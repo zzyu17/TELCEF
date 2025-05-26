@@ -61,7 +61,7 @@ else:
 
 # Define the directories
 root = os.getcwd()
-processed_lightcurve_plots_dir = root + f"/03 Processed Lightcurve Plots_V2_{method}"
+processed_lightcurve_plots_dir = root + f"/03 Processed Light Curve Plots_V2_{method}"
 os.makedirs(processed_lightcurve_plots_dir, exist_ok=True)
 processed_lightcurve_plots_parent_dir = processed_lightcurve_plots_dir + f"/{name}_Sector {sector}"
 os.makedirs(processed_lightcurve_plots_parent_dir, exist_ok=True)
@@ -92,14 +92,14 @@ tesscut_size = (tesscut_size_1d, tesscut_size_1d) if tesscut else None
 
 lc_type = 'Corrected' ##### select the type of light curve to be processed #####
 
-# define the method-specified directory based on whether postcard or tesscut is used and the type of light curve to be processed
+# define the postcard-lightcurve-specified directory based on whether postcard or tesscut is used and the type of light curve to be processed
 if postcard:
-    processed_lightcurve_plots_method_parent_dir = processed_lightcurve_plots_parent_dir + f"/{method}_Postcard_{lc_type}"
+    processed_lightcurve_plots_pc_lc_parent_dir = processed_lightcurve_plots_parent_dir + f"/{method}_Postcard_{lc_type}"
     post_dir = eleanor_root
 if tesscut:
-    processed_lightcurve_plots_method_parent_dir = processed_lightcurve_plots_parent_dir + f"/{method}_TESScut_{lc_type}"
+    processed_lightcurve_plots_pc_lc_parent_dir = processed_lightcurve_plots_parent_dir + f"/{method}_TESScut_{lc_type}"
     post_dir = eleanor_root_tesscut
-os.makedirs(processed_lightcurve_plots_method_parent_dir, exist_ok=True)
+os.makedirs(processed_lightcurve_plots_pc_lc_parent_dir, exist_ok=True)
 
 source = eleanor.Source(name=name, sector=sector, tc=tesscut, tesscut_size=tesscut_size_1d, post_dir=post_dir) ##### run eleanor.Source with default parameters first #####
 print(f"Found TIC {source.tic} (Gaia {source.gaia}), with TESS magnitude {source.tess_mag}, RA {source.coords[0]}, and Dec {source.coords[1]}")
@@ -159,7 +159,7 @@ if render_tpf_animation:
         tpf_animation_artists.append([ax_tpf_animation_cadence_img, ax_tpf_animation_cadence_title])
     tpf_animation = animation.ArtistAnimation(fig=tpf_animation_plot, artists=tpf_animation_artists, interval=int(1000/tpf_animation_framerate), blit=True)
     tpf_animation_writer = animation.FFMpegWriter(fps=int(tpf_animation_framerate), metadata=dict(artist='zzyu'), bitrate=2000)
-    tpf_animation.save(filename=processed_lightcurve_plots_method_parent_dir + f"/{i:02} {name} Sector {sector} {method_eleanor} TPF Exptime={exptime}s.mp4", writer=tpf_animation_writer)
+    tpf_animation.save(filename=processed_lightcurve_plots_pc_lc_parent_dir + f"/{i:02} {name} Sector {sector} {method_eleanor} TPF Exptime={exptime}s.mp4", writer=tpf_animation_writer)
     tpf_animation_end_time = time.time()  # measure the end time
     tpf_animation_rendering_time = tpf_animation_end_time - tpf_animation_start_time # calculate the rendering time
     print(f"Rendered the {name} Sector {sector} {method_eleanor} TPF animation in {tpf_animation_rendering_time} seconds.")
@@ -185,7 +185,7 @@ lc_pca.scatter(ax=ax_lc, normalize=True, offset=0, label='PCA', c='g')
 lc_psf.scatter(ax=ax_lc, normalize=True, offset=-0.1, label='PSF Modelled', c='b')
 ax_lc.set_title(f"{name} Sector {sector} {method_eleanor} Light Curve")
 lc_plot.figure.tight_layout()
-lc_plot.figure.savefig(processed_lightcurve_plots_method_parent_dir + f"/{i:02}-{j:01} {name} Sector {sector} {method_eleanor} Light Curves Exptime={exptime}s.png") # plot all the Eleanor light curves
+lc_plot.figure.savefig(processed_lightcurve_plots_pc_lc_parent_dir + f"/{i:02}-{j:01} {name} Sector {sector} {method_eleanor} Light Curves Exptime={exptime}s.png") # plot all the Eleanor light curves
 j += 1 # count the sub-step
 if lc_type.lower() == 'raw':
     lc_proc = lc_raw
@@ -199,7 +199,7 @@ lc_proc_plot, ax_lc_proc = plt.subplots(figsize=(20, 5))
 lc_proc.normalize().scatter(ax=ax_lc_proc)
 ax_lc_proc.set_title(f"{name} Sector {sector} {method_eleanor} {lc_type} Light Curve")
 lc_proc_plot.figure.tight_layout()
-lc_proc_plot.figure.savefig(processed_lightcurve_plots_method_parent_dir + f"/{i:02}-{j:01} {name} Sector {sector} {method_eleanor} {lc_type} Light Curve Exptime={exptime}s.png") # plot the light curve of the selected type
+lc_proc_plot.figure.savefig(processed_lightcurve_plots_pc_lc_parent_dir + f"/{i:02}-{j:01} {name} Sector {sector} {method_eleanor} {lc_type} Light Curve Exptime={exptime}s.png") # plot the light curve of the selected type
 
 # Plot the pixel-by-pixel light curves
 i += 1 # count the step
@@ -213,17 +213,17 @@ j = 1 # count the sub-step
 pbp_lc_proc_plot = visualize.pixel_by_pixel(colrange=colrange, rowrange=rowrange, data_type=lc_type, color_by_pixel=True)
 pbp_lc_proc_plot.suptitle(f"{name} Sector {sector} {method_eleanor} {lc_type}-flux Pixel-by-Pixel Light Curves", fontsize='x-large')
 pbp_lc_proc_plot.figure.tight_layout()
-pbp_lc_proc_plot.figure.savefig(processed_lightcurve_plots_method_parent_dir + f"/{i:02}-{j:01} {name} Sector {sector} {method_eleanor} {lc_type}-flux Pixel-by-Pixel Light Curves Exptime={exptime}s.png") # plot the pixel-by-pixel light curves of the selected type
+pbp_lc_proc_plot.figure.savefig(processed_lightcurve_plots_pc_lc_parent_dir + f"/{i:02}-{j:01} {name} Sector {sector} {method_eleanor} {lc_type}-flux Pixel-by-Pixel Light Curves Exptime={exptime}s.png") # plot the pixel-by-pixel light curves of the selected type
 j += 1 # count the sub-step
 pbp_lc_pg_plot = visualize.pixel_by_pixel(colrange=colrange, rowrange=rowrange, data_type="periodogram", color_by_pixel=True)
 pbp_lc_pg_plot.suptitle(f"{name} Sector {sector} {method_eleanor} Periodogram Pixel-by-Pixel Light Curves", fontsize='x-large')
 pbp_lc_pg_plot.figure.tight_layout()
-pbp_lc_pg_plot.figure.savefig(processed_lightcurve_plots_method_parent_dir + f"/{i:02}-{j:01} {name} Sector {sector} {method_eleanor} Periodogram Pixel-by-Pixel Light Curves Exptime={exptime}s.png") # plot the periodogram pixel-by-pixel light curves
+pbp_lc_pg_plot.figure.savefig(processed_lightcurve_plots_pc_lc_parent_dir + f"/{i:02}-{j:01} {name} Sector {sector} {method_eleanor} Periodogram Pixel-by-Pixel Light Curves Exptime={exptime}s.png") # plot the periodogram pixel-by-pixel light curves
 j += 1 # count the sub-step
 pbp_lc_amp_plot = visualize.pixel_by_pixel(colrange=colrange, rowrange=rowrange, data_type="amplitude", view='frequency', color_by_pixel=True)
 pbp_lc_amp_plot.suptitle(f"{name} Sector {sector} {method_eleanor} Amplitude Pixel-by-Pixel Light Curves", fontsize='x-large')
 pbp_lc_amp_plot.figure.tight_layout()
-pbp_lc_amp_plot.figure.savefig(processed_lightcurve_plots_method_parent_dir + f"/{i:02}-{j:01} {name} Sector {sector} {method_eleanor} Amplitude Pixel-by-Pixel Light Curves Exptime={exptime}s.png") # plot the amplitude pixel-by-pixel light curves
+pbp_lc_amp_plot.figure.savefig(processed_lightcurve_plots_pc_lc_parent_dir + f"/{i:02}-{j:01} {name} Sector {sector} {method_eleanor} Amplitude Pixel-by-Pixel Light Curves Exptime={exptime}s.png") # plot the amplitude pixel-by-pixel light curves
 
 
 ### Background ###
@@ -238,7 +238,7 @@ bkg_1d_pc.scatter(ax=ax_bkg_1d, normalize=False, offset=2000, label='1D postcard
 bkg_1d_tpf.scatter(ax=ax_bkg_1d, normalize=False, offset=0, label='1D TPF', c='g')
 ax_bkg_1d.set_title(f"{name} Sector {sector} {method_eleanor} 1D Background ({data.bkg_type} is applied.)")
 bkg_1d_plot.figure.tight_layout()
-bkg_1d_plot.figure.savefig(processed_lightcurve_plots_method_parent_dir + f"/{i:02} {name} Sector {sector} {method_eleanor} 1D Background Exptime={exptime}s.png")
+bkg_1d_plot.figure.savefig(processed_lightcurve_plots_pc_lc_parent_dir + f"/{i:02} {name} Sector {sector} {method_eleanor} 1D Background Exptime={exptime}s.png")
 
 # Plot the aperture-overplotted TPF, the Gaia-overlay TPF, the 2D background and the aperture
 i += 1 # count the step
@@ -257,7 +257,7 @@ if tesscut:
 ax_aperture.imshow(data.aperture, origin='lower')
 ax_aperture.set_title(f"{name} Sector {sector} {method_eleanor} Aperture") # plot the aperture
 bkg_2d_aperture_tpf_plot.figure.tight_layout()
-bkg_2d_aperture_tpf_plot.figure.savefig(processed_lightcurve_plots_method_parent_dir + f"/{i:02} {name} Sector {sector} {method_eleanor} 2D Background & Aperture TPF Exptime={exptime}s.png")
+bkg_2d_aperture_tpf_plot.figure.savefig(processed_lightcurve_plots_pc_lc_parent_dir + f"/{i:02} {name} Sector {sector} {method_eleanor} 2D Background & Aperture TPF Exptime={exptime}s.png")
 
 # Render the 2D background animation
 i += 1 # count the step
@@ -273,7 +273,7 @@ if render_bkg_2d_animation and postcard:
         bkg_2d_animation_artists.append([ax_bkg_2d_animation_cadence_img, ax_bkg_2d_animation_cadence_title])
     bkg_2d_animation = animation.ArtistAnimation(fig=bkg_2d_animation_plot, artists=bkg_2d_animation_artists, interval=int(1000/bkg_2d_animation_framerate), blit=True)
     bkg_2d_animation_writer = animation.FFMpegWriter(fps=int(bkg_2d_animation_framerate), metadata=dict(artist='zzyu'), bitrate=2000)
-    bkg_2d_animation.save(filename=processed_lightcurve_plots_method_parent_dir + f"/{i:02} {name} Sector {sector} {method_eleanor} 2D Background Exptime={exptime}s.mp4", writer=bkg_2d_animation_writer)
+    bkg_2d_animation.save(filename=processed_lightcurve_plots_pc_lc_parent_dir + f"/{i:02} {name} Sector {sector} {method_eleanor} 2D Background Exptime={exptime}s.mp4", writer=bkg_2d_animation_writer)
     bkg_2d_animation_end_time = time.time()  # measure the end time
     bkg_2d_animation_rendering_time = bkg_2d_animation_end_time - bkg_2d_animation_start_time # calculate the rendering time
     print(f"Rendered the {name} Sector {sector} {method_eleanor} 2D background animation in {bkg_2d_animation_rendering_time} seconds.")
@@ -301,7 +301,7 @@ if render_postcard_animation:
         postcard_animation_artists.append([ax_postcard_animation_cadence_img, ax_postcard_animation_cadence_title])
     postcard_animation = animation.ArtistAnimation(fig=postcard_animation_plot, artists=postcard_animation_artists, interval=int(1000/postcard_animation_framerate), blit=True)
     postcard_animation_writer = animation.FFMpegWriter(fps=int(postcard_animation_framerate), metadata=dict(artist='zzyu'), bitrate=2000)
-    postcard_animation.save(filename=processed_lightcurve_plots_method_parent_dir + f"/{i:02} {name} Sector {sector} {method_eleanor} Postcard Exptime={exptime}s.mp4", writer=postcard_animation_writer)
+    postcard_animation.save(filename=processed_lightcurve_plots_pc_lc_parent_dir + f"/{i:02} {name} Sector {sector} {method_eleanor} Postcard Exptime={exptime}s.mp4", writer=postcard_animation_writer)
     postcard_animation_end_time = time.time()  # measure the end time
     postcard_animation_rendering_time = postcard_animation_end_time - postcard_animation_start_time  # calculate the rendering time
     print(f"Rendered the {name} Sector {sector} {method_eleanor} Postcard animation in {postcard_animation_rendering_time} seconds.")
@@ -324,16 +324,19 @@ lc_flatten_plot, ax_flatten = plt.subplots(figsize=(20, 5))
 lc_flatten.errorbar(ax=ax_flatten)
 ax_flatten.set_title(f"{name} Sector {sector} {method_lightkurve} Flatten Light Curve (Window Length: {flatten_window_length})")
 lc_flatten_plot.figure.tight_layout()
-lc_flatten_plot.figure.savefig(processed_lightcurve_plots_method_parent_dir + f"/{i:02} {name} Sector {sector} {flatten_window_proportion * 100}% Window {method_lightkurve} Flatten Light Curve Exptime={exptime}s.png")
+lc_flatten_plot.figure.savefig(processed_lightcurve_plots_pc_lc_parent_dir + f"/{i:02} {name} Sector {sector} {flatten_window_proportion * 100}% Window {method_lightkurve} Flatten Light Curve Exptime={exptime}s.png")
 
 
 
 
 ### ------ Documentation ------ ###
 # Print the methodologies and results
-methodology_result_file = open(processed_lightcurve_plots_method_parent_dir + f"/{name} Sector {sector} {method} Methodologies And Results.txt", "w", encoding='utf-8')
-methodology_result_file.write(f"{name} Sector {sector} {method} Methodologies And Results\n\n")
-methodology_result_file.write(f"Eleanor {lc_type} --- Lightkurve flatten\n\n") ##### set the lightkurve methodologies manually #####
+if postcard:
+    methodology_result_file = open(processed_lightcurve_plots_pc_lc_parent_dir + f"/{name} Sector {sector} {method} Postcard {lc_type} Methodologies And Results.txt", "w", encoding='utf-8')
+    methodology_result_file.write(f"{name} Sector {sector} {method} Postcard {lc_type} Methodologies And Results\n\n")
+if tesscut:
+    methodology_result_file = open(processed_lightcurve_plots_pc_lc_parent_dir + f"/{name} Sector {sector} {method} TESScut {lc_type} Methodologies And Results.txt", "w", encoding='utf-8')
+    methodology_result_file.write(f"{name} Sector {sector} {method} TESScut {lc_type} Methodologies And Results\n\n")
 methodology_result_file.write("Target Information: \n"
                                     f"Name: {name}\n"
                                     f"Sector: {source.sector}\n"
