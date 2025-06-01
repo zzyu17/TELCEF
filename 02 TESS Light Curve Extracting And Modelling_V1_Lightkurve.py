@@ -1,8 +1,12 @@
+import os
+import time
+
+import astropy.units as u
 import lightkurve as lk
-import os, warnings, time
 import matplotlib.pyplot as plt
 import numpy as np
-import astropy.units as u
+
+
 
 
 ### ------ Preparations ------ ###

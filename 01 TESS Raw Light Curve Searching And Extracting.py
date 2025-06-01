@@ -1,9 +1,10 @@
-import lightkurve as lk
 import os
-import warnings
+from collections import defaultdict
+
+import lightkurve as lk
 import matplotlib.pyplot as plt
 import numpy as np
-from collections import defaultdict
+
 
 
 

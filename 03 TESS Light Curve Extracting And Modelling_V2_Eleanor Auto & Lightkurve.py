@@ -1,11 +1,13 @@
-import lightkurve as lk
+import os
+import time
+import warnings
+
 import eleanor
-import os, warnings, time
+import lightkurve as lk
 import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib import animation
 from matplotlib import rcParams
-from matplotlib import collections
-import numpy as np
 
 # Ignore all warnings
 warnings.filterwarnings("ignore")
