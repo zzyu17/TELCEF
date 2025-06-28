@@ -105,6 +105,14 @@ def calculate_cdpp(lc, transit_duration=13):
 
 
 
+# Define the sort_lc() function
+def sort_lc(lc):
+    """
+    Ensure the light curve is sorted in strictly increasing time order.
+    """
+    time = lc.time
+    flux = lc.flux
+    flux_err = lc.flux_err
 
 # Define the method name based on the script name
 script_path = os.path.abspath(__file__)
@@ -116,6 +124,12 @@ if last_underscore_idx != -1 and dot_idx != -1 and last_underscore_idx < dot_idx
 else:
     print("Unresolvable script name. Please define the method name manually.")
     method = "Lightkurve" # define the method name manually if the script name is unresolvable
+    if np.all(np.diff(time.value) > 0):
+        return lc
+
+    else:
+        # Retrieve the indices that would sort the time array
+        sort_indices = np.argsort(time.value)
 
 # Define the directories
 root = os.getcwd()
@@ -125,13 +139,21 @@ processed_lightcurve_plots_parent_dir = processed_lightcurve_plots_dir + f"/{nam
 os.makedirs(processed_lightcurve_plots_parent_dir, exist_ok=True)
 processed_lightcurve_plots_exptime_parent_dir = processed_lightcurve_plots_parent_dir + f"/Exposure Time={exptime}s"
 os.makedirs(processed_lightcurve_plots_exptime_parent_dir, exist_ok=True)
+        sorted_time = time[sort_indices]
+        sorted_flux = flux[sort_indices]
+        sorted_flux_err = flux_err[sort_indices]
 
 eleanor_root = os.path.expanduser("~/.eleanor")
 eleanor_root_targetdata = eleanor_root + f"/targetdata"
 os.makedirs(eleanor_root_targetdata, exist_ok=True)
 eleanor_root_targetdata_source = eleanor_root_targetdata + f"/{name}"
 os.makedirs(eleanor_root_targetdata_source, exist_ok=True)
+        sorted_lc = lc.copy()
+        sorted_lc.time = sorted_time
+        sorted_lc.flux = sorted_flux
+        sorted_lc.flux_err = sorted_flux_err
 
+        return sorted_lc
 
 
 
@@ -154,8 +176,8 @@ lc_raw_plot.figure.savefig(processed_lightcurve_plots_exptime_parent_dir + f"/{i
 
 
 j += 1 # count the sub-step
-lc_raw_nans_removed = lc_raw.remove_nans() # Remove NaNs from the raw light curve
-lc_raw_nans_removed_cdpp = calculate_cdpp(lc_raw_nans_removed, transit_duration=216) ##### set the transit duration after fitting transit parameters for the first time #####
+lc_raw_nans_removed = sort_lc(lc_raw.remove_nans()) # remove NaNs from the raw light curve and sort it in strictly increasing time order
+lc_raw_nans_removed_cdpp = calculate_cdpp(lc_raw_nans_removed, transit_duration=216) ##### set the transit duration after fitting transit parameters using the BLS method for the first time #####
 
 lc_raw_nans_removed_plot, ax_lc_raw_nans_removed = plt.subplots(figsize=(20, 5))
 lc_raw_nans_removed.errorbar(ax=ax_lc_raw_nans_removed, label=f"simplified CDPP={lc_raw_nans_removed_cdpp:.2f}")
@@ -309,8 +331,8 @@ if clip:
 
     # Retrieve and plot the clipped light curve
     j += 1 # count the sub-step
-    lc_clipped = lc_clipped_baseline.append(lc_clipped_transit)  # append the in-transit NaNs-removed raw light curve to the clipped baseline to retrieve the clipped light curve
-    lc_clipped_cdpp = calculate_cdpp(lc_clipped, transit_duration=transit_duration_raw_nans_removed_in_cadence)
+    lc_clipped = sort_lc(lc_clipped_baseline.append(lc_clipped_transit))  # append the in-transit NaNs-removed raw light curve to the clipped baseline to retrieve the clipped light curve
+    lc_clipped_cdpp = calculate_cdpp(lc_clipped, transit_duration=transit_duration_in_cadence_raw_nans_removed)
 
     lc_clipped_plot, ax_lc_clipped = plt.subplots(figsize=(20, 5))
     lc_clipped.errorbar(ax=ax_lc_clipped, label=f"simplified CDPP={lc_clipped_cdpp:.2f}")
