@@ -24,9 +24,9 @@ warnings.filterwarnings("ignore")
 sector = 10 ##### set the single sector to be processed #####
 exptime = 1800   ##### set the exposure time of data to be processed #####
 
-
 # Define the starting point of TESS observation time
 TESS_time = 2457000 # BJD
+
 
 # ##### Define the source parameters #####
 # name = "WASP-80"
@@ -164,9 +164,9 @@ if render_tpf_animation:
     tpf_animation.save(filename=processed_lightcurve_plots_pc_lc_parent_dir + f"/{i:02} {name} Sector {sector} {method_eleanor} TPF Exptime={exptime}s.mp4", writer=tpf_animation_writer)
     tpf_animation_end_time = time.time()  # measure the end time
     tpf_animation_rendering_time = tpf_animation_end_time - tpf_animation_start_time # calculate the rendering time
-    print(f"Rendered the {name} Sector {sector} {method_eleanor} TPF animation in {tpf_animation_rendering_time} seconds.")
+    print(f"Rendered {name} Sector {sector} {method_eleanor} TPF animation in {tpf_animation_rendering_time} seconds.")
 if not render_tpf_animation:
-    print(f"Skipped the {name} Sector {sector} {method_eleanor} TPF animation rendering.")
+    print(f"Skipped {name} Sector {sector} {method_eleanor} TPF animation rendering.")
 
 
 ### Light Curve ###
@@ -191,11 +191,11 @@ lc_plot.figure.savefig(processed_lightcurve_plots_pc_lc_parent_dir + f"/{i:02}-{
 j += 1 # count the sub-step
 if lc_type.lower() == 'raw':
     lc_proc = lc_raw
-if lc_type.lower() == 'corrected':
+elif lc_type.lower() == 'corrected':
     lc_proc = lc_corr
-if lc_type.lower() == 'pca':
+elif lc_type.lower() == 'pca':
     lc_proc = lc_pca
-if lc_type.lower() == 'psf' or lc_type.lower() == 'psf modelled':
+elif lc_type.lower() == 'psf' or lc_type.lower() == 'psf modelled':
     lc_proc = lc_psf
 lc_proc_plot, ax_lc_proc = plt.subplots(figsize=(20, 5))
 lc_proc.normalize().scatter(ax=ax_lc_proc)
@@ -278,9 +278,9 @@ if render_bkg_2d_animation and postcard:
     bkg_2d_animation.save(filename=processed_lightcurve_plots_pc_lc_parent_dir + f"/{i:02} {name} Sector {sector} {method_eleanor} 2D Background Exptime={exptime}s.mp4", writer=bkg_2d_animation_writer)
     bkg_2d_animation_end_time = time.time()  # measure the end time
     bkg_2d_animation_rendering_time = bkg_2d_animation_end_time - bkg_2d_animation_start_time # calculate the rendering time
-    print(f"Rendered the {name} Sector {sector} {method_eleanor} 2D background animation in {bkg_2d_animation_rendering_time} seconds.")
+    print(f"Rendered {name} Sector {sector} {method_eleanor} 2D Background animation in {bkg_2d_animation_rendering_time} seconds.")
 elif not render_bkg_2d_animation:
-    print(f"Skipped the {name} Sector {sector} {method_eleanor} 2D background animation rendering.")
+    print(f"Skipped {name} Sector {sector} {method_eleanor} 2D Background animation rendering.")
 elif not postcard:
     print(f"The 2D background of postcard produced using TESScut is the same as the TESScut postcard itself. Please render the postcard animation instead to visualize the TESScut postcard.")
 
@@ -306,9 +306,9 @@ if render_postcard_animation:
     postcard_animation.save(filename=processed_lightcurve_plots_pc_lc_parent_dir + f"/{i:02} {name} Sector {sector} {method_eleanor} Postcard Exptime={exptime}s.mp4", writer=postcard_animation_writer)
     postcard_animation_end_time = time.time()  # measure the end time
     postcard_animation_rendering_time = postcard_animation_end_time - postcard_animation_start_time  # calculate the rendering time
-    print(f"Rendered the {name} Sector {sector} {method_eleanor} Postcard animation in {postcard_animation_rendering_time} seconds.")
+    print(f"Rendered {name} Sector {sector} {method_eleanor} Postcard animation in {postcard_animation_rendering_time} seconds.")
 if not render_postcard_animation:
-    print(f"Skipped the {name} Sector {sector} {method_eleanor} Postcard animation rendering.")
+    print(f"Skipped {name} Sector {sector} {method_eleanor} Postcard animation rendering.")
 
 
 

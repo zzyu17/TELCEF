@@ -14,9 +14,9 @@ import numpy as np
 sector = 54 ##### set the single sector to be processed #####
 pipeline = 'SPOC' ##### set the pipeline to be processed #####
 
-
 # Define the starting point of TESS observation time
 TESS_time = 2457000 # BJD
+
 
 ##### Define the source parameters #####
 name = "WASP-80"
@@ -37,16 +37,16 @@ transit_depth_NASA = (0.17137) ** 2
 # gaia = 3578638842054261248
 # tess_mag = 10.418
 
+
 ##### Define the Lightkurve parameters depending on the exptime #####
 exptime = 20
-exptime_in_days = (exptime * u.second).to(u.day).value  # convert exposure time to days
+exptime_in_day = (exptime * u.second).to(u.day).value  # convert exposure time to days
 
-# set the coefficient of transit mask span manually
-transit_mask_raw_nans_removed_coefficient = 1.8
+transit_mask_raw_nans_removed_coefficient = 1.8 # set the coefficient of BLS transit mask span manually
 
 flatten = True
 flatten_window_proportion = 0.05
-polyorder = 3
+flatten_polyorder = 3
 
 clip = True
 clip_transit = True
@@ -54,8 +54,35 @@ sigma_baseline = 3.0
 sigma_upper_transit = 0.4 # set sigma_upper_transit manually
 sigma_lower_transit = np.inf # set to np.inf to avoid clipping the real transit
 
-bin = True
-cadence_bin_size = 2.5
+
+
+
+# Define the method name based on the script name
+script_path = os.path.abspath(__file__)
+script_name = str(os.path.basename(script_path))
+last_underscore_idx = script_name.rfind('_')
+dot_idx = script_name.rfind('.')
+if last_underscore_idx != -1 and dot_idx != -1 and last_underscore_idx < dot_idx:
+    method = script_name[last_underscore_idx + 1: dot_idx]
+else:
+    print("Unresolvable script name. Please define the method name manually.")
+    method = "Lightkurve" # define the method name manually if the script name is unresolvable
+
+
+# Define the directories
+root = os.getcwd()
+processed_lightcurve_plots_dir = root + f"/02 Processed Light Curve Plots_V1_{method}"
+os.makedirs(processed_lightcurve_plots_dir, exist_ok=True)
+processed_lightcurve_plots_parent_dir = processed_lightcurve_plots_dir + f"/{name}_Sector {sector}_{pipeline}"
+os.makedirs(processed_lightcurve_plots_parent_dir, exist_ok=True)
+processed_lightcurve_plots_exptime_parent_dir = processed_lightcurve_plots_parent_dir + f"/Exposure Time={exptime}s"
+os.makedirs(processed_lightcurve_plots_exptime_parent_dir, exist_ok=True)
+
+eleanor_root = os.path.expanduser("~/.eleanor")
+eleanor_root_targetdata = eleanor_root + f"/targetdata"
+os.makedirs(eleanor_root_targetdata, exist_ok=True)
+eleanor_root_targetdata_source = eleanor_root_targetdata + f"/{name}"
+os.makedirs(eleanor_root_targetdata_source, exist_ok=True)
 
 
 
@@ -101,7 +128,9 @@ def calculate_cdpp(lc, transit_duration=13):
     normalized_lc = cleaned_lc.normalize("ppm")
 
     mean = running_mean(data=normalized_lc.flux, window_size=transit_duration)
-    return np.std(mean)
+    cdpp = np.std(mean)
+    return cdpp
+
 
 
 
@@ -114,16 +143,6 @@ def sort_lc(lc):
     flux = lc.flux
     flux_err = lc.flux_err
 
-# Define the method name based on the script name
-script_path = os.path.abspath(__file__)
-script_name = str(os.path.basename(script_path))
-last_underscore_idx = script_name.rfind('_')
-dot_idx = script_name.rfind('.')
-if last_underscore_idx != -1 and dot_idx != -1 and last_underscore_idx < dot_idx:
-    method = script_name[last_underscore_idx + 1: dot_idx]
-else:
-    print("Unresolvable script name. Please define the method name manually.")
-    method = "Lightkurve" # define the method name manually if the script name is unresolvable
     if np.all(np.diff(time.value) > 0):
         return lc
 
@@ -131,23 +150,10 @@ else:
         # Retrieve the indices that would sort the time array
         sort_indices = np.argsort(time.value)
 
-# Define the directories
-root = os.getcwd()
-processed_lightcurve_plots_dir = root + f"/02 Processed Light Curve Plots_V1_{method}"
-os.makedirs(processed_lightcurve_plots_dir, exist_ok=True)
-processed_lightcurve_plots_parent_dir = processed_lightcurve_plots_dir + f"/{name}_Sector {sector}_{pipeline}"
-os.makedirs(processed_lightcurve_plots_parent_dir, exist_ok=True)
-processed_lightcurve_plots_exptime_parent_dir = processed_lightcurve_plots_parent_dir + f"/Exposure Time={exptime}s"
-os.makedirs(processed_lightcurve_plots_exptime_parent_dir, exist_ok=True)
         sorted_time = time[sort_indices]
         sorted_flux = flux[sort_indices]
         sorted_flux_err = flux_err[sort_indices]
 
-eleanor_root = os.path.expanduser("~/.eleanor")
-eleanor_root_targetdata = eleanor_root + f"/targetdata"
-os.makedirs(eleanor_root_targetdata, exist_ok=True)
-eleanor_root_targetdata_source = eleanor_root_targetdata + f"/{name}"
-os.makedirs(eleanor_root_targetdata_source, exist_ok=True)
         sorted_lc = lc.copy()
         sorted_lc.time = sorted_time
         sorted_lc.flux = sorted_flux
@@ -166,7 +172,7 @@ i = 1 # count the step
 j = 1 # count the sub-step
 lc_raw = lk.search_lightcurve(name, sector=sector, author=f'*{pipeline}*', exptime=exptime).download()
 print(f"Downloaded and processing {name} Sector {sector} {pipeline} Exptime={exptime}s Light Curve...\n")
-lc_raw_cdpp = calculate_cdpp(lc_raw, transit_duration=216) ##### set the transit duration after fitting transit parameters for the first time #####
+lc_raw_cdpp = calculate_cdpp(lc_raw, transit_duration=216) ##### set the transit duration after fitting transit parameters using the BLS method for the first time #####
 
 lc_raw_plot, ax_lc_raw = plt.subplots(figsize=(20, 5))
 lc_raw.errorbar(ax=ax_lc_raw, label=f"simplified CDPP={lc_raw_cdpp:.2f}")
@@ -189,11 +195,11 @@ lc_raw_nans_removed_plot.figure.savefig(processed_lightcurve_plots_exptime_paren
 # Fit the NaNs-removed raw light curve using the Box Least Squares (BLS) method
 j += 1 # count the sub-step
 pg_bls_raw_nans_removed_start_time = time.time() # measure the start time
-period_raw_nans_removed_range = np.linspace(0.5, 27, 10000) ##### set the range of period to search #####
-pg_bls_raw_nans_removed = lc_raw_nans_removed.to_periodogram(method='bls', period=period_raw_nans_removed_range, frequency_factor=500)
+p_raw_nans_removed_range = np.linspace(0.5, 27, 10000) ##### set the range of period to search #####
+pg_bls_raw_nans_removed = lc_raw_nans_removed.to_periodogram(method='bls', period=p_raw_nans_removed_range, frequency_factor=500)
 pg_bls_raw_nans_removed_end_time = time.time() # measure the end time
 pg_bls_raw_nans_removed_fitting_time = pg_bls_raw_nans_removed_end_time - pg_bls_raw_nans_removed_start_time # calculate the fitting time
-print(f"Fitted {name} Sector {sector} {pipeline} NaNs-Removed Raw Light Curve Exptime={exptime}s using the Box Least Squares (BLS) method in {pg_bls_raw_nans_removed_fitting_time} seconds.\n")
+print(f"Fitted global parameters of {name} Sector {sector} {pipeline} NaNs-Removed Raw light curve Exptime={exptime}s using the Box Least Squares (BLS) method in {pg_bls_raw_nans_removed_fitting_time} seconds.\n")
 
 pg_bls_raw_nans_removed_plot, ax_pg_bls_raw_nans_removed = plt.subplots(figsize=(20, 5))
 pg_bls_raw_nans_removed.plot(ax=ax_pg_bls_raw_nans_removed)
@@ -203,28 +209,27 @@ pg_bls_raw_nans_removed_plot.figure.savefig(processed_lightcurve_plots_exptime_p
 
 
 j += 1 # count the sub-step
-period_raw_nans_removed = pg_bls_raw_nans_removed.period_at_max_power.value
-epoch_time_raw_nans_removed = pg_bls_raw_nans_removed.transit_time_at_max_power.value
+p_raw_nans_removed = pg_bls_raw_nans_removed.period_at_max_power.value
+t0_raw_nans_removed = pg_bls_raw_nans_removed.transit_time_at_max_power.value
 transit_duration_raw_nans_removed = pg_bls_raw_nans_removed.duration_at_max_power.value
-transit_duration_raw_nans_removed_proportion = transit_duration_raw_nans_removed / (lc_raw_nans_removed.time.value[-1] - lc_raw_nans_removed.time.value[0])
-transit_duration_raw_nans_removed_in_cadence = int(round(transit_duration_raw_nans_removed / exptime_in_days))  # convert transit duration to number of cadences
+transit_duration_in_cadence_raw_nans_removed = int(round(transit_duration_raw_nans_removed / exptime_in_day))  # convert transit duration to number of cadences
 transit_depth_raw_nans_removed = pg_bls_raw_nans_removed.depth_at_max_power.value / np.nanmedian(lc_raw_nans_removed.flux.value) # calculate the normalized transit depth
-transit_mask_raw_nans_removed = pg_bls_raw_nans_removed.get_transit_mask(period=period_raw_nans_removed, transit_time=epoch_time_raw_nans_removed, duration=transit_duration_raw_nans_removed * transit_mask_raw_nans_removed_coefficient)
-lc_bls_transit_model_raw_nans_removed = pg_bls_raw_nans_removed.get_transit_model(period=period_raw_nans_removed, transit_time=epoch_time_raw_nans_removed, duration=transit_duration_raw_nans_removed)
+transit_mask_raw_nans_removed = pg_bls_raw_nans_removed.get_transit_mask(period=p_raw_nans_removed, transit_time=t0_raw_nans_removed, duration=transit_duration_raw_nans_removed * transit_mask_raw_nans_removed_coefficient)
+lc_bls_transit_model_raw_nans_removed = pg_bls_raw_nans_removed.get_transit_model(period=p_raw_nans_removed, transit_time=t0_raw_nans_removed, duration=transit_duration_raw_nans_removed)
 
 lc_bls_transit_model_raw_nans_removed_plot, ax_lc_bls_transit_model_raw_nans_removed = plt.subplots(figsize=(20, 5))
-lc_raw_nans_removed.errorbar(ax=ax_lc_bls_transit_model_raw_nans_removed, label=f"NaNs-Removed Raw Light Curve Exptime={exptime}s")
-lc_bls_transit_model_raw_nans_removed.plot(ax=ax_lc_bls_transit_model_raw_nans_removed, c='red', label=f"NaNs-Removed Raw BLS Transit Model Exptime={exptime}s")
-ax_lc_bls_transit_model_raw_nans_removed.set_title(f"{name} Sector {sector} {pipeline} NaNs-Removed Raw Light Curve & BLS Transit Model Exptime={exptime}s")
+lc_raw_nans_removed.errorbar(ax=ax_lc_bls_transit_model_raw_nans_removed, label=f"NaNs-Removed Raw Light Curve")
+lc_bls_transit_model_raw_nans_removed.plot(ax=ax_lc_bls_transit_model_raw_nans_removed, c='red', label=f"Best Fitted BLS Model")
+ax_lc_bls_transit_model_raw_nans_removed.set_title(f"{name} Sector {sector} {pipeline} NaNs-Removed Raw Light Curve & BLS Model Exptime={exptime}s")
 lc_bls_transit_model_raw_nans_removed_plot.figure.tight_layout()
-lc_bls_transit_model_raw_nans_removed_plot.figure.savefig(processed_lightcurve_plots_exptime_parent_dir + f"/{i:02}-{j:01} {name} Sector {sector} {pipeline} NaNs-Removed Raw Light Curve & BLS Transit Model Exptime={exptime}s.png")
+lc_bls_transit_model_raw_nans_removed_plot.figure.savefig(processed_lightcurve_plots_exptime_parent_dir + f"/{i:02}-{j:01} {name} Sector {sector} {pipeline} NaNs-Removed Raw Light Curve & BLS Model Exptime={exptime}s.png")
 
 
 # Retrieve and plot Nans-removed raw baseline
 j += 1 # count the sub-step
 lc_raw_nans_removed_baseline = lc_raw_nans_removed[~transit_mask_raw_nans_removed] # retrieve the out-of-transit light curve (baseline)
 lc_raw_nans_removed_transit = lc_raw_nans_removed[transit_mask_raw_nans_removed] # retrieve the in-transit light curve
-lc_raw_nans_removed_baseline_cdpp = calculate_cdpp(lc_raw_nans_removed_baseline, transit_duration=transit_duration_raw_nans_removed_in_cadence)
+lc_raw_nans_removed_baseline_cdpp = calculate_cdpp(lc_raw_nans_removed_baseline, transit_duration=transit_duration_in_cadence_raw_nans_removed)
 
 lc_raw_nans_removed_baseline_plot, ax_lc_raw_nans_removed_baseline = plt.subplots(figsize=(20, 5))
 lc_raw_nans_removed_baseline.errorbar(ax=ax_lc_raw_nans_removed_baseline, label=f"simplified CDPP={lc_raw_nans_removed_baseline_cdpp:.2f}")
@@ -244,8 +249,8 @@ if flatten:
     if flatten_window_length % 2 == 0:
         flatten_window_length += 1  # the flatten window length should be an odd number
 
-    lc_flattened, lc_flattened_trend = lc_raw_nans_removed.flatten(window_length=flatten_window_length, polyorder=polyorder, mask=transit_mask_raw_nans_removed, return_trend=True)
-    lc_flattened_cdpp = calculate_cdpp(lc_flattened, transit_duration=transit_duration_raw_nans_removed_in_cadence)
+    lc_flattened, lc_flattened_trend = lc_raw_nans_removed.flatten(window_length=flatten_window_length, polyorder=flatten_polyorder, mask=transit_mask_raw_nans_removed, return_trend=True)
+    lc_flattened_cdpp = calculate_cdpp(lc_flattened, transit_duration=transit_duration_in_cadence_raw_nans_removed)
 
     j = 1  # count the sub-step
     lc_flattened_plot, ax_lc_flattened = plt.subplots(figsize=(20, 5))
@@ -255,7 +260,9 @@ if flatten:
     lc_flattened_plot.figure.savefig(processed_lightcurve_plots_exptime_parent_dir + f"/{i:02}-{j:01} {name} Sector {sector} {pipeline} {flatten_window_proportion * 100}% Window Flatten Light Curve Exptime={exptime}s.png")
 
     j += 1  # count the sub-step
-    lc_flattened_trend_plot, ax_lc_flattened_trend = plt.subplots(figsize=(20, 5))
+    lc_flattened_trend_plot, (ax_lc_flattened, ax_lc_flattened_trend) = plt.subplots(2, 1, figsize=(20, 10))
+    lc_flattened.errorbar(ax=ax_lc_flattened, label=f"simplified CDPP={lc_flattened_cdpp:.2f}")
+    ax_lc_flattened.set_title(f"{name} Sector {sector} {pipeline} {flatten_window_proportion * 100}% Window Flatten Light Curve Exptime={exptime}s")
     lc_flattened_trend.plot(ax=ax_lc_flattened_trend)
     ax_lc_flattened_trend.set_title(f"{name} Sector {sector} {pipeline} {flatten_window_proportion * 100}% Window Flatten Trend Exptime={exptime}s")
     lc_flattened_trend_plot.figure.tight_layout()
@@ -267,7 +274,7 @@ if flatten:
     lc_flattened_transit = lc_flattened[transit_mask_raw_nans_removed]
     lc_flattened_baseline_trend = lc_flattened_trend[~transit_mask_raw_nans_removed]
     lc_flattened_transit_trend = lc_flattened_trend[transit_mask_raw_nans_removed]
-    lc_flattened_baseline_cdpp = calculate_cdpp(lc_flattened_baseline, transit_duration=transit_duration_raw_nans_removed_in_cadence)
+    lc_flattened_baseline_cdpp = calculate_cdpp(lc_flattened_baseline, transit_duration=transit_duration_in_cadence_raw_nans_removed)
 
     j += 1  # count the sub-step
     lc_flattened_baseline_plot, ax_lc_flattened_baseline = plt.subplots(figsize=(20, 5))
@@ -277,7 +284,9 @@ if flatten:
     lc_flattened_baseline_plot.figure.savefig(processed_lightcurve_plots_exptime_parent_dir + f"/{i:02}-{j:01} {name} Sector {sector} {pipeline} {flatten_window_proportion * 100}% Window Flatten Baseline Light Curve Exptime={exptime}s.png")
 
     j += 1  # count the sub-step
-    lc_flattened_baseline_trend_plot, ax_lc_flattened_baseline_trend = plt.subplots(figsize=(20, 5))
+    lc_flattened_baseline_trend_plot, (ax_lc_flattened_baseline, ax_lc_flattened_baseline_trend) = plt.subplots(2, 1, figsize=(20, 10))
+    lc_flattened_baseline.errorbar(ax=ax_lc_flattened_baseline, label=f"simplified CDPP={lc_flattened_baseline_cdpp:.2f}")
+    ax_lc_flattened_baseline.set_title(f"{name} Sector {sector} {pipeline} {flatten_window_proportion * 100}% Window Flatten Baseline Light Curve Exptime={exptime}s")
     lc_flattened_baseline_trend.plot(ax=ax_lc_flattened_baseline_trend)
     ax_lc_flattened_baseline_trend.set_title(f"{name} Sector {sector} {pipeline} {flatten_window_proportion * 100}% Window Flatten Baseline Trend Exptime={exptime}s")
     lc_flattened_baseline_trend_plot.figure.tight_layout()
@@ -286,7 +295,7 @@ if flatten:
 
 else:
     lc_flattened_baseline = lc_raw_nans_removed_baseline.copy()
-    lc_flattened_baseline_cdpp = calculate_cdpp(lc_flattened_baseline, transit_duration=transit_duration_raw_nans_removed_in_cadence)
+    lc_flattened_baseline_cdpp = calculate_cdpp(lc_flattened_baseline, transit_duration=transit_duration_in_cadence_raw_nans_removed)
 
     lc_flattened_transit = lc_raw_nans_removed_transit.copy()
 
@@ -304,7 +313,7 @@ if clip:
     # Clip and plot the baseline
     j = 1 # count the sub-step
     lc_clipped_baseline = lc_flattened_baseline.remove_outliers(sigma=sigma_baseline)
-    lc_clipped_baseline_cdpp = calculate_cdpp(lc_clipped_baseline, transit_duration=transit_duration_raw_nans_removed_in_cadence)
+    lc_clipped_baseline_cdpp = calculate_cdpp(lc_clipped_baseline, transit_duration=transit_duration_in_cadence_raw_nans_removed)
 
     lc_clipped_baseline_plot, ax_lc_clipped_baseline = plt.subplots(figsize=(20, 5))
     lc_clipped_baseline.errorbar(ax=ax_lc_clipped_baseline, label=f"simplified CDPP={lc_clipped_baseline_cdpp:.2f}")
@@ -343,12 +352,12 @@ if clip:
 
 else:
     lc_clipped_baseline = lc_flattened_baseline.copy()
-    lc_clipped_baseline_cdpp = calculate_cdpp(lc_clipped_baseline, transit_duration=transit_duration_raw_nans_removed_in_cadence)
+    lc_clipped_baseline_cdpp = calculate_cdpp(lc_clipped_baseline, transit_duration=transit_duration_in_cadence_raw_nans_removed)
 
     lc_clipped_transit = lc_flattened_transit.copy()
 
     lc_clipped = lc_flattened.copy()
-    lc_clipped_cdpp = calculate_cdpp(lc_clipped, transit_duration=transit_duration_raw_nans_removed_in_cadence)
+    lc_clipped_cdpp = calculate_cdpp(lc_clipped, transit_duration=transit_duration_in_cadence_raw_nans_removed)
 
 
 
@@ -364,7 +373,16 @@ else:
     correction = "Raw"
 
 
-lc_clipped.to_fits(eleanor_root_targetdata_source + f"/{name}_Sector {sector}_{method}_{pipeline}_{correction}_Exptime={exptime}s.fits", overwrite=True)
+##### Assign the corrected light curve #####
+lc_corrected = lc_clipped.copy()
+lc_corrected_baseline = lc_clipped_baseline.copy()
+lc_corrected_transit = lc_clipped_transit.copy()
+
+lc_corrected.to_fits(eleanor_root_targetdata_source + f"/{name}_Sector {sector}_{method}_{pipeline}_{correction}_Exptime={exptime}s.fits", overwrite=True)
+##### Define the Lightkurve parameters depending on the exptime and fitted parameters #####
+bin = True
+cadence_bin_size = 2.5
+time_bin_size = exptime * u.second * cadence_bin_size
 
 
 
@@ -376,12 +394,18 @@ i += 1 # count the step
 
 lc_folded = lc_clipped.fold(period=period_raw_nans_removed, epoch_time=epoch_time_raw_nans_removed)
 lc_folded_cdpp = calculate_cdpp(lc_folded, transit_duration=transit_duration_raw_nans_removed_in_cadence)
+p_folded = p_raw_nans_removed
+t0_folded = t0_raw_nans_removed
+lc_folded = lc_corrected.fold(period=p_folded, epoch_time=t0_folded)
+lc_folded_cdpp = calculate_cdpp(lc_folded, transit_duration=transit_duration_in_cadence_raw_nans_removed)
 
 lc_folded_plot, ax_lc_folded = plt.subplots(figsize=(10, 5))
-lc_folded.errorbar(ax=ax_lc_folded, label=f"simplified CDPP={lc_folded_cdpp:.2f}")
-ax_lc_folded.set_title(f"{name} Sector {sector} {pipeline} Period={period_raw_nans_removed}d Folded Light Curve Exptime={exptime}s")
+lc_folded.scatter(ax=ax_lc_folded, label=None, s=0.1, alpha=1.0)
+lc_folded.errorbar(ax=ax_lc_folded, label=f"simplified CDPP={lc_folded_cdpp:.2f}", alpha=0.05)
+ax_lc_folded.legend(loc='lower right')
+ax_lc_folded.set_title(f"{name} Sector {sector} {pipeline} Period={p_folded:.4f}d Folded Light Curve Exptime={exptime}s")
 lc_folded_plot.figure.tight_layout()
-lc_folded_plot.figure.savefig(processed_lightcurve_plots_exptime_parent_dir + f"/{i:02} {name} Sector {sector} {pipeline} Period={period_raw_nans_removed}d Folded Light Curve Exptime={exptime}s.png")
+lc_folded_plot.figure.savefig(processed_lightcurve_plots_exptime_parent_dir + f"/{i:02} {name} Sector {sector} {pipeline} Period={p_folded}d Folded Light Curve Exptime={exptime}s.png")
 
 
 
@@ -392,22 +416,21 @@ i += 1 # count the step
 
 
 if bin:
-    time_bin_size = exptime * u.second * cadence_bin_size
-
     lc_binned = lc_folded.bin(time_bin_size=time_bin_size)
-    lc_binned_cdpp = calculate_cdpp(lc_binned, transit_duration=transit_duration_raw_nans_removed_in_cadence)
+    lc_binned_cdpp = calculate_cdpp(lc_binned, transit_duration=transit_duration_in_cadence_raw_nans_removed)
 
     lc_binned_plot, ax_lc_binned = plt.subplots(figsize=(10, 5))
-    # lc_binned.plot(ax=ax_lc_binned, label=f"simplified CDPP={lc_binned_cdpp:.2f}")
-    lc_binned.errorbar(ax=ax_lc_binned, label=f"simplified CDPP={lc_binned_cdpp:.2f}")
-    ax_lc_binned.set_title(f"{name} Sector {sector} {pipeline} Cadence_Bin_Size={cadence_bin_size} Binned Light Curve Exptime={exptime}s")
+    lc_binned.scatter(ax=ax_lc_binned, label=None, s=0.1, alpha=1.0)
+    lc_binned.errorbar(ax=ax_lc_binned, label=f"simplified CDPP={lc_binned_cdpp:.2f}", alpha=0.5)
+    ax_lc_binned.legend(loc='lower right')
+    ax_lc_binned.set_title(f"{name} Sector {sector} {pipeline} Time_Bin_Size={time_bin_size:.1f} Binned Light Curve Exptime={exptime}s")
     lc_binned_plot.figure.tight_layout()
-    lc_binned_plot.figure.savefig(processed_lightcurve_plots_exptime_parent_dir + f"/{i:02} {name} Sector {sector} {pipeline} Cadence_Bin_Size={cadence_bin_size} Binned Light Curve Exptime={exptime}s.png")
+    lc_binned_plot.figure.savefig(processed_lightcurve_plots_exptime_parent_dir + f"/{i:02} {name} Sector {sector} {pipeline} Time_Bin_Size={time_bin_size} Binned Light Curve Exptime={exptime}s.png")
 
 
 else:
     lc_binned = lc_folded.copy()
-    lc_binned_cdpp = calculate_cdpp(lc_binned, transit_duration=transit_duration_raw_nans_removed_in_cadence)
+    lc_binned_cdpp = calculate_cdpp(lc_binned, transit_duration=transit_duration_in_cadence_raw_nans_removed)
 
 
 
@@ -425,7 +448,7 @@ methodology_result_file.write("NASA Exoplanet Archive Source Planetary Parameter
                                     f"Transit Depth: {transit_depth_NASA}\n\n")
 
 
-methodology_result_file.write("Lightkurve: \n\n")
+methodology_result_file.write("-----------------------------Lightkurve Processing-----------------------------\n\n")
 
 
 methodology_result_file.write(      f"Raw Light Curve CDPP: {lc_raw_cdpp}\n"
@@ -434,10 +457,10 @@ methodology_result_file.write(      f"Raw Light Curve CDPP: {lc_raw_cdpp}\n"
 
 
 methodology_result_file.write(      f"Box Least Squares (BLS) Fitted NaNs-Removed Raw Light Curve Parameters: \n"
-                                    f"Period (Days): {period_raw_nans_removed}\n"
-                                    f"Epoch Time (BTJD): {epoch_time_raw_nans_removed}\n"
+                                    f"Period (Days): {p_raw_nans_removed}\n"
+                                    f"Epoch Time (BTJD): {t0_raw_nans_removed}\n"
                                     f"Transit Duration (Days): {transit_duration_raw_nans_removed}\n"
-                                    f"Transit Duration (Cadences): {transit_duration_raw_nans_removed_in_cadence}\n"
+                                    f"Transit Duration (Cadences): {transit_duration_in_cadence_raw_nans_removed}\n"
                                     f"Transit Depth: {transit_depth_raw_nans_removed}\n"
                                     f"Fitted the {name} Sector {sector} {pipeline} NaNs-Removed Raw Light Curve Exptime={exptime}s using the Box Least Squares (BLS) method in {pg_bls_raw_nans_removed_fitting_time} seconds.\n\n")
 
@@ -446,7 +469,7 @@ methodology_result_file.write(      f"Flatten: {flatten}\n")
 if flatten:
     methodology_result_file.write(f"Flatten Window Proportion: {flatten_window_proportion}\n"
                                   f"Flatten Window Length: {flatten_window_length}\n"
-                                  f"Flatten Polyorder: {polyorder}\n"
+                                  f"Flatten Polyorder: {flatten_polyorder}\n"
                                   f"Flattened Baseline CDPP: {lc_flattened_baseline_cdpp}\n"
                                   f"Flattened Light Curve CDPP: {lc_flattened_cdpp}\n\n")
 else:
@@ -464,15 +487,21 @@ else:
     methodology_result_file.write("\n") # write an empty line
 
 
-methodology_result_file.write(      f"Folded Period (Days): {period_raw_nans_removed}\n"
-                                    f"Folded Epoch Time (BTJD): {epoch_time_raw_nans_removed}\n"
+methodology_result_file.write(      f"Correction: {correction}\n\n")
+
+
+methodology_result_file.write("------------------------------Folding And Binning------------------------------\n\n")
+
+
+methodology_result_file.write(      f"Folded Period (Days): {p_folded}\n"
+                                    f"Folded Epoch Time (BTJD): {t0_folded}\n"
                                     f"Folded Light Curve CDPP: {lc_folded_cdpp}\n\n")
 
 
 methodology_result_file.write(      f"Bin: {bin}\n")
 if bin:
-    methodology_result_file.write(f"Cadence Bin Size: {cadence_bin_size}\n"
-                                  f"Time Bin Size: {time_bin_size}\n"
+    methodology_result_file.write(f"Time Bin Size: {time_bin_size}\n"
+                                  f"Cadence Bin Size: {cadence_bin_size}\n"
                                   f"Binned Light Curve CDPP: {lc_binned_cdpp}\n\n")
 else:
     methodology_result_file.write("\n") # write an empty line
