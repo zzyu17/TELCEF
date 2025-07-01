@@ -28,13 +28,6 @@ exptime = 1800   ##### set the exposure time of data to be processed #####
 TESS_time = 2457000 # BJD
 
 
-# ##### Define the source parameters #####
-# name = "WASP-80"
-# tic = 243921117
-# coords = (303.16737208333325,-2.144218611111111)
-# gaia = 4223507222112425344
-# tess_mag = 10.3622
-
 ##### Define the source parameters #####
 name = "WASP-107"
 tic = 429302040
