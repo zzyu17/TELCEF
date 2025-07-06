@@ -1505,6 +1505,462 @@ if fit_binned:
 
 
 
+### Distinct Transit Inspection ###
+i += 1 # count the step
+
+
+distinct_transit = np.array([4]) ##### Assign the indices of the distinct transits to inspect #####
+lc_list_corrected_distinct_transit = []
+distinct_transit_mask = np.zeros_like(lc_corrected.time.value, dtype=bool)
+for distinct_transit_index in distinct_transit:
+    distinct_transit_mask |= individual_mask_list[distinct_transit_index]
+    distinct_transit_individual_mask = individual_mask_list[distinct_transit_index]
+    lc_corrected_distinct_transit = lc_corrected[distinct_transit_individual_mask]
+    lc_corrected_distinct_transit = lc_corrected_distinct_transit.fold(period=p_folded, epoch_time=t0_folded) # fold the distinct transit light curve to let it center around 0.0
+    lc_list_corrected_distinct_transit.append(lc_corrected_distinct_transit)
+lc_corrected_normal_transit = lc_corrected[~distinct_transit_mask]
+
+lc_corrected_normal_transit_folded = lc_corrected_normal_transit.fold(period=p_folded, epoch_time=t0_folded)
+
+##### Define the Lightkurve parameters depending on the exptime and fitted parameters #####
+bin_distinct_transit = False
+time_bin_size_distinct_transit = exptime * u.second
+bin_normal_transit = True
+time_bin_size_normal_transit = exptime * u.second
+##### Define the emcee MCMC sampling parameters #####
+fit_normal_transit_binned = True
+max_inter_normal_transit_binned = 3 # maximum number of iterations for the individual fitting after removing outliers
+sigma_normal_transit_binned = 3.0 # sigma for the individual fitting outlier removal
+n_steps_normal_transit_binned = 5000
+chain_discard_proportion_normal_transit_binned = 0.2 # the proportion of the chain to discard to remove the burn-in phase
+chain_thin_normal_transit_binned = 10 # thinning factor of the sample chain when visualizing the process and result
+running_mean_window_length_normal_transit_binned = int(running_mean_window_proportion * n_steps_normal_transit_binned * (1 - chain_discard_proportion_normal_transit_binned) / chain_thin_normal_transit_binned)
+normal_transit_binned_transit_plot_coefficient = 2 # the coefficient of the normal-transit binned transit plot span
+
+if bin_distinct_transit:
+    lc_list_corrected_distinct_transit_binned = []
+    for lc_corrected_distinct_transit in lc_list_corrected_distinct_transit:
+        lc_corrected_distinct_transit_binned = lc_corrected_distinct_transit.bin(time_bin_size=time_bin_size_distinct_transit)
+        lc_list_corrected_distinct_transit_binned.append(lc_corrected_distinct_transit_binned)
+    lc_list_corrected_distinct_transit = lc_list_corrected_distinct_transit_binned
+
+if bin_normal_transit:
+    lc_corrected_normal_transit_binned = lc_corrected_normal_transit_folded.bin(time_bin_size=time_bin_size_normal_transit)
+else:
+    lc_corrected_normal_transit_binned = lc_corrected_normal_transit_folded.copy()
+
+# Normal-transit Binned Fitting
+if fit_normal_transit_binned:
+    # Initialize the parameters dictionary
+    params_normal_transit_binned_best_dict = {
+        'model': None,
+        'k': None, 't0': None, 'p': None, 'a': None, 'i': None, 'i_in_degree': None, 'ldc1': None, 'ldc2': None, 'ldc': None,
+        'transit_duration': None, 'transit_duration_in_cadence': None, 'transit_depth': None,
+        'n_fitting_iteration': None, 'residual_std': None, 'chi_square': None, 'reduced_chi_square': None,
+        'residual_std_list':[], 'chi_square_list':[], 'reduced_chi_square_list':[]
+    }
+
+    params_normal_transit_binned_name = ['k', 't0', 'a', 'i', 'ldc1', 'ldc2']
+
+
+    ##### Initialize and configure the transit model #####
+    transit_model_name_normal_transit_binned = 'Quadratic'
+    transit_model_normal_transit_binned = QuadraticModel()
+    transit_model_normal_transit_binned.set_data(lc_corrected_normal_transit_binned.time.value)
+
+
+    ##### Set the initial normal-transit binned parameters based on the best fitted binned parameters or the best fitted global parameters or the NaNs-removed raw light curve BLS-fitted parameters #####
+    if fit_binned:
+        k_normal_transit_binned_initial = k_binned_best # k: normalized planetary radius, i.e., R_p/R_s
+        t0_normal_transit_binned_initial = t0_binned_best # t0: epoch time
+        p_normal_transit_binned = p_binned # p: period, fixed
+        a_normal_transit_binned_initial = a_binned_best # a: normalized semi-major axis, i.e., a/R_s
+        i_normal_transit_binned_initial = i_binned_best # i: inclination in radians
+        ldc1_normal_transit_binned_initial = ldc1_binned_best # ldc1: linear coefficient
+        ldc2_normal_transit_binned_initial = ldc2_binned_best # ldc2: quadratic coefficient
+        ldc_normal_transit_binned_initial = [ldc1_normal_transit_binned_initial, ldc2_normal_transit_binned_initial] # ldc: quadratic limb darkening coefficients
+    elif fit_global:
+        k_normal_transit_binned_initial = k_global_best # k: normalized planetary radius, i.e., R_p/R_s
+        t0_normal_transit_binned_initial = 0.0 # t0: epoch time
+        # t0_normal_transit_binned_initial = t0_global_best - lc_corrected.time.value[0] # t0: epoch time
+        p_normal_transit_binned = p_global_best # p: period, fixed
+        a_normal_transit_binned_initial = a_global_best # a: normalized semi-major axis, i.e., a/R_s
+        i_normal_transit_binned_initial = i_global_best # i: inclination in radians
+        ldc1_normal_transit_binned_initial = ldc1_global_best # ldc1: linear coefficient
+        ldc2_normal_transit_binned_initial = ldc2_global_best # ldc2: quadratic coefficient
+        ldc_normal_transit_binned_initial = [ldc1_normal_transit_binned_initial, ldc2_normal_transit_binned_initial] # ldc: quadratic limb darkening coefficients
+    else:
+        k_normal_transit_binned_initial = np.sqrt(transit_depth_raw_nans_removed) # k: normalized planetary radius, i.e., R_p/R_s
+        t0_normal_transit_binned_initial = 0.0 # t0: epoch time
+        # t0_normal_transit_binned_initial = t0_raw_nans_removed - lc_corrected.time.value[0] # t0: epoch time
+        p_normal_transit_binned = p_raw_nans_removed # p: period, fixed
+        a_normal_transit_binned_initial = 10.0 # a: normalized semi-major axis, i.e., a/R_s
+        i_normal_transit_binned_initial = np.pi / 2 # i: inclination in radians
+        ldc1_normal_transit_binned_initial = 0.2 # ldc1: linear coefficient
+        ldc2_normal_transit_binned_initial = 0.3 # ldc2: quadratic coefficient
+        ldc_normal_transit_binned_initial = [ldc1_normal_transit_binned_initial, ldc2_normal_transit_binned_initial] # ldc: quadratic limb darkening coefficients
+
+    params_normal_transit_binned_initial = [k_normal_transit_binned_initial, t0_normal_transit_binned_initial, a_normal_transit_binned_initial, i_normal_transit_binned_initial, ldc1_normal_transit_binned_initial, ldc2_normal_transit_binned_initial]
+
+
+    # Store the parameters in the dictionary
+    params_normal_transit_binned_best_dict['model'] = transit_model_name_normal_transit_binned
+    params_normal_transit_binned_best_dict['p'] = p_normal_transit_binned
+
+
+    inter_normal_transit_binned = 0
+    while inter_normal_transit_binned < max_inter_normal_transit_binned:
+        inter_normal_transit_binned += 1
+        # Initialize walkers
+        params_normal_transit_binned_position = params_normal_transit_binned_initial + 1e-4 * np.random.randn(n_walkers, n_dim_single)
+
+        # Initialize and run the MCMC sampler
+        params_normal_transit_binned_sampler = emcee.EnsembleSampler(n_walkers, n_dim_single, log_probability_single, args=(p_normal_transit_binned, transit_model_normal_transit_binned, lc_corrected_normal_transit_binned))
+        params_normal_transit_binned_sampler.run_mcmc(params_normal_transit_binned_position, n_steps_normal_transit_binned, progress=True, progress_kwargs={'desc': f"Normal-transit Binned Fitting Interation {inter_normal_transit_binned}: "})
+
+        # Retrieve the best fitted parameters and their uncertainties from the MCMC sampler
+        params_normal_transit_binned_samples = params_normal_transit_binned_sampler.get_chain(discard=int(n_steps_normal_transit_binned * chain_discard_proportion_normal_transit_binned), flat=True)
+        params_normal_transit_binned_best = np.median(params_normal_transit_binned_samples, axis=0)
+        params_normal_transit_binned_best_lower_error = params_normal_transit_binned_best - np.percentile(params_normal_transit_binned_samples, 16, axis=0)
+        params_normal_transit_binned_best_upper_error = np.percentile(params_normal_transit_binned_samples, 84, axis=0) - params_normal_transit_binned_best
+
+        k_normal_transit_binned_samples, t0_normal_transit_binned_samples, a_normal_transit_binned_samples, i_normal_transit_binned_samples, ldc1_normal_transit_binned_samples, ldc2_normal_transit_binned_samples = params_normal_transit_binned_samples.T
+        ldc_normal_transit_binned_samples = np.column_stack((ldc1_normal_transit_binned_samples, ldc2_normal_transit_binned_samples))
+
+        k_normal_transit_binned_best, t0_normal_transit_binned_best, a_normal_transit_binned_best, i_normal_transit_binned_best, ldc1_normal_transit_binned_best, ldc2_normal_transit_binned_best = params_normal_transit_binned_best
+        k_normal_transit_binned_best_lower_error, t0_normal_transit_binned_best_lower_error, a_normal_transit_binned_best_lower_error, i_normal_transit_binned_best_lower_error, ldc1_normal_transit_binned_best_lower_error, ldc2_normal_transit_binned_best_lower_error = params_normal_transit_binned_best_lower_error
+        k_normal_transit_binned_best_upper_error, t0_normal_transit_binned_best_upper_error, a_normal_transit_binned_best_upper_error, i_normal_transit_binned_best_upper_error, ldc1_normal_transit_binned_best_upper_error, ldc2_normal_transit_binned_best_upper_error = params_normal_transit_binned_best_upper_error
+
+        i_in_degree_normal_transit_binned_best, i_in_degree_normal_transit_binned_best_lower_error, i_in_degree_normal_transit_binned_best_upper_error = np.rad2deg(i_normal_transit_binned_best), np.rad2deg(i_normal_transit_binned_best_lower_error), np.rad2deg(i_normal_transit_binned_best_upper_error)
+        ldc_normal_transit_binned_best, ldc_normal_transit_binned_best_lower_error, ldc_normal_transit_binned_best_upper_error = [ldc1_normal_transit_binned_best, ldc2_normal_transit_binned_best], [ldc1_normal_transit_binned_best_lower_error, ldc2_normal_transit_binned_best_lower_error], [ldc1_normal_transit_binned_best_upper_error, ldc2_normal_transit_binned_best_upper_error]
+
+        # calculate the transit duration
+        transit_duration_normal_transit_binned_samples = [calculate_transit_duration(k, p_normal_transit_binned, a, i) for k, a, i in zip(k_normal_transit_binned_samples, a_normal_transit_binned_samples, i_normal_transit_binned_samples)]
+        transit_duration_normal_transit_binned_best = np.median(transit_duration_normal_transit_binned_samples, axis=0)
+        transit_duration_normal_transit_binned_best_lower_error = transit_duration_normal_transit_binned_best - np.percentile(transit_duration_normal_transit_binned_samples, 16, axis=0)
+        transit_duration_normal_transit_binned_best_upper_error = np.percentile(transit_duration_normal_transit_binned_samples, 84, axis=0) - transit_duration_normal_transit_binned_best
+
+        # convert transit duration to number of cadences
+        transit_duration_in_cadence_normal_transit_binned_best = int(round(transit_duration_normal_transit_binned_best / exptime_in_day))
+        transit_duration_in_cadence_normal_transit_binned_best_lower_error = int(round(transit_duration_normal_transit_binned_best_lower_error / exptime_in_day))
+        transit_duration_in_cadence_normal_transit_binned_best_upper_error = int(round(transit_duration_normal_transit_binned_best_upper_error / exptime_in_day))
+
+        # calculate the normalized transit depth
+        transit_depth_normal_transit_binned_samples = [calculate_transit_depth(k, a, i, ldc, transit_model_name_normal_transit_binned) for k, a, i, ldc in zip(k_normal_transit_binned_samples, a_normal_transit_binned_samples, i_normal_transit_binned_samples, ldc_normal_transit_binned_samples)]
+        transit_depth_normal_transit_binned_best = np.median(transit_depth_normal_transit_binned_samples, axis=0)
+        transit_depth_normal_transit_binned_best_lower_error = transit_depth_normal_transit_binned_best - np.percentile(transit_depth_normal_transit_binned_samples, 16, axis=0)
+        transit_depth_normal_transit_binned_best_upper_error = np.percentile(transit_depth_normal_transit_binned_samples, 84, axis=0) - transit_depth_normal_transit_binned_best
+
+
+        # calculate the best fitted model flux
+        lc_corrected_normal_transit_binned_best_fit = lc_corrected_normal_transit_binned.copy()
+        lc_corrected_normal_transit_binned_best_fit.flux = model_single(params_normal_transit_binned_best, p_normal_transit_binned, transit_model_normal_transit_binned, time=lc_corrected_normal_transit_binned_best_fit.time.value) * lc_corrected_normal_transit_binned.flux.unit
+        lc_corrected_normal_transit_binned_best_fit.flux_err = np.zeros(len(lc_corrected_normal_transit_binned_best_fit.flux_err))
+
+        # calculate the best fitted model residuals
+        lc_corrected_normal_transit_binned_best_fit_residual = lc_corrected_normal_transit_binned.copy()
+        lc_corrected_normal_transit_binned_best_fit_residual.flux = lc_corrected_normal_transit_binned.flux - lc_corrected_normal_transit_binned_best_fit.flux
+        lc_corrected_normal_transit_binned_best_fit_residual.flux_err = lc_corrected_normal_transit_binned.flux_err - lc_corrected_normal_transit_binned_best_fit.flux_err
+
+        # calculate the residual standard deviation
+        residual_std_normal_transit_binned = np.std(lc_corrected_normal_transit_binned_best_fit_residual.flux.value)
+
+        # calculate the chi-square and reduced chi-square of the best fitted model
+        chi_square_normal_transit_binned = np.sum((lc_corrected_normal_transit_binned_best_fit_residual.flux.value / lc_corrected_normal_transit_binned.flux_err.value) ** 2)
+        reduced_chi_square_normal_transit_binned = chi_square_normal_transit_binned / (len(lc_corrected_normal_transit_binned.flux.value) - n_dim_single)
+
+
+        # Plot the visualization plots of the fitting process
+        # Plot the parameters trace and evolution plots
+        j = 1  # count the sub-step
+
+        params_normal_transit_binned_samples_thinned_unflattened = params_normal_transit_binned_sampler.get_chain(discard=int(n_steps_normal_transit_binned * chain_discard_proportion_normal_transit_binned), thin=chain_thin_normal_transit_binned, flat=False)  # retrieve the thinned and unflattened sample chains from the MCMC sampler
+
+        params_normal_transit_binned_trace_evolution_plot = plt.figure(figsize=(20, 2 * n_dim_single))
+        params_normal_transit_binned_trace_evolution_gs = GridSpec(n_dim_single, 2, wspace=0.05)
+
+        params_normal_transit_binned_moving_means = []
+        for d in range(n_dim_single):
+            param_normal_transit_binned_mean = np.mean(params_normal_transit_binned_samples_thinned_unflattened[:, :, d], axis=1)
+            param_normal_transit_binned_moving_means = np.convolve(param_normal_transit_binned_mean, np.ones(running_mean_window_length_normal_transit_binned) / running_mean_window_length_normal_transit_binned, mode='valid')
+            params_normal_transit_binned_moving_means.append(param_normal_transit_binned_moving_means)
+
+        for d in range(n_dim_single):
+            # Plot the parameter trace plot on the left side
+            ax_trace_normal_transit_binned = params_normal_transit_binned_trace_evolution_plot.add_subplot(params_normal_transit_binned_trace_evolution_gs[d, 0])
+            for w in range(n_walkers):
+                ax_trace_normal_transit_binned.plot(params_normal_transit_binned_samples_thinned_unflattened[:, w, d], alpha=0.5, linewidth=0.8)
+            ax_trace_normal_transit_binned.set_ylabel(params_normal_transit_binned_name[d])
+            ax_trace_normal_transit_binned.grid(True, alpha=0.3)
+            # only show the x-axis label on the last subplot
+            if d == n_dim_single - 1:
+                ax_trace_normal_transit_binned.set_xlabel("Step Number")
+            else:
+                ax_trace_normal_transit_binned.tick_params(labelbottom=False)
+            # only show the title on the first subplot
+            if d == 0:
+                ax_trace_normal_transit_binned.set_title("Trace Of Parameters", fontsize='x-large')
+
+            # Plot the parameter evolution plot on the right side
+            ax_evolution_normal_transit_binned = params_normal_transit_binned_trace_evolution_plot.add_subplot(params_normal_transit_binned_trace_evolution_gs[d, 1], sharey=ax_trace_normal_transit_binned)
+            ax_evolution_normal_transit_binned.plot(params_normal_transit_binned_moving_means[d], c='red')
+            ax_evolution_normal_transit_binned.tick_params(labelleft=False)  # hide the y-axis labels
+            ax_evolution_normal_transit_binned.grid(True, alpha=0.3)
+            # only show the x-axis label on the last subplot
+            if d == n_dim_single - 1:
+                ax_evolution_normal_transit_binned.set_xlabel("Step Number")
+            else:
+                ax_evolution_normal_transit_binned.tick_params(labelbottom=False)
+            # only show the legend on the first subplot
+            if d == 0:
+                ax_evolution_normal_transit_binned.set_title(f"Evolution ({running_mean_window_proportion * 100}% Window Running Mean) Of Parameters", fontsize='x-large')
+
+        params_normal_transit_binned_trace_evolution_plot.suptitle(f"{name} Sector {sector} {pipeline} Normal-transit Binned Fitting Trace And Evolution Plot (Thinned By {chain_thin_normal_transit_binned}) Exptime={exptime}s Interation {inter_normal_transit_binned}", fontsize='xx-large')
+        params_normal_transit_binned_trace_evolution_plot.figure.subplots_adjust(wspace=0.05)
+        params_normal_transit_binned_trace_evolution_plot.figure.savefig(processed_lightcurve_plots_exptime_parent_dir + f"/{i:02}-{j:01}-{inter_normal_transit_binned} {name} Sector {sector} {pipeline} Normal-transit Binned Fitting Trace And Evolution Plot Exptime={exptime}s Interation {inter_normal_transit_binned}.png")
+
+
+        # Plot the parameters posterior distribution plot
+        j += 1  # count the sub-step
+
+        params_normal_transit_binned_corner_plot = corner.corner(params_normal_transit_binned_samples, labels=params_normal_transit_binned_name, quantiles=[0.16, 0.5, 0.84], show_titles=True, title_fmt=".4f", figsize=(20, 25))
+        params_normal_transit_binned_corner_plot.suptitle(f"{name} Sector {sector} {pipeline} Normal-transit Binned Fitting Parameters Posterior Distribution Corner Plot Exptime={exptime}s Interation {inter_normal_transit_binned}", fontsize='xx-large', y=1.05)
+        params_normal_transit_binned_corner_plot.figure.savefig(processed_lightcurve_plots_exptime_parent_dir + f"/{i:02}-{j:01}-{inter_normal_transit_binned} {name} Sector {sector} {pipeline} Normal-transit Binned Fitting Parameters Posterior Distribution Corner Plot Exptime={exptime}s Interation {inter_normal_transit_binned}.png", bbox_inches='tight')
+
+
+        # Remove the outliers
+        lc_corrected_normal_transit_binned_best_fit_residual_clipped, outliers_mask_normal_transit_binned = lc_corrected_normal_transit_binned_best_fit_residual.remove_outliers(sigma=sigma_normal_transit_binned, return_mask=True)
+        if np.sum(outliers_mask_normal_transit_binned) == 0:
+            break
+        else:
+            # update the lightcurve, initial parameters and transit model
+            lc_corrected_normal_transit_binned = lc_corrected_normal_transit_binned[~outliers_mask_normal_transit_binned]
+            params_normal_transit_binned_initial = params_normal_transit_binned_best
+            transit_model_normal_transit_binned.set_data(lc_corrected_normal_transit_binned.time.value)
+
+
+    # Calculate the residuals between the normal-transit binned best fitted model and the individual light curves
+    lc_list_individual_normal_transit_binned_best_fit = []
+    lc_list_individual_normal_transit_binned_best_fit_residual = []
+    for transit_index in range(params_individual_best_dict['n_transit']):
+        if transit_index in params_individual_best_dict['valid_transit']:
+            lc_corrected_individual = lc_list_corrected_individual[transit_index]
+            lc_individual_normal_transit_binned_best_fit = lc_corrected_individual.copy()
+            t0_individual_normal_transit_binned_best = t0_normal_transit_binned_best + t0_folded + transit_index * p_folded
+            params_individual_normal_transit_binned_best = np.array([k_normal_transit_binned_best, t0_individual_normal_transit_binned_best, a_normal_transit_binned_best, i_normal_transit_binned_best, ldc1_normal_transit_binned_best, ldc2_normal_transit_binned_best])
+            lc_individual_normal_transit_binned_best_fit.flux = model_single(params_individual_normal_transit_binned_best, p_normal_transit_binned, transit_model_normal_transit_binned, time=lc_corrected_individual.time.value) * lc_corrected_individual.flux.unit
+            lc_individual_normal_transit_binned_best_fit.flux_err = np.zeros(len(lc_individual_normal_transit_binned_best_fit.flux_err))
+            lc_list_individual_normal_transit_binned_best_fit.append(lc_individual_normal_transit_binned_best_fit)
+
+            lc_individual_normal_transit_binned_best_fit_residual = lc_corrected_individual.copy()
+            lc_individual_normal_transit_binned_best_fit_residual.flux = lc_corrected_individual.flux - lc_individual_normal_transit_binned_best_fit.flux
+            lc_individual_normal_transit_binned_best_fit_residual.flux_err = lc_corrected_individual.flux_err - lc_individual_normal_transit_binned_best_fit.flux_err
+            lc_list_individual_normal_transit_binned_best_fit_residual.append(lc_individual_normal_transit_binned_best_fit_residual)
+
+            # calculate the residual standard deviation
+            residual_std_individual_normal_transit_binned = np.std(lc_individual_normal_transit_binned_best_fit_residual.flux.value)
+            # calculate the chi-square and reduced chi-square of the best fitted model
+            chi_square_individual_normal_transit_binned = np.sum((lc_individual_normal_transit_binned_best_fit_residual.flux.value / lc_corrected_individual.flux_err.value) ** 2)
+            reduced_chi_square_individual_normal_transit_binned = chi_square_individual_normal_transit_binned / (len(lc_corrected_individual.flux.value) - n_dim_single)
+
+            # store the parameters in the dictionary
+            params_normal_transit_binned_best_dict['residual_std_list'].append(residual_std_individual_normal_transit_binned)
+            params_normal_transit_binned_best_dict['chi_square_list'].append(chi_square_individual_normal_transit_binned)
+            params_normal_transit_binned_best_dict['reduced_chi_square_list'].append(reduced_chi_square_individual_normal_transit_binned)
+        else:
+            lc_list_individual_normal_transit_binned_best_fit.append(None)
+            lc_list_individual_normal_transit_binned_best_fit_residual.append(None)
+            # store the parameters in the dictionary
+            params_normal_transit_binned_best_dict['residual_std_list'].append(np.nan)
+            params_normal_transit_binned_best_dict['chi_square_list'].append(np.nan)
+            params_normal_transit_binned_best_dict['reduced_chi_square_list'].append(np.nan)
+
+
+    # Store the best fitted parameters in the dictionary
+    params_normal_transit_binned_best_dict['k'] = (k_normal_transit_binned_best, k_normal_transit_binned_best_lower_error, k_normal_transit_binned_best_upper_error)
+    params_normal_transit_binned_best_dict['t0'] = (t0_normal_transit_binned_best, t0_normal_transit_binned_best_lower_error, t0_normal_transit_binned_best_upper_error)
+    params_normal_transit_binned_best_dict['a'] = (a_normal_transit_binned_best, a_normal_transit_binned_best_lower_error, a_normal_transit_binned_best_upper_error)
+    params_normal_transit_binned_best_dict['i'] = (i_normal_transit_binned_best, i_normal_transit_binned_best_lower_error, i_normal_transit_binned_best_upper_error)
+    params_normal_transit_binned_best_dict['i_in_degree'] = (i_in_degree_normal_transit_binned_best, i_in_degree_normal_transit_binned_best_lower_error, i_in_degree_normal_transit_binned_best_upper_error)
+    params_normal_transit_binned_best_dict['ldc1'] = (ldc1_normal_transit_binned_best, ldc1_normal_transit_binned_best_lower_error, ldc1_normal_transit_binned_best_upper_error)
+    params_normal_transit_binned_best_dict['ldc2'] = (ldc2_normal_transit_binned_best, ldc2_normal_transit_binned_best_lower_error, ldc2_normal_transit_binned_best_upper_error)
+    params_normal_transit_binned_best_dict['ldc'] = (ldc_normal_transit_binned_best, ldc_normal_transit_binned_best_lower_error, ldc_normal_transit_binned_best_upper_error)
+
+    params_normal_transit_binned_best_dict['transit_duration'] = (transit_duration_normal_transit_binned_best, transit_duration_normal_transit_binned_best_lower_error, transit_duration_normal_transit_binned_best_upper_error)
+    params_normal_transit_binned_best_dict['transit_duration_in_cadence'] = (transit_duration_in_cadence_normal_transit_binned_best, transit_duration_in_cadence_normal_transit_binned_best_lower_error, transit_duration_in_cadence_normal_transit_binned_best_upper_error)
+    params_normal_transit_binned_best_dict['transit_depth'] = (transit_depth_normal_transit_binned_best, transit_depth_normal_transit_binned_best_lower_error, transit_depth_normal_transit_binned_best_upper_error)
+
+    params_normal_transit_binned_best_dict['n_fitting_iteration'] = inter_normal_transit_binned
+    params_normal_transit_binned_best_dict['residual_std'] = residual_std_normal_transit_binned
+    params_normal_transit_binned_best_dict['chi_square'] = chi_square_normal_transit_binned
+    params_normal_transit_binned_best_dict['reduced_chi_square'] = reduced_chi_square_normal_transit_binned
+
+
+    # Plot the visualization plots of the fitting result
+    # Overplot the distinct-transit light curve on the normal-transit folded light curve, normal-transit binned light curve and normal-transit binned best fitted model
+    j += 1  # count the sub-step
+
+    # create the normal-transit binned transit plot mask and apply it to the lightcurves
+    normal_transit_binned_transit_plot_range = (t0_normal_transit_binned_best - transit_duration_normal_transit_binned_best / 2 * normal_transit_binned_transit_plot_coefficient, t0_normal_transit_binned_best + transit_duration_normal_transit_binned_best / 2 * normal_transit_binned_transit_plot_coefficient)
+    normal_transit_binned_transit_plot_mask_normal_transit_folded = ((lc_corrected_normal_transit_folded.time.value >= normal_transit_binned_transit_plot_range[0]) & (lc_corrected_normal_transit_folded.time.value < normal_transit_binned_transit_plot_range[1]))
+    normal_transit_binned_transit_plot_mask_list_distinct_transit = []
+    for lc_corrected_distinct_transit in lc_list_corrected_distinct_transit:
+        normal_transit_binned_transit_plot_mask_distinct_transit = ((lc_corrected_distinct_transit.time.value >= normal_transit_binned_transit_plot_range[0]) & (lc_corrected_distinct_transit.time.value < normal_transit_binned_transit_plot_range[1]))
+        normal_transit_binned_transit_plot_mask_list_distinct_transit.append(normal_transit_binned_transit_plot_mask_distinct_transit)
+    normal_transit_binned_transit_plot_mask_normal_transit_binned = ((lc_corrected_normal_transit_binned.time.value >= normal_transit_binned_transit_plot_range[0]) & (lc_corrected_normal_transit_binned.time.value < normal_transit_binned_transit_plot_range[1]))
+    lc_corrected_normal_transit_folded_masked = lc_corrected_normal_transit_folded[normal_transit_binned_transit_plot_mask_normal_transit_folded]
+    lc_corrected_normal_transit_binned_masked = lc_corrected_normal_transit_binned[normal_transit_binned_transit_plot_mask_normal_transit_binned]
+    lc_list_corrected_distinct_transit_masked = []
+    for distinct_transit_plot_index, lc_corrected_distinct_transit in enumerate(lc_list_corrected_distinct_transit):
+        lc_corrected_distinct_transit_masked = lc_corrected_distinct_transit[normal_transit_binned_transit_plot_mask_list_distinct_transit[distinct_transit_plot_index]]
+        lc_list_corrected_distinct_transit_masked.append(lc_corrected_distinct_transit)
+    lc_corrected_normal_transit_binned_best_fit_masked = lc_corrected_normal_transit_binned_best_fit[normal_transit_binned_transit_plot_mask_normal_transit_binned]
+    lc_corrected_normal_transit_binned_best_fit_residual_masked = lc_corrected_normal_transit_binned_best_fit_residual[normal_transit_binned_transit_plot_mask_normal_transit_binned]
+    normal_transit_binned_transit_min_model_flux = lc_corrected_normal_transit_binned_best_fit_masked.flux.value.min()
+
+    lc_corrected_normal_transit_binned_best_fit_plot, (ax_lc_corrected_normal_transit_binned_best_fit, ax_lc_corrected_normal_transit_binned_best_fit_residual) = plt.subplots(2, 1, figsize=(20, 10), sharex=True)
+    if bin_normal_transit:
+        lc_corrected_normal_transit_folded_masked.scatter(ax=ax_lc_corrected_normal_transit_binned_best_fit, label=None, c='orange', s=0.03, alpha=0.3)
+        lc_corrected_normal_transit_folded_masked.errorbar(ax=ax_lc_corrected_normal_transit_binned_best_fit, label="(Folded) Corrected Normal-transit Light Curve", c='orange', alpha=0.2)
+    lc_corrected_normal_transit_binned_masked.scatter(ax=ax_lc_corrected_normal_transit_binned_best_fit, label=None, c='orange', s=0.1, alpha=1.0)
+    lc_corrected_normal_transit_binned_masked.errorbar(ax=ax_lc_corrected_normal_transit_binned_best_fit, label="Binned Corrected Normal-transit Light Curve", c='orange', alpha=0.75)
+    colors = ['blue', 'brown', 'purple', 'magenta', 'cyan', 'pink']
+    for distinct_transit_masked_plot_index, lc_corrected_distinct_transit_masked in enumerate(lc_list_corrected_distinct_transit_masked):
+        color = colors[distinct_transit_masked_plot_index % len(colors)]  # Cycle through colors if more transits than colors
+        lc_corrected_distinct_transit_masked.scatter(ax=ax_lc_corrected_normal_transit_binned_best_fit, label=None, s=0.1, alpha=1.0, c=color)
+        lc_corrected_distinct_transit_masked.errorbar(ax=ax_lc_corrected_normal_transit_binned_best_fit, label=f"Corrected Distinct-transit Light Curve Transit {distinct_transit[distinct_transit_masked_plot_index]:02}", alpha=0.5, c=color)
+    lc_corrected_normal_transit_binned_best_fit_masked.plot(ax=ax_lc_corrected_normal_transit_binned_best_fit, c='red', label=f"Best Fitted {transit_model_name_normal_transit_binned} Model, chi-square={chi_square_normal_transit_binned:.2f}, reduced chi-square={reduced_chi_square_normal_transit_binned:.2f}")
+    ax_lc_corrected_normal_transit_binned_best_fit.axhline(y=normal_transit_binned_transit_min_model_flux, c='black', linestyle='--', linewidth=1)
+
+    # add the normal-transit binned transit minimum model flux value to the y-axis
+    ax_lc_corrected_normal_transit_binned_best_fit_y_ticks = ax_lc_corrected_normal_transit_binned_best_fit.get_yticks()
+    ax_lc_corrected_normal_transit_binned_best_fit_y_ticks_interval = np.median(np.diff(ax_lc_corrected_normal_transit_binned_best_fit_y_ticks))
+    ax_lc_corrected_normal_transit_binned_best_fit_y_ticks_closest_diff = np.min(np.abs(ax_lc_corrected_normal_transit_binned_best_fit_y_ticks - normal_transit_binned_transit_min_model_flux))
+    ax_lc_corrected_normal_transit_binned_best_fit_y_ticks_closest_diff_idx = np.argmin(np.abs(ax_lc_corrected_normal_transit_binned_best_fit_y_ticks - normal_transit_binned_transit_min_model_flux))
+    ax_lc_corrected_normal_transit_binned_best_fit_y_ticks_closest = ax_lc_corrected_normal_transit_binned_best_fit_y_ticks[ax_lc_corrected_normal_transit_binned_best_fit_y_ticks_closest_diff_idx]
+    if ax_lc_corrected_normal_transit_binned_best_fit_y_ticks_closest_diff > ax_lc_corrected_normal_transit_binned_best_fit_y_ticks_interval * 0.2:
+        ax_lc_corrected_normal_transit_binned_best_fit.text(x=0.0, y=normal_transit_binned_transit_min_model_flux, s=f"{normal_transit_binned_transit_min_model_flux:.6f}", transform=ax_lc_corrected_normal_transit_binned_best_fit.get_yaxis_transform(), ha='right', va='center')
+    elif normal_transit_binned_transit_min_model_flux < ax_lc_corrected_normal_transit_binned_best_fit_y_ticks_closest:
+        ax_lc_corrected_normal_transit_binned_best_fit.text(x=0.0, y=normal_transit_binned_transit_min_model_flux - ax_lc_corrected_normal_transit_binned_best_fit_y_ticks_interval * 0.2, s=f"{normal_transit_binned_transit_min_model_flux:.6f}", transform=ax_lc_corrected_normal_transit_binned_best_fit.get_yaxis_transform(), ha='right', va='center')
+    elif normal_transit_binned_transit_min_model_flux > ax_lc_corrected_normal_transit_binned_best_fit_y_ticks_closest:
+        ax_lc_corrected_normal_transit_binned_best_fit.text(x=0.0, y=normal_transit_binned_transit_min_model_flux + ax_lc_corrected_normal_transit_binned_best_fit_y_ticks_interval * 0.2, s=f"{normal_transit_binned_transit_min_model_flux:.6f}", transform=ax_lc_corrected_normal_transit_binned_best_fit.get_yaxis_transform(), ha='right', va='center')
+
+    ax_lc_corrected_normal_transit_binned_best_fit.legend(loc='lower right')
+    ax_lc_corrected_normal_transit_binned_best_fit.set_ylabel("Flux")
+    ax_lc_corrected_normal_transit_binned_best_fit.set_xlabel("")
+    ax_lc_corrected_normal_transit_binned_best_fit.set_xlim(normal_transit_binned_transit_plot_range[0], normal_transit_binned_transit_plot_range[1])
+
+    lc_corrected_normal_transit_binned_best_fit_residual_masked.errorbar(ax=ax_lc_corrected_normal_transit_binned_best_fit_residual, c='green', label=f"Residuals, residual std={residual_std_normal_transit_binned:.6f}")
+    ax_lc_corrected_normal_transit_binned_best_fit_residual.legend(loc='upper right')
+    ax_lc_corrected_normal_transit_binned_best_fit_residual.set_ylabel("Residuals")
+    ax_lc_corrected_normal_transit_binned_best_fit_residual.set_xlim(normal_transit_binned_transit_plot_range[0], normal_transit_binned_transit_plot_range[1])
+
+    lc_corrected_normal_transit_binned_best_fit_plot.suptitle(f"{name} Sector {sector} {pipeline} Normal-transit Binned Best Fitted Light Curve And Residuals Exptime={exptime}s")
+    lc_corrected_normal_transit_binned_best_fit_plot.figure.tight_layout()
+    lc_corrected_normal_transit_binned_best_fit_plot.figure.savefig(processed_lightcurve_plots_exptime_parent_dir + f"/{i:02}-{j:01} {name} Sector {sector} {pipeline} Normal-transit Binned Best Fitted Light Curve And Residuals Exptime={exptime}s.png")
+
+
+    # Overplot the best fitted model binned light curve on the individual light curves
+    j += 1 # count the sub-step
+
+    for valid_transit_index in params_individual_best_dict['valid_transit']:
+        individual_transit_plot_range = (params_individual_best_dict['t0'][valid_transit_index][0] - params_individual_best_dict['transit_duration'][valid_transit_index][0] / 2 * individual_transit_plot_coefficient,
+                                         params_individual_best_dict['t0'][valid_transit_index][0] + params_individual_best_dict['transit_duration'][valid_transit_index][0] / 2 * individual_transit_plot_coefficient)
+        lc_corrected_individual = lc_list_corrected_individual[valid_transit_index]
+        lc_corrected_individual_masked = lc_list_corrected_individual_masked[valid_transit_index]
+        individual_transit_plot_mask = ((lc_corrected_individual.time.value >= individual_transit_plot_range[0]) & (lc_corrected_individual.time.value < individual_transit_plot_range[1]))
+        lc_individual_normal_transit_binned_best_fit = lc_list_individual_normal_transit_binned_best_fit[valid_transit_index]
+        lc_individual_normal_transit_binned_best_fit_masked = lc_individual_normal_transit_binned_best_fit[individual_transit_plot_mask]
+        lc_individual_normal_transit_binned_best_fit_residual = lc_list_individual_normal_transit_binned_best_fit_residual[valid_transit_index]
+        lc_individual_normal_transit_binned_best_fit_residual_masked = lc_individual_normal_transit_binned_best_fit_residual[individual_transit_plot_mask]
+        individual_normal_transit_binned_transit_min_model_flux = lc_individual_normal_transit_binned_best_fit_masked.flux.value.min()
+
+        lc_individual_normal_transit_binned_best_fit_plot, (ax_lc_individual_normal_transit_binned_best_fit, ax_lc_individual_normal_transit_binned_best_fit_residual) = plt.subplots(2, 1, figsize=(20, 10), sharex=True)
+        lc_corrected_individual_masked.scatter(ax=ax_lc_individual_normal_transit_binned_best_fit, label=None, s=0.1, alpha=1.0)
+        lc_corrected_individual_masked.errorbar(ax=ax_lc_individual_normal_transit_binned_best_fit, label="Corrected Light Curve", alpha=alpha_exptime * 5 if alpha_exptime <= 1/5 else 1.0)
+        lc_individual_normal_transit_binned_best_fit_masked.plot(ax=ax_lc_individual_normal_transit_binned_best_fit, c='red',
+                                                                 label=f"Best Fitted {transit_model_name_normal_transit_binned} Model, chi-square={params_normal_transit_binned_best_dict['chi_square_list'][valid_transit_index]:.2f}, reduced chi-square={params_normal_transit_binned_best_dict['reduced_chi_square_list'][valid_transit_index]:.2f}")
+        ax_lc_individual_normal_transit_binned_best_fit.axhline(y=individual_normal_transit_binned_transit_min_model_flux, c='black', linestyle='--', linewidth=1)
+
+        # add the individual normal-transit binned transit minimum model flux value to the y-axis
+        ax_lc_individual_normal_transit_binned_best_fit_y_ticks = ax_lc_individual_normal_transit_binned_best_fit.get_yticks()
+        ax_lc_individual_normal_transit_binned_best_fit_y_ticks_interval = np.median(np.diff(ax_lc_individual_normal_transit_binned_best_fit_y_ticks))
+        ax_lc_individual_normal_transit_binned_best_fit_y_ticks_closest_diff = np.min(np.abs(ax_lc_individual_normal_transit_binned_best_fit_y_ticks - individual_normal_transit_binned_transit_min_model_flux))
+        ax_lc_individual_normal_transit_binned_best_fit_y_ticks_closest_diff_idx = np.argmin(np.abs(ax_lc_individual_normal_transit_binned_best_fit_y_ticks - individual_normal_transit_binned_transit_min_model_flux))
+        ax_lc_individual_normal_transit_binned_best_fit_y_ticks_closest = ax_lc_individual_normal_transit_binned_best_fit_y_ticks[ax_lc_individual_normal_transit_binned_best_fit_y_ticks_closest_diff_idx]
+        if ax_lc_individual_normal_transit_binned_best_fit_y_ticks_closest_diff > ax_lc_individual_normal_transit_binned_best_fit_y_ticks_interval * 0.2:
+            ax_lc_individual_normal_transit_binned_best_fit.text(x=0.0, y=individual_normal_transit_binned_transit_min_model_flux, s=f"{individual_normal_transit_binned_transit_min_model_flux:.6f}", transform=ax_lc_individual_normal_transit_binned_best_fit.get_yaxis_transform(), ha='right', va='center')
+        elif individual_normal_transit_binned_transit_min_model_flux < ax_lc_individual_normal_transit_binned_best_fit_y_ticks_closest:
+            ax_lc_individual_normal_transit_binned_best_fit.text(x=0.0, y=individual_normal_transit_binned_transit_min_model_flux - ax_lc_individual_normal_transit_binned_best_fit_y_ticks_interval * 0.2, s=f"{individual_normal_transit_binned_transit_min_model_flux:.6f}", transform=ax_lc_individual_normal_transit_binned_best_fit.get_yaxis_transform(), ha='right', va='center')
+        elif individual_normal_transit_binned_transit_min_model_flux > ax_lc_individual_normal_transit_binned_best_fit_y_ticks_closest:
+            ax_lc_individual_normal_transit_binned_best_fit.text(x=0.0, y=individual_normal_transit_binned_transit_min_model_flux + ax_lc_individual_normal_transit_binned_best_fit_y_ticks_interval * 0.2, s=f"{individual_normal_transit_binned_transit_min_model_flux:.6f}", transform=ax_lc_individual_normal_transit_binned_best_fit.get_yaxis_transform(), ha='right', va='center')
+
+        ax_lc_individual_normal_transit_binned_best_fit.legend(loc='lower right')
+        ax_lc_individual_normal_transit_binned_best_fit.set_ylabel("Flux")
+        ax_lc_individual_normal_transit_binned_best_fit.set_xlabel("")
+        ax_lc_individual_normal_transit_binned_best_fit.set_xlim(individual_transit_plot_range[0], individual_transit_plot_range[1])
+
+        lc_individual_normal_transit_binned_best_fit_residual_masked.errorbar(ax=ax_lc_individual_normal_transit_binned_best_fit_residual, c='green', label=f"Residuals, residual std={params_normal_transit_binned_best_dict['residual_std_list'][valid_transit_index]:.6f}")
+        ax_lc_individual_normal_transit_binned_best_fit_residual.legend(loc='upper right')
+        ax_lc_individual_normal_transit_binned_best_fit_residual.set_ylabel("Residuals")
+        ax_lc_individual_normal_transit_binned_best_fit_residual.set_xlim(individual_transit_plot_range[0], individual_transit_plot_range[1])
+
+        # Define the directories
+        processed_lightcurve_plots_exptime_individual_transit_parent_dir = processed_lightcurve_plots_exptime_parent_dir + f"/Transit {valid_transit_index:02}"
+
+        lc_individual_normal_transit_binned_best_fit_plot.suptitle(f"{name} Sector {sector} {pipeline} Individual And Normal-transit Binned Best Fitted Light Curve And Residuals Exptime={exptime}s")
+        lc_individual_normal_transit_binned_best_fit_plot.figure.tight_layout()
+        lc_individual_normal_transit_binned_best_fit_plot.figure.savefig(processed_lightcurve_plots_exptime_individual_transit_parent_dir + f"/{i:02}-{j:01} {name} Sector {sector} {pipeline} Individual And Normal-transit Binned Best Fitted Light Curve And Residuals Exptime={exptime}s.png")
+
+
+    # Overplot the best fitted model binned light curve on the all-in-one individual light curves
+    j += 1 # count the sub-step
+
+    lc_individual_normal_transit_binned_best_fit_all_plot, axes_lc_individual_normal_transit_binned_best_fit = plt.subplots(params_individual_best_dict['n_valid_transit'], 1, figsize=(20, 5 * params_individual_best_dict['n_valid_transit']))
+    if params_individual_best_dict['n_valid_transit'] == 1:
+        axes_lc_individual_normal_transit_binned_best_fit = [axes_lc_individual_normal_transit_binned_best_fit]
+    for plot_index, valid_transit_index in enumerate(params_individual_best_dict['valid_transit']):
+        individual_transit_plot_range = (params_individual_best_dict['t0'][valid_transit_index][0] - params_individual_best_dict['transit_duration'][valid_transit_index][0] / 2 * individual_transit_plot_coefficient,
+                                         params_individual_best_dict['t0'][valid_transit_index][0] + params_individual_best_dict['transit_duration'][valid_transit_index][0] / 2 * individual_transit_plot_coefficient)
+        lc_corrected_individual = lc_list_corrected_individual[valid_transit_index]
+        lc_corrected_individual_masked = lc_list_corrected_individual_masked[valid_transit_index]
+        individual_transit_plot_mask = ((lc_corrected_individual.time.value >= individual_transit_plot_range[0]) & (lc_corrected_individual.time.value < individual_transit_plot_range[1]))
+        lc_individual_normal_transit_binned_best_fit = lc_list_individual_normal_transit_binned_best_fit[valid_transit_index]
+        lc_individual_normal_transit_binned_best_fit_masked = lc_individual_normal_transit_binned_best_fit[individual_transit_plot_mask]
+        individual_normal_transit_binned_transit_min_model_flux = lc_individual_normal_transit_binned_best_fit_masked.flux.value.min()
+
+        ax_lc_individual_normal_transit_binned_best_fit = axes_lc_individual_normal_transit_binned_best_fit[plot_index]
+        lc_corrected_individual_masked.scatter(ax=ax_lc_individual_normal_transit_binned_best_fit, label=None, s=0.1, alpha=1.0)
+        lc_corrected_individual_masked.errorbar(ax=ax_lc_individual_normal_transit_binned_best_fit, label="Corrected Light Curve" if plot_index == 0 else None, alpha=alpha_exptime * 5 if alpha_exptime <= 1/5 else 1.0)
+        lc_individual_normal_transit_binned_best_fit.plot(ax=ax_lc_individual_normal_transit_binned_best_fit, c='red',
+                                                         label=f"Best Fitted {transit_model_name_normal_transit_binned} Model, chi-square={params_normal_transit_binned_best_dict['chi_square_list'][valid_transit_index]:.2f}, reduced chi-square={params_normal_transit_binned_best_dict['reduced_chi_square_list'][valid_transit_index]:.2f}, residual std={params_normal_transit_binned_best_dict['residual_std_list'][valid_transit_index]:.6f}"
+                                                         if plot_index == 0 else f"chi-square={params_normal_transit_binned_best_dict['chi_square_list'][valid_transit_index]:.2f}, reduced chi-square={params_normal_transit_binned_best_dict['reduced_chi_square_list'][valid_transit_index]:.2f}, residual std={params_normal_transit_binned_best_dict['residual_std_list'][valid_transit_index]:.6f}")
+        ax_lc_individual_normal_transit_binned_best_fit.axhline(y=individual_normal_transit_binned_transit_min_model_flux, c='black', linestyle='--', linewidth=1)
+
+        # add the binned transit minimum model flux value to the y-axis
+        ax_lc_individual_normal_transit_binned_best_fit_y_ticks = ax_lc_individual_normal_transit_binned_best_fit.get_yticks()
+        ax_lc_individual_normal_transit_binned_best_fit_y_ticks_interval = np.median(np.diff(ax_lc_individual_normal_transit_binned_best_fit_y_ticks))
+        ax_lc_individual_normal_transit_binned_best_fit_y_ticks_closest_diff = np.min(np.abs(ax_lc_individual_normal_transit_binned_best_fit_y_ticks - individual_normal_transit_binned_transit_min_model_flux))
+        ax_lc_individual_normal_transit_binned_best_fit_y_ticks_closest_diff_idx = np.argmin(np.abs(ax_lc_individual_normal_transit_binned_best_fit_y_ticks - individual_normal_transit_binned_transit_min_model_flux))
+        ax_lc_individual_normal_transit_binned_best_fit_y_ticks_closest = ax_lc_individual_normal_transit_binned_best_fit_y_ticks[ax_lc_individual_normal_transit_binned_best_fit_y_ticks_closest_diff_idx]
+        if ax_lc_individual_normal_transit_binned_best_fit_y_ticks_closest_diff > ax_lc_individual_normal_transit_binned_best_fit_y_ticks_interval * 0.3:
+            ax_lc_individual_normal_transit_binned_best_fit.text(x=0.0, y=individual_normal_transit_binned_transit_min_model_flux, s=f"{individual_normal_transit_binned_transit_min_model_flux:.6f}", transform=ax_lc_individual_normal_transit_binned_best_fit.get_yaxis_transform(), ha='right', va='center')
+        elif individual_normal_transit_binned_transit_min_model_flux < ax_lc_individual_normal_transit_binned_best_fit_y_ticks_closest:
+            ax_lc_individual_normal_transit_binned_best_fit.text(x=0.0, y=individual_normal_transit_binned_transit_min_model_flux - ax_lc_individual_normal_transit_binned_best_fit_y_ticks_interval * 0.3, s=f"{individual_normal_transit_binned_transit_min_model_flux:.6f}", transform=ax_lc_individual_normal_transit_binned_best_fit.get_yaxis_transform(), ha='right', va='center')
+        elif individual_normal_transit_binned_transit_min_model_flux > ax_lc_individual_normal_transit_binned_best_fit_y_ticks_closest:
+            ax_lc_individual_normal_transit_binned_best_fit.text(x=0.0, y=individual_normal_transit_binned_transit_min_model_flux + ax_lc_individual_normal_transit_binned_best_fit_y_ticks_interval * 0.3, s=f"{individual_normal_transit_binned_transit_min_model_flux:.6f}", transform=ax_lc_individual_normal_transit_binned_best_fit.get_yaxis_transform(), ha='right', va='center')
+
+        ax_lc_individual_normal_transit_binned_best_fit.legend(loc='lower right')
+        ax_lc_individual_normal_transit_binned_best_fit.set_ylabel("Flux")
+        ax_lc_individual_normal_transit_binned_best_fit.set_xlim(individual_transit_plot_range[0], individual_transit_plot_range[1])
+        ax_lc_individual_normal_transit_binned_best_fit.set_title(f"Transit {valid_transit_index:02}", fontsize='x-large')
+    lc_individual_normal_transit_binned_best_fit_all_plot.suptitle(f"{name} Sector {sector} {pipeline} Individual And Normal-transit Binned Best Fitted Model Light Curves Exptime={exptime}s", fontsize='xx-large', y=1.02)
+    lc_individual_normal_transit_binned_best_fit_all_plot.tight_layout()
+    lc_individual_normal_transit_binned_best_fit_all_plot.figure.savefig(processed_lightcurve_plots_exptime_parent_dir + f"/{i:02}-{j:01} {name} Sector {sector} {pipeline} Individual And Normal-transit Binned Best Fitted Binned Model Light Curves Exptime={exptime}s.png", bbox_inches='tight')
+
+
+
+
 ### ------ Documentation ------ ###
 # Define the format_with_uncertainty() function to format the parameters with uncertainties
 def format_with_uncertainty(param, precision=8):
@@ -1667,6 +2123,36 @@ if fit_binned:
                                         f"Residual Standard Deviation: {params_binned_best_dict['residual_std']:.6f}\n"
                                         f"Chi-Square: {params_binned_best_dict['chi_square']:.2f}\n"
                                         f"Reduced Chi-Square: {params_binned_best_dict['reduced_chi_square']:.2f}\n\n")
+else:
+    methodology_result_file.write("\n") # write an empty line
+
+
+if fit_normal_transit_binned:
+    methodology_result_file.write("-----------------------------Normal-transit Binned Fitting-----------------------------\n\n")
+
+
+    methodology_result_file.write(      f"MCMC Steps: {n_steps_normal_transit_binned}\n"
+                                        f"Chain Discard Proportion: {chain_discard_proportion_normal_transit_binned}\n\n")
+
+
+    methodology_result_file.write(      f"{params_normal_transit_binned_best_dict['model']} Model Fitted Normal-transit Binned Corrected Light Curve Parameters: \n"
+                                        f"Normalized Planetary Radius (k, R_p/R_s): {format_with_uncertainty(params_normal_transit_binned_best_dict['k'])}\n"
+                                        f"Epoch Time (t0): {format_with_uncertainty(params_normal_transit_binned_best_dict['t0'])}\n"
+                                        f"Period (p) (fixed to the same as the fitted period): {format_with_uncertainty(params_normal_transit_binned_best_dict['p'])}\n"
+                                        f"Normalized Semi-Major Axis (a/R_s): {format_with_uncertainty(params_normal_transit_binned_best_dict['a'])}\n"
+                                        f"Inclination (i) (Radians): {format_with_uncertainty(params_normal_transit_binned_best_dict['i'])}\n"
+                                        f"Inclination (i) (Degrees): {format_with_uncertainty(params_normal_transit_binned_best_dict['i_in_degree'])}\n"
+                                        f"Quadratic Limb Darkening Coefficients (ldc1, ldc2): {format_with_uncertainty(params_normal_transit_binned_best_dict['ldc1'])}, {format_with_uncertainty(params_normal_transit_binned_best_dict['ldc2'])}\n"
+                                        f"Transit Duration (Days): {format_with_uncertainty(params_normal_transit_binned_best_dict['transit_duration'])}\n"
+                                        f"Transit Duration (Cadences): {format_with_uncertainty(params_normal_transit_binned_best_dict['transit_duration_in_cadence'], precision=0)}\n"
+                                        f"Transit Depth: {format_with_uncertainty(params_normal_transit_binned_best_dict['transit_depth'])}\n"
+                                        f"Fitting Interation: {params_normal_transit_binned_best_dict['n_fitting_iteration']}\n"
+                                        f"Residual Standard Deviation: {params_normal_transit_binned_best_dict['residual_std']:.6f}\n"
+                                        f"Chi-Square: {params_normal_transit_binned_best_dict['chi_square']:.2f}\n"
+                                        f"Reduced Chi-Square: {params_normal_transit_binned_best_dict['reduced_chi_square']:.2f}\n"
+                                        f"Residual Standard Deviation Between Normal-transit Binned Best Fitted Model And Individual Light Curves: {', '.join([f'{residual_std:.6f}' for residual_std in params_normal_transit_binned_best_dict['residual_std_list']])}\n"
+                                        f"Chi-Square Between Normal-transit Binned Best Fitted Model And Individual Light Curves: {', '.join([f'{chi_square:.2f}' for chi_square in params_normal_transit_binned_best_dict['chi_square_list']])}\n"
+                                        f"Reduced Chi-Square Between Normal-transit Binned Best Fitted Model And Individual Light Curves: {', '.join([f'{reduced_chi_square:.2f}' for reduced_chi_square in params_normal_transit_binned_best_dict['reduced_chi_square_list']])}\n\n")
 else:
     methodology_result_file.write("\n") # write an empty line
 
