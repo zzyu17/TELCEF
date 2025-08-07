@@ -11,19 +11,16 @@ exptime = 600 ##### set the exposure time of data to be processed #####
 # Define the starting point of TESS observation time
 TESS_time = 2457000 # BJD
 
-##### Define the target parameters #####
+
+##### Define the source parameters #####
 name = "WASP-80"
 tic = 243921117
 coords = (303.16737208333325,-2.144218611111111)
 gaia = 4223507222112425344
 tess_mag = 10.3622
 
-# ##### Define the target parameters #####
-# name = "WASP-107"
-# tic = 429302040
-# coords = (188.38685041666665, -10.146173611111111)
-# gaia = 3578638842054261248
-# tess_mag = 10.418
+
+
 
 # Define the directories
 root = os.getcwd()
@@ -38,8 +35,11 @@ os.makedirs(fits_inspection_dir, exist_ok=True)
 
 
 
-# Function to inspect a FITS file and write its information to a .txt file
+# Define the inspect_fits_file() function
 def inspect_fits_file(fits_fn, fits_inspection_fn=None):
+    """
+    Function to inspect a FITS file and write its metadata into a text file.
+    """
     # Define the filenames
     fits_fn_pure = os.path.basename(fits_fn).split(".")[0]
     if fits_inspection_fn is None:
@@ -69,7 +69,7 @@ def inspect_fits_file(fits_fn, fits_inspection_fn=None):
 
 
 # Inspect each FITS file in the assigned directory
-for root, dirs, files in os.walk(eleanor_root_tesscut):
+for root, dirs, files in os.walk(eleanor_root_tesscut): ##### set the directory to be inspected #####
     for file in files:
         if file.endswith(".fits"):
             fits_fn = root + '/' + file

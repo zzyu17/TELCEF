@@ -14,9 +14,9 @@ import emcee
 
 
 ### ------ Preparations ------ ###
-# Set the single sector and pipeline to be processed
+# Set the single sector and author to be processed
 sector = 54 ##### set the single sector to be processed #####
-pipeline = 'SPOC' ##### set the pipeline to be processed #####
+author = 'SPOC' ##### set the author to be processed #####
 
 # Define the starting point of TESS observation time
 TESS_time = 2457000 # BJD
@@ -74,7 +74,7 @@ else:
 root = os.getcwd()
 processed_lightcurve_plots_dir = root + f"/02 Processed Light Curve Plots_V1_{method}"
 os.makedirs(processed_lightcurve_plots_dir, exist_ok=True)
-processed_lightcurve_plots_parent_dir = processed_lightcurve_plots_dir + f"/{name}_Sector {sector}_{pipeline}"
+processed_lightcurve_plots_parent_dir = processed_lightcurve_plots_dir + f"/{name}_Sector {sector}_{author}"
 os.makedirs(processed_lightcurve_plots_parent_dir, exist_ok=True)
 processed_lightcurve_plots_exptime_parent_dir = processed_lightcurve_plots_parent_dir + f"/Exposure Time={exptime}s"
 os.makedirs(processed_lightcurve_plots_exptime_parent_dir, exist_ok=True)
@@ -172,15 +172,15 @@ i = 1 # count the step
 
 # Download and plot the raw light curve
 j = 1 # count the sub-step
-lc_raw = lk.search_lightcurve(name, sector=sector, author=f'*{pipeline}*', exptime=exptime).download()
-print(f"Downloaded and processing {name} Sector {sector} {pipeline} Exptime={exptime}s Light Curve...\n")
+lc_raw = lk.search_lightcurve(name, sector=sector, author=f'*{author}*', exptime=exptime).download()
+print(f"Downloaded and processing {name} Sector {sector} {author} Exptime={exptime}s Light Curve...\n")
 lc_raw_cdpp = calculate_cdpp(lc_raw, transit_duration=216) ##### set the transit duration after fitting transit parameters using the BLS method for the first time #####
 
 lc_raw_plot, ax_lc_raw = plt.subplots(figsize=(20, 5))
 lc_raw.errorbar(ax=ax_lc_raw, label=f"simplified CDPP={lc_raw_cdpp:.2f}")
-ax_lc_raw.set_title(f"{name} Sector {sector} {pipeline} Raw Light Curve Exptime={exptime}s")
+ax_lc_raw.set_title(f"{name} Sector {sector} {author} Raw Light Curve Exptime={exptime}s")
 lc_raw_plot.figure.tight_layout()
-lc_raw_plot.figure.savefig(processed_lightcurve_plots_exptime_parent_dir + f"/{i:02}-{j:01} {name} Sector {sector} {pipeline} Raw Light Curve Exptime={exptime}s.png")
+lc_raw_plot.figure.savefig(processed_lightcurve_plots_exptime_parent_dir + f"/{i:02}-{j:01} {name} Sector {sector} {author} Raw Light Curve Exptime={exptime}s.png")
 
 
 j += 1 # count the sub-step
@@ -189,9 +189,9 @@ lc_raw_nans_removed_cdpp = calculate_cdpp(lc_raw_nans_removed, transit_duration=
 
 lc_raw_nans_removed_plot, ax_lc_raw_nans_removed = plt.subplots(figsize=(20, 5))
 lc_raw_nans_removed.errorbar(ax=ax_lc_raw_nans_removed, label=f"simplified CDPP={lc_raw_nans_removed_cdpp:.2f}")
-ax_lc_raw_nans_removed.set_title(f"{name} Sector {sector} {pipeline} NaNs-Removed Raw Light Curve Exptime={exptime}s")
+ax_lc_raw_nans_removed.set_title(f"{name} Sector {sector} {author} NaNs-Removed Raw Light Curve Exptime={exptime}s")
 lc_raw_nans_removed_plot.figure.tight_layout()
-lc_raw_nans_removed_plot.figure.savefig(processed_lightcurve_plots_exptime_parent_dir + f"/{i:02}-{j:01} {name} Sector {sector} {pipeline} NaNs-Removed Raw Light Curve Exptime={exptime}s.png")
+lc_raw_nans_removed_plot.figure.savefig(processed_lightcurve_plots_exptime_parent_dir + f"/{i:02}-{j:01} {name} Sector {sector} {author} NaNs-Removed Raw Light Curve Exptime={exptime}s.png")
 
 
 # Fit the NaNs-removed raw light curve using the Box Least Squares (BLS) method
@@ -201,13 +201,13 @@ p_raw_nans_removed_range = np.linspace(0.5, 27, 10000) ##### set the range of pe
 pg_bls_raw_nans_removed = lc_raw_nans_removed.to_periodogram(method='bls', period=p_raw_nans_removed_range, frequency_factor=500)
 pg_bls_raw_nans_removed_end_time = time.time() # measure the end time
 pg_bls_raw_nans_removed_fitting_time = pg_bls_raw_nans_removed_end_time - pg_bls_raw_nans_removed_start_time # calculate the fitting time
-print(f"Fitted global parameters of {name} Sector {sector} {pipeline} NaNs-Removed Raw light curve Exptime={exptime}s using the Box Least Squares (BLS) method in {pg_bls_raw_nans_removed_fitting_time} seconds.\n")
+print(f"Fitted global parameters of {name} Sector {sector} {author} NaNs-Removed Raw light curve Exptime={exptime}s using the Box Least Squares (BLS) method in {pg_bls_raw_nans_removed_fitting_time} seconds.\n")
 
 pg_bls_raw_nans_removed_plot, ax_pg_bls_raw_nans_removed = plt.subplots(figsize=(20, 5))
 pg_bls_raw_nans_removed.plot(ax=ax_pg_bls_raw_nans_removed)
-ax_pg_bls_raw_nans_removed.set_title(f"{name} Sector {sector} {pipeline} NaNs-Removed Raw BLS Periodogram Exptime={exptime}s")
+ax_pg_bls_raw_nans_removed.set_title(f"{name} Sector {sector} {author} NaNs-Removed Raw BLS Periodogram Exptime={exptime}s")
 pg_bls_raw_nans_removed_plot.figure.tight_layout()
-pg_bls_raw_nans_removed_plot.figure.savefig(processed_lightcurve_plots_exptime_parent_dir + f"/{i:02}-{j:01} {name} Sector {sector} {pipeline} NaNs-Removed Raw BLS Periodogram Exptime={exptime}s.png")
+pg_bls_raw_nans_removed_plot.figure.savefig(processed_lightcurve_plots_exptime_parent_dir + f"/{i:02}-{j:01} {name} Sector {sector} {author} NaNs-Removed Raw BLS Periodogram Exptime={exptime}s.png")
 
 
 j += 1 # count the sub-step
@@ -222,9 +222,9 @@ lc_bls_transit_model_raw_nans_removed = pg_bls_raw_nans_removed.get_transit_mode
 lc_bls_transit_model_raw_nans_removed_plot, ax_lc_bls_transit_model_raw_nans_removed = plt.subplots(figsize=(20, 5))
 lc_raw_nans_removed.errorbar(ax=ax_lc_bls_transit_model_raw_nans_removed, label=f"NaNs-Removed Raw Light Curve")
 lc_bls_transit_model_raw_nans_removed.plot(ax=ax_lc_bls_transit_model_raw_nans_removed, c='red', label=f"Best Fitted BLS Model")
-ax_lc_bls_transit_model_raw_nans_removed.set_title(f"{name} Sector {sector} {pipeline} NaNs-Removed Raw Light Curve & BLS Model Exptime={exptime}s")
+ax_lc_bls_transit_model_raw_nans_removed.set_title(f"{name} Sector {sector} {author} NaNs-Removed Raw Light Curve & BLS Model Exptime={exptime}s")
 lc_bls_transit_model_raw_nans_removed_plot.figure.tight_layout()
-lc_bls_transit_model_raw_nans_removed_plot.figure.savefig(processed_lightcurve_plots_exptime_parent_dir + f"/{i:02}-{j:01} {name} Sector {sector} {pipeline} NaNs-Removed Raw Light Curve & BLS Model Exptime={exptime}s.png")
+lc_bls_transit_model_raw_nans_removed_plot.figure.savefig(processed_lightcurve_plots_exptime_parent_dir + f"/{i:02}-{j:01} {name} Sector {sector} {author} NaNs-Removed Raw Light Curve & BLS Model Exptime={exptime}s.png")
 
 
 # Retrieve and plot Nans-removed raw baseline
@@ -235,9 +235,9 @@ lc_raw_nans_removed_baseline_cdpp = calculate_cdpp(lc_raw_nans_removed_baseline,
 
 lc_raw_nans_removed_baseline_plot, ax_lc_raw_nans_removed_baseline = plt.subplots(figsize=(20, 5))
 lc_raw_nans_removed_baseline.errorbar(ax=ax_lc_raw_nans_removed_baseline, label=f"simplified CDPP={lc_raw_nans_removed_baseline_cdpp:.2f}")
-ax_lc_raw_nans_removed_baseline.set_title(f"{name} Sector {sector} {pipeline} NaNs-Removed Raw Baseline Exptime={exptime}s")
+ax_lc_raw_nans_removed_baseline.set_title(f"{name} Sector {sector} {author} NaNs-Removed Raw Baseline Exptime={exptime}s")
 lc_raw_nans_removed_baseline_plot.figure.tight_layout()
-lc_raw_nans_removed_baseline_plot.figure.savefig(processed_lightcurve_plots_exptime_parent_dir + f"/{i:02}-{j:01} {name} Sector {sector} {pipeline} NaNs-Removed Raw Baseline Exptime={exptime}s.png")
+lc_raw_nans_removed_baseline_plot.figure.savefig(processed_lightcurve_plots_exptime_parent_dir + f"/{i:02}-{j:01} {name} Sector {sector} {author} NaNs-Removed Raw Baseline Exptime={exptime}s.png")
 
 
 
@@ -257,18 +257,18 @@ if flatten:
     j = 1  # count the sub-step
     lc_flattened_plot, ax_lc_flattened = plt.subplots(figsize=(20, 5))
     lc_flattened.errorbar(ax=ax_lc_flattened, label=f"simplified CDPP={lc_flattened_cdpp:.2f}")
-    ax_lc_flattened.set_title(f"{name} Sector {sector} {pipeline} {flatten_window_proportion * 100}% Window Flatten Light Curve Exptime={exptime}s")
+    ax_lc_flattened.set_title(f"{name} Sector {sector} {author} {flatten_window_proportion * 100}% Window Flattened Light Curve Exptime={exptime}s")
     lc_flattened_plot.figure.tight_layout()
-    lc_flattened_plot.figure.savefig(processed_lightcurve_plots_exptime_parent_dir + f"/{i:02}-{j:01} {name} Sector {sector} {pipeline} {flatten_window_proportion * 100}% Window Flatten Light Curve Exptime={exptime}s.png")
+    lc_flattened_plot.figure.savefig(processed_lightcurve_plots_exptime_parent_dir + f"/{i:02}-{j:01} {name} Sector {sector} {author} {flatten_window_proportion * 100}% Window Flattened Light Curve Exptime={exptime}s.png")
 
     j += 1  # count the sub-step
     lc_flattened_trend_plot, (ax_lc_flattened, ax_lc_flattened_trend) = plt.subplots(2, 1, figsize=(20, 10))
     lc_flattened.errorbar(ax=ax_lc_flattened, label=f"simplified CDPP={lc_flattened_cdpp:.2f}")
-    ax_lc_flattened.set_title(f"{name} Sector {sector} {pipeline} {flatten_window_proportion * 100}% Window Flatten Light Curve Exptime={exptime}s")
+    ax_lc_flattened.set_title(f"{name} Sector {sector} {author} {flatten_window_proportion * 100}% Window Flattened Light Curve Exptime={exptime}s")
     lc_flattened_trend.plot(ax=ax_lc_flattened_trend)
-    ax_lc_flattened_trend.set_title(f"{name} Sector {sector} {pipeline} {flatten_window_proportion * 100}% Window Flatten Trend Exptime={exptime}s")
+    ax_lc_flattened_trend.set_title(f"{name} Sector {sector} {author} {flatten_window_proportion * 100}% Window Flatten Trend Exptime={exptime}s")
     lc_flattened_trend_plot.figure.tight_layout()
-    lc_flattened_trend_plot.figure.savefig(processed_lightcurve_plots_exptime_parent_dir + f"/{i:02}-{j:01} {name} Sector {sector} {pipeline} {flatten_window_proportion * 100}% Window Flatten Trend Exptime={exptime}s.png")
+    lc_flattened_trend_plot.figure.savefig(processed_lightcurve_plots_exptime_parent_dir + f"/{i:02}-{j:01} {name} Sector {sector} {author} {flatten_window_proportion * 100}% Window Flatten Trend Exptime={exptime}s.png")
 
 
     # Retrieve and plot the flattened baseline
@@ -281,18 +281,18 @@ if flatten:
     j += 1  # count the sub-step
     lc_flattened_baseline_plot, ax_lc_flattened_baseline = plt.subplots(figsize=(20, 5))
     lc_flattened_baseline.errorbar(ax=ax_lc_flattened_baseline, label=f"simplified CDPP={lc_flattened_baseline_cdpp:.2f}")
-    ax_lc_flattened_baseline.set_title(f"{name} Sector {sector} {pipeline} {flatten_window_proportion * 100}% Window Flatten Baseline Light Curve Exptime={exptime}s")
+    ax_lc_flattened_baseline.set_title(f"{name} Sector {sector} {author} {flatten_window_proportion * 100}% Window Flattened Baseline Light Curve Exptime={exptime}s")
     lc_flattened_baseline_plot.figure.tight_layout()
-    lc_flattened_baseline_plot.figure.savefig(processed_lightcurve_plots_exptime_parent_dir + f"/{i:02}-{j:01} {name} Sector {sector} {pipeline} {flatten_window_proportion * 100}% Window Flatten Baseline Light Curve Exptime={exptime}s.png")
+    lc_flattened_baseline_plot.figure.savefig(processed_lightcurve_plots_exptime_parent_dir + f"/{i:02}-{j:01} {name} Sector {sector} {author} {flatten_window_proportion * 100}% Window Flattened Baseline Light Curve Exptime={exptime}s.png")
 
     j += 1  # count the sub-step
     lc_flattened_baseline_trend_plot, (ax_lc_flattened_baseline, ax_lc_flattened_baseline_trend) = plt.subplots(2, 1, figsize=(20, 10))
     lc_flattened_baseline.errorbar(ax=ax_lc_flattened_baseline, label=f"simplified CDPP={lc_flattened_baseline_cdpp:.2f}")
-    ax_lc_flattened_baseline.set_title(f"{name} Sector {sector} {pipeline} {flatten_window_proportion * 100}% Window Flatten Baseline Light Curve Exptime={exptime}s")
+    ax_lc_flattened_baseline.set_title(f"{name} Sector {sector} {author} {flatten_window_proportion * 100}% Window Flattened Baseline Light Curve Exptime={exptime}s")
     lc_flattened_baseline_trend.plot(ax=ax_lc_flattened_baseline_trend)
-    ax_lc_flattened_baseline_trend.set_title(f"{name} Sector {sector} {pipeline} {flatten_window_proportion * 100}% Window Flatten Baseline Trend Exptime={exptime}s")
+    ax_lc_flattened_baseline_trend.set_title(f"{name} Sector {sector} {author} {flatten_window_proportion * 100}% Window Flattened Baseline Trend Exptime={exptime}s")
     lc_flattened_baseline_trend_plot.figure.tight_layout()
-    lc_flattened_baseline_trend_plot.figure.savefig(processed_lightcurve_plots_exptime_parent_dir + f"/{i:02}-{j:01} {name} Sector {sector} {pipeline} {flatten_window_proportion * 100}% Window Flatten Baseline Trend Exptime={exptime}s.png")
+    lc_flattened_baseline_trend_plot.figure.savefig(processed_lightcurve_plots_exptime_parent_dir + f"/{i:02}-{j:01} {name} Sector {sector} {author} {flatten_window_proportion * 100}% Window Flattened Baseline Trend Exptime={exptime}s.png")
 
 
 else:
@@ -319,9 +319,9 @@ if clip:
 
     lc_clipped_baseline_plot, ax_lc_clipped_baseline = plt.subplots(figsize=(20, 5))
     lc_clipped_baseline.errorbar(ax=ax_lc_clipped_baseline, label=f"simplified CDPP={lc_clipped_baseline_cdpp:.2f}")
-    ax_lc_clipped_baseline.set_title(f"{name} Sector {sector} {pipeline} {sigma_baseline} Sigma Clipped Baseline Exptime={exptime}s")
+    ax_lc_clipped_baseline.set_title(f"{name} Sector {sector} {author} {sigma_baseline} Sigma Clipped Baseline Exptime={exptime}s")
     lc_clipped_baseline_plot.figure.tight_layout()
-    lc_clipped_baseline_plot.figure.savefig(processed_lightcurve_plots_exptime_parent_dir + f"/{i:02}-{j:01} {name} Sector {sector} {pipeline} {sigma_baseline} Sigma Clipped Baseline Exptime={exptime}s.png")
+    lc_clipped_baseline_plot.figure.savefig(processed_lightcurve_plots_exptime_parent_dir + f"/{i:02}-{j:01} {name} Sector {sector} {author} {sigma_baseline} Sigma Clipped Baseline Exptime={exptime}s.png")
 
 
     # Clip and plot the transit if there are upper outliers
@@ -332,9 +332,9 @@ if clip:
 
         lc_clipped_transit_plot, ax_lc_clipped_transit = plt.subplots(figsize=(20, 5))
         lc_clipped_transit.errorbar(ax=ax_lc_clipped_transit)
-        ax_lc_clipped_transit.set_title(f"{name} Sector {sector} {pipeline} {sigma_upper_transit} Upper Sigma Clipped Transit Exptime={exptime}s")
+        ax_lc_clipped_transit.set_title(f"{name} Sector {sector} {author} {sigma_upper_transit} Upper Sigma Clipped Transit Exptime={exptime}s")
         lc_clipped_transit_plot.figure.tight_layout()
-        lc_clipped_transit_plot.figure.savefig(processed_lightcurve_plots_exptime_parent_dir + f"/{i:02}-{j:01} {name} Sector {sector} {pipeline} {sigma_upper_transit} Upper Sigma Clipped Transit Exptime={exptime}s.png")
+        lc_clipped_transit_plot.figure.savefig(processed_lightcurve_plots_exptime_parent_dir + f"/{i:02}-{j:01} {name} Sector {sector} {author} {sigma_upper_transit} Upper Sigma Clipped Transit Exptime={exptime}s.png")
 
     else:
         lc_clipped_transit = lc_flattened_transit.copy()
@@ -347,9 +347,9 @@ if clip:
 
     lc_clipped_plot, ax_lc_clipped = plt.subplots(figsize=(20, 5))
     lc_clipped.errorbar(ax=ax_lc_clipped, label=f"simplified CDPP={lc_clipped_cdpp:.2f}")
-    ax_lc_clipped.set_title(f"{name} Sector {sector} {pipeline} {sigma_baseline} Sigma Clipped Light Curve Exptime={exptime}s")
+    ax_lc_clipped.set_title(f"{name} Sector {sector} {author} {sigma_baseline} Sigma Clipped Light Curve Exptime={exptime}s")
     lc_clipped_plot.figure.tight_layout()
-    lc_clipped_plot.figure.savefig(processed_lightcurve_plots_exptime_parent_dir + f"/{i:02}-{j:01} {name} Sector {sector} {pipeline} {sigma_baseline} Sigma Clipped Light Curve Exptime={exptime}s.png")
+    lc_clipped_plot.figure.savefig(processed_lightcurve_plots_exptime_parent_dir + f"/{i:02}-{j:01} {name} Sector {sector} {author} {sigma_baseline} Sigma Clipped Light Curve Exptime={exptime}s.png")
 
 
 else:
@@ -380,7 +380,7 @@ lc_corrected = lc_clipped.copy()
 lc_corrected_baseline = lc_clipped_baseline.copy()
 lc_corrected_transit = lc_clipped_transit.copy()
 
-lc_corrected.to_fits(eleanor_root_targetdata_source + f"/{name}_Sector {sector}_{method}_{pipeline}_{correction}_Exptime={exptime}s.fits", overwrite=True)
+lc_corrected.to_fits(eleanor_root_targetdata_source + f"/{name}_Sector {sector}_{method}_{author}_{correction}_Exptime={exptime}s.fits", overwrite=True)
 
 
 
@@ -528,7 +528,7 @@ def calculate_transit_depth(k, a, i, ldc, transit_model):
 
 
 
-# Define the max_deviation_from_nanmedian() function to calculate the deviation of the most deviated parameter from the NaN-median of the other parameters
+# Define the max_deviation() function to calculate the deviation of the most deviated parameter from the NaN-median of the other parameters
 def max_deviation(arr):
     array = np.asarray(arr)
     median_all = np.nanmedian(array)
@@ -693,17 +693,17 @@ if fit_global:
             if d == 0:
                 ax_evolution_global.set_title(f"Evolution ({running_mean_window_proportion * 100}% Window Running Mean) Of Parameters", fontsize='x-large')
 
-        params_global_trace_evolution_plot.suptitle(f"{name} Sector {sector} {pipeline} Global Fitting Trace And Evolution Plot (Thinned By {chain_thin_global}) Exptime={exptime}s Interation {inter_global}", fontsize='xx-large')
+        params_global_trace_evolution_plot.suptitle(f"{name} Sector {sector} {author} Global Fitting Trace And Evolution Plot (Thinned By {chain_thin_global}) Exptime={exptime}s Interation {inter_global}", fontsize='xx-large')
         params_global_trace_evolution_plot.figure.subplots_adjust(wspace=0.05)
-        params_global_trace_evolution_plot.figure.savefig(processed_lightcurve_plots_exptime_parent_dir + f"/{i:02}-{j:01}-{inter_global} {name} Sector {sector} {pipeline} Global Fitting Trace And Evolution Plot Exptime={exptime}s Interation {inter_global}.png")
+        params_global_trace_evolution_plot.figure.savefig(processed_lightcurve_plots_exptime_parent_dir + f"/{i:02}-{j:01}-{inter_global} {name} Sector {sector} {author} Global Fitting Trace And Evolution Plot Exptime={exptime}s Interation {inter_global}.png")
 
 
         # Plot the parameters posterior distribution plot
         j += 1  # count the sub-step
 
         params_global_corner_plot = corner.corner(params_global_samples, labels=params_global_name, quantiles=[0.16, 0.5, 0.84], show_titles=True, title_fmt=".4f", figsize=(20, 25))
-        params_global_corner_plot.suptitle(f"{name} Sector {sector} {pipeline} Global Fitting Parameters Posterior Distribution Corner Plot Exptime={exptime}s Interation {inter_global}", fontsize='xx-large', y=1.05)
-        params_global_corner_plot.figure.savefig(processed_lightcurve_plots_exptime_parent_dir + f"/{i:02}-{j:01}-{inter_global} {name} Sector {sector} {pipeline} Global Fitting Parameters Posterior Distribution Corner Plot Exptime={exptime}s Interation {inter_global}.png", bbox_inches='tight')
+        params_global_corner_plot.suptitle(f"{name} Sector {sector} {author} Global Fitting Parameters Posterior Distribution Corner Plot Exptime={exptime}s Interation {inter_global}", fontsize='xx-large', y=1.05)
+        params_global_corner_plot.figure.savefig(processed_lightcurve_plots_exptime_parent_dir + f"/{i:02}-{j:01}-{inter_global} {name} Sector {sector} {author} Global Fitting Parameters Posterior Distribution Corner Plot Exptime={exptime}s Interation {inter_global}.png", bbox_inches='tight')
 
 
         # Plot the best fitted model light curve and residuals
@@ -732,9 +732,9 @@ if fit_global:
             ax_lc_global_best_fit_residual.set_xlim(ax_lc_global_best_fit_residual_x_lim)
             ax_lc_global_best_fit_residual.set_ylim(ax_lc_global_best_fit_residual_y_lim)
 
-        lc_global_best_fit_plot.suptitle(f"{name} Sector {sector} {pipeline} Global Best Fitted Light Curve And Residuals Exptime={exptime}s Interation {inter_global}")
+        lc_global_best_fit_plot.suptitle(f"{name} Sector {sector} {author} Global Best Fitted Light Curve And Residuals Exptime={exptime}s Interation {inter_global}")
         lc_global_best_fit_plot.figure.tight_layout()
-        lc_global_best_fit_plot.figure.savefig(processed_lightcurve_plots_exptime_parent_dir + f"/{i:02}-{j:01}-{inter_global} {name} Sector {sector} {pipeline} Global Best Fitted Light Curve And Residuals Exptime={exptime}s Interation {inter_global}.png")
+        lc_global_best_fit_plot.figure.savefig(processed_lightcurve_plots_exptime_parent_dir + f"/{i:02}-{j:01}-{inter_global} {name} Sector {sector} {author} Global Best Fitted Light Curve And Residuals Exptime={exptime}s Interation {inter_global}.png")
 
 
         # Remove the outliers
@@ -1011,17 +1011,17 @@ if fit_individual:
                 if d == 0:
                     ax_evolution_individual.set_title(f"Evolution ({running_mean_window_proportion * 100}% Window Running Mean) Of Parameters", fontsize='x-large')
 
-            params_individual_trace_evolution_plot.suptitle(f"{name} Sector {sector} {pipeline} Individual Fitting Trace And Evolution Plot (Thinned By {chain_thin_individual}) Transit {transit_index:02} Exptime={exptime}s Interation {inter_individual}", fontsize='xx-large')
+            params_individual_trace_evolution_plot.suptitle(f"{name} Sector {sector} {author} Individual Fitting Trace And Evolution Plot (Thinned By {chain_thin_individual}) Transit {transit_index:02} Exptime={exptime}s Interation {inter_individual}", fontsize='xx-large')
             params_individual_trace_evolution_plot.figure.subplots_adjust(wspace=0.05)
-            params_individual_trace_evolution_plot.figure.savefig(processed_lightcurve_plots_exptime_individual_transit_parent_dir + f"/{i:02}-{j:01}-{transit_index:02}-{inter_individual} {name} Sector {sector} {pipeline} Individual Fitting Trace And Evolution Plot Transit {transit_index:02} Exptime={exptime}s Interation {inter_individual}.png")
+            params_individual_trace_evolution_plot.figure.savefig(processed_lightcurve_plots_exptime_individual_transit_parent_dir + f"/{i:02}-{j:01}-{transit_index:02}-{inter_individual} {name} Sector {sector} {author} Individual Fitting Trace And Evolution Plot Transit {transit_index:02} Exptime={exptime}s Interation {inter_individual}.png")
 
 
             # Plot the parameters posterior distribution plot
             j += 1  # count the sub-step
 
             params_individual_corner_plot = corner.corner(params_individual_samples, labels=params_individual_name, quantiles=[0.16, 0.5, 0.84], show_titles=True, title_fmt=".4f", figsize=(20, 25))
-            params_individual_corner_plot.suptitle(f"{name} Sector {sector} {pipeline} Individual Fitting Parameters Posterior Distribution Corner Plot Transit {transit_index:02} Exptime={exptime}s Interation {inter_individual}", fontsize='xx-large', y=1.05)
-            params_individual_corner_plot.figure.savefig(processed_lightcurve_plots_exptime_individual_transit_parent_dir + f"/{i:02}-{j:01}-{transit_index:02}-{inter_individual} {name} Sector {sector} {pipeline} Individual Fitting Parameters Posterior Distribution Corner Plot Transit {transit_index:02} Exptime={exptime}s Interation {inter_individual}.png", bbox_inches='tight')
+            params_individual_corner_plot.suptitle(f"{name} Sector {sector} {author} Individual Fitting Parameters Posterior Distribution Corner Plot Transit {transit_index:02} Exptime={exptime}s Interation {inter_individual}", fontsize='xx-large', y=1.05)
+            params_individual_corner_plot.figure.savefig(processed_lightcurve_plots_exptime_individual_transit_parent_dir + f"/{i:02}-{j:01}-{transit_index:02}-{inter_individual} {name} Sector {sector} {author} Individual Fitting Parameters Posterior Distribution Corner Plot Transit {transit_index:02} Exptime={exptime}s Interation {inter_individual}.png", bbox_inches='tight')
 
 
             # Plot the best fitted model light curve and residuals
@@ -1078,9 +1078,9 @@ if fit_individual:
                 ax_lc_individual_best_fit_residual.set_xlim(ax_lc_individual_best_fit_residual_x_lim)
                 ax_lc_individual_best_fit_residual.set_ylim(ax_lc_individual_best_fit_residual_y_lim) # plot the best fitted model residuals
 
-            lc_individual_best_fit_plot.suptitle(f"{name} Sector {sector} {pipeline} Individual Best Fitted Light Curve And Residuals Transit {transit_index:02} Exptime={exptime}s Interation {inter_individual}")
+            lc_individual_best_fit_plot.suptitle(f"{name} Sector {sector} {author} Individual Best Fitted Light Curve And Residuals Transit {transit_index:02} Exptime={exptime}s Interation {inter_individual}")
             lc_individual_best_fit_plot.figure.tight_layout()
-            lc_individual_best_fit_plot.figure.savefig(processed_lightcurve_plots_exptime_individual_transit_parent_dir + f"/{i:02}-{j:01}-{transit_index:02}-{inter_individual} {name} Sector {sector} {pipeline} Individual Best Fitted Light Curve And Residuals Transit {transit_index:02} Exptime={exptime}s Interation {inter_individual}.png")
+            lc_individual_best_fit_plot.figure.savefig(processed_lightcurve_plots_exptime_individual_transit_parent_dir + f"/{i:02}-{j:01}-{transit_index:02}-{inter_individual} {name} Sector {sector} {author} Individual Best Fitted Light Curve And Residuals Transit {transit_index:02} Exptime={exptime}s Interation {inter_individual}.png")
 
 
             # Remove the outliers
@@ -1162,14 +1162,9 @@ if fit_individual:
         ax_lc_individual_best_fit.set_ylabel("Flux")
         ax_lc_individual_best_fit.set_xlim(individual_transit_plot_range[0], individual_transit_plot_range[1])
         ax_lc_individual_best_fit.set_title(f"Transit {valid_transit_index:02}", fontsize='x-large')
-    lc_individual_best_fit_all_plot.suptitle(f"{name} Sector {sector} {pipeline} Individual Best Fitted Light Curves Exptime={exptime}s", fontsize='xx-large', y=1.02)
+    lc_individual_best_fit_all_plot.suptitle(f"{name} Sector {sector} {author} Individual Best Fitted Light Curves Exptime={exptime}s", fontsize='xx-large', y=1.02)
     lc_individual_best_fit_all_plot.tight_layout()
-    lc_individual_best_fit_all_plot.figure.savefig(processed_lightcurve_plots_exptime_parent_dir + f"/{i:02} {name} Sector {sector} {pipeline} Individual Best Fitted Light Curves Exptime={exptime}s.png", bbox_inches='tight')
-
-
-    # Calculate the max deviation of the transit durations and transit depths
-    transit_duration_max_dev_idx, transit_duration_max_dev_value, transit_duration_max_dev_n_stds = max_deviation([transit_duration[0] for transit_duration in params_individual_best_dict['transit_duration']])
-    transit_depth_max_dev_idx, transit_depth_max_dev_value, transit_depth_max_dev_n_stds = max_deviation([transit_depth[0] for transit_depth in params_individual_best_dict['transit_depth']])
+    lc_individual_best_fit_all_plot.figure.savefig(processed_lightcurve_plots_exptime_parent_dir + f"/{i:02} {name} Sector {sector} {author} Individual Best Fitted Light Curves Exptime={exptime}s.png", bbox_inches='tight')
 
 
 
@@ -1213,9 +1208,9 @@ lc_folded_plot, ax_lc_folded = plt.subplots(figsize=(10, 5))
 lc_folded.scatter(ax=ax_lc_folded, label=None, s=0.1, alpha=1.0)
 lc_folded.errorbar(ax=ax_lc_folded, label=f"simplified CDPP={lc_folded_cdpp:.2f}", alpha=alpha_exptime / 2)
 ax_lc_folded.legend(loc='lower right')
-ax_lc_folded.set_title(f"{name} Sector {sector} {pipeline} Period={p_folded:.4f}d Folded Light Curve Exptime={exptime}s")
+ax_lc_folded.set_title(f"{name} Sector {sector} {author} Period={p_folded:.4f}d Folded Light Curve Exptime={exptime}s")
 lc_folded_plot.figure.tight_layout()
-lc_folded_plot.figure.savefig(processed_lightcurve_plots_exptime_parent_dir + f"/{i:02} {name} Sector {sector} {pipeline} Period={p_folded}d Folded Light Curve Exptime={exptime}s.png")
+lc_folded_plot.figure.savefig(processed_lightcurve_plots_exptime_parent_dir + f"/{i:02} {name} Sector {sector} {author} Period={p_folded}d Folded Light Curve Exptime={exptime}s.png")
 
 
 
@@ -1233,9 +1228,9 @@ if bin:
     lc_binned.scatter(ax=ax_lc_binned, label=None, s=0.1, alpha=1.0)
     lc_binned.errorbar(ax=ax_lc_binned, label=f"simplified CDPP={lc_binned_cdpp:.2f}", alpha=alpha_exptime * 5 if alpha_exptime <= 1/5 else 1.0)
     ax_lc_binned.legend(loc='lower right')
-    ax_lc_binned.set_title(f"{name} Sector {sector} {pipeline} Time_Bin_Size={time_bin_size:.1f} Binned Light Curve Exptime={exptime}s")
+    ax_lc_binned.set_title(f"{name} Sector {sector} {author} Time_Bin_Size={time_bin_size:.1f} Binned Light Curve Exptime={exptime}s")
     lc_binned_plot.figure.tight_layout()
-    lc_binned_plot.figure.savefig(processed_lightcurve_plots_exptime_parent_dir + f"/{i:02} {name} Sector {sector} {pipeline} Time_Bin_Size={time_bin_size} Binned Light Curve Exptime={exptime}s.png")
+    lc_binned_plot.figure.savefig(processed_lightcurve_plots_exptime_parent_dir + f"/{i:02} {name} Sector {sector} {author} Time_Bin_Size={time_bin_size.value}s Binned Light Curve Exptime={exptime}s.png")
 
 
 else:
@@ -1404,17 +1399,17 @@ if fit_binned:
             if d == 0:
                 ax_evolution_binned.set_title(f"Evolution ({running_mean_window_proportion * 100}% Window Running Mean) Of Parameters", fontsize='x-large')
 
-        params_binned_trace_evolution_plot.suptitle(f"{name} Sector {sector} {pipeline} Binned Fitting Trace And Evolution Plot (Thinned By {chain_thin_binned}) Exptime={exptime}s Interation {inter_binned}", fontsize='xx-large')
+        params_binned_trace_evolution_plot.suptitle(f"{name} Sector {sector} {author} Binned Fitting Trace And Evolution Plot (Thinned By {chain_thin_binned}) Exptime={exptime}s Interation {inter_binned}", fontsize='xx-large')
         params_binned_trace_evolution_plot.figure.subplots_adjust(wspace=0.05)
-        params_binned_trace_evolution_plot.figure.savefig(processed_lightcurve_plots_exptime_parent_dir + f"/{i:02}-{j:01}-{inter_binned} {name} Sector {sector} {pipeline} Binned Fitting Trace And Evolution Plot Exptime={exptime}s Interation {inter_binned}.png")
+        params_binned_trace_evolution_plot.figure.savefig(processed_lightcurve_plots_exptime_parent_dir + f"/{i:02}-{j:01}-{inter_binned} {name} Sector {sector} {author} Binned Fitting Trace And Evolution Plot Exptime={exptime}s Interation {inter_binned}.png")
 
 
         # Plot the parameters posterior distribution plot
         j += 1  # count the sub-step
 
         params_binned_corner_plot = corner.corner(params_binned_samples, labels=params_binned_name, quantiles=[0.16, 0.5, 0.84], show_titles=True, title_fmt=".4f", figsize=(20, 25))
-        params_binned_corner_plot.suptitle(f"{name} Sector {sector} {pipeline} Binned Fitting Parameters Posterior Distribution Corner Plot Exptime={exptime}s Interation {inter_binned}", fontsize='xx-large', y=1.05)
-        params_binned_corner_plot.figure.savefig(processed_lightcurve_plots_exptime_parent_dir + f"/{i:02}-{j:01}-{inter_binned} {name} Sector {sector} {pipeline} Binned Fitting Parameters Posterior Distribution Corner Plot Exptime={exptime}s Interation {inter_binned}.png", bbox_inches='tight')
+        params_binned_corner_plot.suptitle(f"{name} Sector {sector} {author} Binned Fitting Parameters Posterior Distribution Corner Plot Exptime={exptime}s Interation {inter_binned}", fontsize='xx-large', y=1.05)
+        params_binned_corner_plot.figure.savefig(processed_lightcurve_plots_exptime_parent_dir + f"/{i:02}-{j:01}-{inter_binned} {name} Sector {sector} {author} Binned Fitting Parameters Posterior Distribution Corner Plot Exptime={exptime}s Interation {inter_binned}.png", bbox_inches='tight')
 
 
         # Plot the best fitted model light curve and residuals
@@ -1472,9 +1467,9 @@ if fit_binned:
             ax_lc_binned_best_fit_residual.set_xlim(ax_lc_binned_best_fit_residual_x_lim)
             ax_lc_binned_best_fit_residual.set_ylim(ax_lc_binned_best_fit_residual_y_lim) # plot the best fitted model residuals
 
-        lc_binned_best_fit_plot.suptitle(f"{name} Sector {sector} {pipeline} Binned Best Fitted Light Curve And Residuals Exptime={exptime}s Interation {inter_binned}")
+        lc_binned_best_fit_plot.suptitle(f"{name} Sector {sector} {author} Binned Best Fitted Light Curve And Residuals Exptime={exptime}s Interation {inter_binned}")
         lc_binned_best_fit_plot.figure.tight_layout()
-        lc_binned_best_fit_plot.figure.savefig(processed_lightcurve_plots_exptime_parent_dir + f"/{i:02}-{j:01}-{inter_binned} {name} Sector {sector} {pipeline} Binned Best Fitted Light Curve And Residuals Exptime={exptime}s Interation {inter_binned}.png")
+        lc_binned_best_fit_plot.figure.savefig(processed_lightcurve_plots_exptime_parent_dir + f"/{i:02}-{j:01}-{inter_binned} {name} Sector {sector} {author} Binned Best Fitted Light Curve And Residuals Exptime={exptime}s Interation {inter_binned}.png")
 
 
         # Remove the outliers
@@ -1523,8 +1518,8 @@ def format_with_uncertainty(param, precision=8):
 
 
 # Print the methodologies and results
-methodology_result_file = open(processed_lightcurve_plots_exptime_parent_dir + f"/{name} Sector {sector} {method} Exptime={exptime}s Methodologies And Results.txt", "w", encoding='utf-8')
-methodology_result_file.write(f"{name} Sector {sector} {method} Exptime={exptime}s Methodologies And Results\n\n")
+methodology_result_file = open(processed_lightcurve_plots_exptime_parent_dir + f"/{name} Sector {sector} {author} {method} Exptime={exptime}s Methodologies And Results.txt", "w", encoding='utf-8')
+methodology_result_file.write(f"{name} Sector {sector} {author} {method} Exptime={exptime}s Methodologies And Results\n\n")
 
 
 methodology_result_file.write("NASA Exoplanet Archive Source Planetary Parameters: \n"
@@ -1623,10 +1618,8 @@ if fit_individual:
                                         f"Inclination (i) (Degrees): {', '.join([format_with_uncertainty(i_in_degree) for i_in_degree in params_individual_best_dict['i_in_degree']])}\n"
                                         f"Quadratic Limb Darkening Coefficients (ldc1, ldc2): {', '.join([f'({format_with_uncertainty(ldc1)}, {format_with_uncertainty(ldc2)})' for ldc1, ldc2 in zip(params_individual_best_dict['ldc1'], params_individual_best_dict['ldc2'])])}\n"
                                         f"Transit Duration (Days): {', '.join([format_with_uncertainty(transit_duration) for transit_duration in params_individual_best_dict['transit_duration']])}\n"
-                                        f"Duration of transit {transit_duration_max_dev_idx:02} is the most deviated: {transit_duration_max_dev_value} days, deviated by {transit_duration_max_dev_n_stds:.2f} standard deviations from the NaN-median of the other transits.\n"
                                         f"Transit Duration (Cadences): {', '.join([format_with_uncertainty(transit_duration_in_cadence, precision=0) for transit_duration_in_cadence in params_individual_best_dict['transit_duration_in_cadence']])}\n"
                                         f"Transit Depth: {', '.join([format_with_uncertainty(transit_depth) for transit_depth in params_individual_best_dict['transit_depth']])}\n"
-                                        f"Depth of transit {transit_depth_max_dev_idx:02} is the most deviated: {transit_depth_max_dev_value}, deviated by {transit_depth_max_dev_n_stds:.2f} standard deviations from the NaN-median of the other transits.\n"
                                         f"Fitting Interation: {', '.join([f'{n_fitting_iteration}' for n_fitting_iteration in params_individual_best_dict['n_fitting_iteration']])}\n"
                                         f"Residual Standard Deviation: {', '.join([f'{residual_std:.6f}' for residual_std in params_individual_best_dict['residual_std']])}\n"
                                         f"Chi-Square: {', '.join([f'{chi_square:.2f}' for chi_square in params_individual_best_dict['chi_square']])}\n"

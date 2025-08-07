@@ -99,6 +99,7 @@ os.makedirs(processed_lightcurve_plots_pc_lc_parent_dir, exist_ok=True)
 source = eleanor.Source(name=name, sector=sector, tc=tesscut, tesscut_size=tesscut_size_1d, post_dir=post_dir) ##### run eleanor.Source with default parameters first #####
 print(f"Found TIC {source.tic} (Gaia {source.gaia}), with TESS magnitude {source.tess_mag}, RA {source.coords[0]}, and Dec {source.coords[1]}")
 
+
 # Retrieve the target data
 tpf_height = 15
 tpf_width = 15
@@ -118,18 +119,21 @@ if postcard:
 if tesscut:
     data.save(output_fn=f"{name}_Sector {sector}_{method}_TESScut.fits", directory=eleanor_root_targetdata_source)
 
+
 # Create a visualize class object
 visualize = eleanor.Visualize(data)
 visualize_postcard = eleanor.Visualize(data.post_obj, obj_type="postcard")
 
 ##### Set whether to render the animations or not #####
 render_tpf_animation = False
-render_aperture_contour_tpf_animation = False # whether to render the TPF animation with aperture contour
+render_aperture_contour_tpf_animation = False # whether to render the TPF animation with aperture contour， set this to True only when render_tpf_animation is True
 if postcard:
     render_bkg_2d_animation = False
 if tesscut:
-    render_bkg_2d_animation = False # do not render the 2D background animation when using TESScut
+    render_bkg_2d_animation = False # do not render the 2D background animation when using TESScut because the 2D background is the same as the TESScut postcard when using TESScut
 render_postcard_animation = False
+
+
 
 
 ### TPF ###
@@ -150,7 +154,7 @@ if render_tpf_animation:
             ax_tpf_animation_cadence_img = ax_tpf_animation.get_images()[-1] # get the newest plotted aperture-overplotted TPF
         else:
             ax_tpf_animation_cadence_img = ax_tpf_animation.imshow(data.tpf[k], origin='lower', animated=True)
-        ax_tpf_animation_cadence_title = ax_tpf_animation.text(0.5, 1.01, f"{name} Sector {sector} {method_eleanor} Target Pixel File (Cadence {k:04})", ha='center', transform=ax_tpf_animation.transAxes, fontfamily=rcParams['font.family'], fontsize='xx-large', fontweight=rcParams['axes.titleweight'])
+        ax_tpf_animation_cadence_title = ax_tpf_animation.text(0.5, 1.01, f"{name} Sector {sector} {method_eleanor} Target Pixel File (Cadence {k:04}) Exptime={exptime}s", ha='center', transform=ax_tpf_animation.transAxes, fontfamily=rcParams['font.family'], fontsize='xx-large', fontweight=rcParams['axes.titleweight'])
         tpf_animation_artists.append([ax_tpf_animation_cadence_img, ax_tpf_animation_cadence_title])
     tpf_animation = animation.ArtistAnimation(fig=tpf_animation_plot, artists=tpf_animation_artists, interval=int(1000/tpf_animation_framerate), blit=True)
     tpf_animation_writer = animation.FFMpegWriter(fps=int(tpf_animation_framerate), metadata=dict(artist='zzyu'), bitrate=2000)
@@ -162,6 +166,8 @@ if not render_tpf_animation:
     print(f"Skipped {name} Sector {sector} {method_eleanor} TPF animation rendering.")
 
 
+
+
 ### Light Curve ###
 # Convert the flux to lightkurve.lightcurve objects
 i += 1 # count the step
@@ -171,16 +177,20 @@ lc_corr = data.to_lightkurve(flux=data.corr_flux, quality_mask=data.quality)
 lc_pca = data.to_lightkurve(flux=data.pca_flux, quality_mask=data.quality)
 lc_psf = data.to_lightkurve(flux=data.psf_flux, quality_mask=data.quality)
 
+
 # Plot the light curve
+# plot the all-in-one eleanor light curve
 j = 1 # count the sub-step
 lc_plot, ax_lc = plt.subplots(figsize=(20, 5))
 lc_raw.scatter(ax=ax_lc, normalize=True, offset=0.2, label='Raw', c='k')
 lc_corr.scatter(ax=ax_lc, normalize=True, offset=0.1, label='Corrected', c='r')
 lc_pca.scatter(ax=ax_lc, normalize=True, offset=0, label='PCA', c='g')
 lc_psf.scatter(ax=ax_lc, normalize=True, offset=-0.1, label='PSF Modelled', c='b')
-ax_lc.set_title(f"{name} Sector {sector} {method_eleanor} Light Curve")
+ax_lc.set_title(f"{name} Sector {sector} {method_eleanor} All-in-one Light Curve Exptime={exptime}s")
 lc_plot.figure.tight_layout()
-lc_plot.figure.savefig(processed_lightcurve_plots_pc_lc_parent_dir + f"/{i:02}-{j:01} {name} Sector {sector} {method_eleanor} Light Curves Exptime={exptime}s.png") # plot all the Eleanor light curves
+lc_plot.figure.savefig(processed_lightcurve_plots_pc_lc_parent_dir + f"/{i:02}-{j:01} {name} Sector {sector} {method_eleanor} All-in-one Light Curves Exptime={exptime}s.png")
+
+# plot the light curve of the selected type
 j += 1 # count the sub-step
 if lc_type.lower() == 'raw':
     lc_proc = lc_raw
@@ -192,9 +202,10 @@ elif lc_type.lower() == 'psf' or lc_type.lower() == 'psf modelled':
     lc_proc = lc_psf
 lc_proc_plot, ax_lc_proc = plt.subplots(figsize=(20, 5))
 lc_proc.normalize().scatter(ax=ax_lc_proc)
-ax_lc_proc.set_title(f"{name} Sector {sector} {method_eleanor} {lc_type} Light Curve")
+ax_lc_proc.set_title(f"{name} Sector {sector} {method_eleanor} {lc_type} Light Curve Exptime={exptime}s")
 lc_proc_plot.figure.tight_layout()
-lc_proc_plot.figure.savefig(processed_lightcurve_plots_pc_lc_parent_dir + f"/{i:02}-{j:01} {name} Sector {sector} {method_eleanor} {lc_type} Light Curve Exptime={exptime}s.png") # plot the light curve of the selected type
+lc_proc_plot.figure.savefig(processed_lightcurve_plots_pc_lc_parent_dir + f"/{i:02}-{j:01} {name} Sector {sector} {method_eleanor} {lc_type} Light Curve Exptime={exptime}s.png")
+
 
 # Plot the pixel-by-pixel light curves
 i += 1 # count the step
@@ -204,21 +215,26 @@ aperture_rows, aperture_cols = np.where(data.aperture > 0)
 tpf_margin = 3 ##### set the margin of the TPF plot #####
 colrange = [int(np.min(aperture_cols) - tpf_margin), int(np.max(aperture_cols) + tpf_margin + 1)]
 rowrange = [int(np.min(aperture_rows) - tpf_margin), int(np.max(aperture_rows) + tpf_margin + 1)]
+
 j = 1 # count the sub-step
 pbp_lc_proc_plot = visualize.pixel_by_pixel(colrange=colrange, rowrange=rowrange, data_type=lc_type, color_by_pixel=True)
-pbp_lc_proc_plot.suptitle(f"{name} Sector {sector} {method_eleanor} {lc_type}-flux Pixel-by-Pixel Light Curves", fontsize='x-large')
+pbp_lc_proc_plot.suptitle(f"{name} Sector {sector} {method_eleanor} {lc_type}-flux Pixel-by-Pixel Light Curves Exptime={exptime}s", fontsize='x-large')
 pbp_lc_proc_plot.figure.tight_layout()
 pbp_lc_proc_plot.figure.savefig(processed_lightcurve_plots_pc_lc_parent_dir + f"/{i:02}-{j:01} {name} Sector {sector} {method_eleanor} {lc_type}-flux Pixel-by-Pixel Light Curves Exptime={exptime}s.png") # plot the pixel-by-pixel light curves of the selected type
+
 j += 1 # count the sub-step
 pbp_lc_pg_plot = visualize.pixel_by_pixel(colrange=colrange, rowrange=rowrange, data_type="periodogram", color_by_pixel=True)
-pbp_lc_pg_plot.suptitle(f"{name} Sector {sector} {method_eleanor} Periodogram Pixel-by-Pixel Light Curves", fontsize='x-large')
+pbp_lc_pg_plot.suptitle(f"{name} Sector {sector} {method_eleanor} Periodogram (View='Period') Pixel-by-Pixel Light Curves Exptime={exptime}s", fontsize='x-large')
 pbp_lc_pg_plot.figure.tight_layout()
-pbp_lc_pg_plot.figure.savefig(processed_lightcurve_plots_pc_lc_parent_dir + f"/{i:02}-{j:01} {name} Sector {sector} {method_eleanor} Periodogram Pixel-by-Pixel Light Curves Exptime={exptime}s.png") # plot the periodogram pixel-by-pixel light curves
+pbp_lc_pg_plot.figure.savefig(processed_lightcurve_plots_pc_lc_parent_dir + f"/{i:02}-{j:01} {name} Sector {sector} {method_eleanor} Periodogram (View='Period') Pixel-by-Pixel Light Curves Exptime={exptime}s.png") # plot the periodogram pixel-by-pixel light curves
+
 j += 1 # count the sub-step
 pbp_lc_amp_plot = visualize.pixel_by_pixel(colrange=colrange, rowrange=rowrange, data_type="amplitude", view='frequency', color_by_pixel=True)
-pbp_lc_amp_plot.suptitle(f"{name} Sector {sector} {method_eleanor} Amplitude Pixel-by-Pixel Light Curves", fontsize='x-large')
+pbp_lc_amp_plot.suptitle(f"{name} Sector {sector} {method_eleanor} Amplitude (View='Frequency') Pixel-by-Pixel Light Curves Exptime={exptime}s", fontsize='x-large')
 pbp_lc_amp_plot.figure.tight_layout()
-pbp_lc_amp_plot.figure.savefig(processed_lightcurve_plots_pc_lc_parent_dir + f"/{i:02}-{j:01} {name} Sector {sector} {method_eleanor} Amplitude Pixel-by-Pixel Light Curves Exptime={exptime}s.png") # plot the amplitude pixel-by-pixel light curves
+pbp_lc_amp_plot.figure.savefig(processed_lightcurve_plots_pc_lc_parent_dir + f"/{i:02}-{j:01} {name} Sector {sector} {method_eleanor} Amplitude (View='Frequency') Pixel-by-Pixel Light Curves Exptime={exptime}s.png") # plot the amplitude pixel-by-pixel light curves
+
+
 
 
 ### Background ###
@@ -226,33 +242,36 @@ pbp_lc_amp_plot.figure.savefig(processed_lightcurve_plots_pc_lc_parent_dir + f"/
 bkg_1d_pc = data.to_lightkurve(flux=data.flux_bkg)
 bkg_1d_tpf = data.to_lightkurve(flux=data.tpf_flux_bkg)
 
+
 # Plot the 1D background
 i += 1 # count the step
 bkg_1d_plot, ax_bkg_1d = plt.subplots(figsize=(20, 5))
 bkg_1d_pc.scatter(ax=ax_bkg_1d, normalize=False, offset=2000, label='1D postcard', c='r')
 bkg_1d_tpf.scatter(ax=ax_bkg_1d, normalize=False, offset=0, label='1D TPF', c='g')
-ax_bkg_1d.set_title(f"{name} Sector {sector} {method_eleanor} 1D Background ({data.bkg_type} is applied.)")
+ax_bkg_1d.set_title(f"{name} Sector {sector} {method_eleanor} 1D Background Exptime={exptime}s ({data.bkg_type} is applied.)")
 bkg_1d_plot.figure.tight_layout()
 bkg_1d_plot.figure.savefig(processed_lightcurve_plots_pc_lc_parent_dir + f"/{i:02} {name} Sector {sector} {method_eleanor} 1D Background Exptime={exptime}s.png")
 
-# Plot the aperture-overplotted TPF, the Gaia-overlay TPF, the 2D background and the aperture
+
+# Plot the aperture-overplotted and Gaia-overlay TPF, the Gaia-overlay TPF, the 2D background and the aperture
 i += 1 # count the step
 k = 0 # cadence index
 bkg_2d_aperture_tpf_plot, ((ax_aperture_contour_tpf, ax_gaia_overlay_tpf), (ax_bkg_2d_tpf, ax_aperture)) = plt.subplots(2, 2, figsize=(15, 10))
 visualize.aperture_contour(ax=ax_aperture_contour_tpf, cadence=k, aperture=data.aperture)
 visualize.add_gaia_figure_elements(fig_or_ax=ax_aperture_contour_tpf, individual=True, magnitude_limit=18) # add the Gaia figure elements
-ax_aperture_contour_tpf.set_title(f"{name} Sector {sector} {method_eleanor} Aperture-overplotted &\nGaia-overlay Target Pixel File (Cadence {k:04})") # plot the aperture-overplotted and Gaia-overlay TPF
+ax_aperture_contour_tpf.set_title(f"{name} Sector {sector} {method_eleanor} Aperture-overplotted &\nGaia-overlay Target Pixel File (Cadence {k:04}) Exptime={exptime}s") # plot the aperture-overplotted and Gaia-overlay TPF
 visualize.plot_gaia_overlay(ax=ax_gaia_overlay_tpf, cadence=k, magnitude_limit=18)
-ax_gaia_overlay_tpf.set_title(f"{name} Sector {sector} {method_eleanor} Gaia-overlay TPF (Cadence {k:04})") # plot the Gaia-overlay TPF
+ax_gaia_overlay_tpf.set_title(f"{name} Sector {sector} {method_eleanor} Gaia-overlay TPF (Cadence {k:04}) Exptime={exptime}s") # plot the Gaia-overlay TPF
 ax_bkg_2d_tpf.imshow(data.bkg_tpf[k], origin='lower')
 if postcard:
-    ax_bkg_2d_tpf.set_title(f"{name} Sector {sector} {method_eleanor} 2D Interpolated Background\n(Cadence {k:04}, within the scope of TPF)") # plot the 2D background within the scope of TPF
+    ax_bkg_2d_tpf.set_title(f"{name} Sector {sector} {method_eleanor} 2D Interpolated Background\n(Cadence {k:04} Exptime={exptime}s, within the scope of TPF)") # plot the 2D background within the scope of TPF
 if tesscut:
-    ax_bkg_2d_tpf.set_title(f"{name} Sector {sector} {method_eleanor} 2D Interpolated Background\n(Cadence {k:04}, the same as the TESScut Postcard)") # the 2D background is the same as the TESScut postcard when using TESScut
+    ax_bkg_2d_tpf.set_title(f"{name} Sector {sector} {method_eleanor} 2D Interpolated Background\n(Cadence {k:04} Exptime={exptime}s, the same as the TESScut Postcard)") # the 2D background is the same as the TESScut postcard when using TESScut
 ax_aperture.imshow(data.aperture, origin='lower')
-ax_aperture.set_title(f"{name} Sector {sector} {method_eleanor} Aperture") # plot the aperture
+ax_aperture.set_title(f"{name} Sector {sector} {method_eleanor} Aperture Exptime={exptime}s") # plot the aperture
 bkg_2d_aperture_tpf_plot.figure.tight_layout()
 bkg_2d_aperture_tpf_plot.figure.savefig(processed_lightcurve_plots_pc_lc_parent_dir + f"/{i:02} {name} Sector {sector} {method_eleanor} 2D Background & Aperture TPF Exptime={exptime}s.png")
+
 
 # Render the 2D background animation
 i += 1 # count the step
@@ -264,7 +283,7 @@ if render_bkg_2d_animation and postcard:
     bkg_2d_animation_artists = []
     for k in range(len(data.bkg_tpf)):
         ax_bkg_2d_animation_cadence_img = ax_bkg_2d_animation.imshow(data.bkg_tpf[k], origin='lower', animated=True)
-        ax_bkg_2d_animation_cadence_title = ax_bkg_2d_animation.text(0.5, 1.01, f"{name} Sector {sector} {method_eleanor} 2D Background (Cadence {k:04})", ha='center', transform=ax_bkg_2d_animation.transAxes, fontfamily=rcParams['font.family'], fontsize='xx-large', fontweight=rcParams['axes.titleweight'])
+        ax_bkg_2d_animation_cadence_title = ax_bkg_2d_animation.text(0.5, 1.01, f"{name} Sector {sector} {method_eleanor} 2D Background (Cadence {k:04}) Exptime={exptime}s", ha='center', transform=ax_bkg_2d_animation.transAxes, fontfamily=rcParams['font.family'], fontsize='xx-large', fontweight=rcParams['axes.titleweight'])
         bkg_2d_animation_artists.append([ax_bkg_2d_animation_cadence_img, ax_bkg_2d_animation_cadence_title])
     bkg_2d_animation = animation.ArtistAnimation(fig=bkg_2d_animation_plot, artists=bkg_2d_animation_artists, interval=int(1000/bkg_2d_animation_framerate), blit=True)
     bkg_2d_animation_writer = animation.FFMpegWriter(fps=int(bkg_2d_animation_framerate), metadata=dict(artist='zzyu'), bitrate=2000)
@@ -275,7 +294,9 @@ if render_bkg_2d_animation and postcard:
 elif not render_bkg_2d_animation:
     print(f"Skipped {name} Sector {sector} {method_eleanor} 2D Background animation rendering.")
 elif not postcard:
-    print(f"The 2D background of postcard produced using TESScut is the same as the TESScut postcard itself. Please render the postcard animation instead to visualize the TESScut postcard.")
+    print(f"The 2D background of TESScut postcard is the same as the TESScut postcard itself. Please render the postcard animation instead to visualize the TESScut postcard.")
+
+
 
 
 ### Postcard ###
@@ -292,7 +313,7 @@ if render_postcard_animation:
     postcard_animation_artists = []
     for k in range(len(data.post_obj.flux)):
         ax_postcard_animation_cadence_img = ax_postcard_animation.imshow(data.post_obj.flux[k], origin='lower', animated=True)
-        ax_postcard_animation_cadence_title = ax_postcard_animation.text(0.5, 1.01, f"{name} Sector {sector} {method_eleanor} Postcard (Cadence {k:04})", ha='center', transform=ax_postcard_animation.transAxes, fontfamily=rcParams['font.family'], fontsize='xx-large', fontweight=rcParams['axes.titleweight'])
+        ax_postcard_animation_cadence_title = ax_postcard_animation.text(0.5, 1.01, f"{name} Sector {sector} {method_eleanor} Postcard (Cadence {k:04}) Exptime={exptime}s", ha='center', transform=ax_postcard_animation.transAxes, fontfamily=rcParams['font.family'], fontsize='xx-large', fontweight=rcParams['axes.titleweight'])
         postcard_animation_artists.append([ax_postcard_animation_cadence_img, ax_postcard_animation_cadence_title])
     postcard_animation = animation.ArtistAnimation(fig=postcard_animation_plot, artists=postcard_animation_artists, interval=int(1000/postcard_animation_framerate), blit=True)
     postcard_animation_writer = animation.FFMpegWriter(fps=int(postcard_animation_framerate), metadata=dict(artist='zzyu'), bitrate=2000)
@@ -302,24 +323,6 @@ if render_postcard_animation:
     print(f"Rendered {name} Sector {sector} {method_eleanor} Postcard animation in {postcard_animation_rendering_time} seconds.")
 if not render_postcard_animation:
     print(f"Skipped {name} Sector {sector} {method_eleanor} Postcard animation rendering.")
-
-
-
-
-### ------ Lightkurve ------ ###
-# Flatten the lightcurve and plot the flatten light curve
-i += 1 # count the step
-flatten = True # set whether to flatten or not
-flatten_window_proportion = 0.02
-flatten_window_length = int(lc_corr.time.shape[0] * flatten_window_proportion)
-if flatten_window_length % 2 == 0:
-    flatten_window_length += 1 # the window length should be an odd number
-lc_flatten = lc_corr.flatten(window_length=flatten_window_length)
-lc_flatten_plot, ax_flatten = plt.subplots(figsize=(20, 5))
-lc_flatten.errorbar(ax=ax_flatten)
-ax_flatten.set_title(f"{name} Sector {sector} {method_lightkurve} Flatten Light Curve (Window Length: {flatten_window_length})")
-lc_flatten_plot.figure.tight_layout()
-lc_flatten_plot.figure.savefig(processed_lightcurve_plots_pc_lc_parent_dir + f"/{i:02} {name} Sector {sector} {flatten_window_proportion * 100}% Window {method_lightkurve} Flatten Light Curve Exptime={exptime}s.png")
 
 
 
@@ -366,7 +369,4 @@ if render_bkg_2d_animation:
     methodology_result_file.write(f"Rendered the {name} Sector {sector} {method_eleanor} 2D background animation in {bkg_2d_animation_rendering_time} seconds.\n\n")
 if render_postcard_animation:
     methodology_result_file.write(f"Rendered the {name} Sector {sector} {method_eleanor} Postcard animation in {postcard_animation_rendering_time} seconds.\n\n")
-methodology_result_file.write("Lightkurve: \n"
-                                    f"Flatten: {flatten}\n"
-                                    f"Flatten Window Proportion: {flatten_window_proportion}\n")
 methodology_result_file.close()

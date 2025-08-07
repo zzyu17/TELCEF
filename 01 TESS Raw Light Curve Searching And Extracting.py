@@ -70,7 +70,7 @@ print(f"Downloaded the {mission} light curves.\n")
 lc_collection_mission_normalized_plot, ax_lc_collection_mission_normalized = plt.subplots(figsize=(20, 5))
 for lc_mission in lc_collection_mission:
     lc_mission_normalized = lc_mission.normalize()
-    lc_mission_normalized.plot(ax=ax_lc_collection_mission_normalized, label=f"{lc_mission_normalized.mission} {stage} {getattr(lc_mission_normalized, attribute)} Pipeline {lc_mission_normalized.author}, CDPP={lc_mission_normalized.estimate_cdpp():.2f}")
+    lc_mission_normalized.plot(ax=ax_lc_collection_mission_normalized, label=f"{lc_mission_normalized.mission} {stage} {getattr(lc_mission_normalized, attribute)} Author {lc_mission_normalized.author}, CDPP={lc_mission_normalized.estimate_cdpp():.2f}")
 ax_lc_collection_mission_normalized.set_title(f"{name} {mission} Normalized Raw Light Curves")
 ax_lc_collection_mission_normalized.legend(loc='upper right')
 lc_collection_mission_normalized_plot.figure.tight_layout()
@@ -92,17 +92,17 @@ lc_search_result_author_list = [
 ]
 
 for lc_mission_author, lcs_mission in lc_mission_authors_dict.items():
-    lc_mission_author_index = np.where(np.char.find(lc_search_result_author_list, lc_mission_author) >= 0)[0] # find the indexes of search results whose authors match those in lc_mission_authors_dict
-    print(f"Found {len(lcs_mission)} light curve(s) for Pipeline {lc_mission_author} in the search result table, first of which matches at index {lc_mission_author_index[0]}.")
+    lc_mission_author_index = np.where(np.char.find(lc_search_result_author_list, lc_mission_author) >= 0)[0] # find the indexes of search results whose author match that in lc_mission_authors_dict
+    print(f"Found {len(lcs_mission)} light curve(s) for Author {lc_mission_author} in the search result table, first of which matches at index {lc_mission_author_index[0]}.")
 
     for j in range(len(lcs_mission)):
         lc_mission = lcs_mission[j]
         # print(list(lc_mission.meta.keys()))
-        print(f"Plotting the single raw light curve for {mission} Pipeline {lc_mission.author} Exptime={lc_search_result.exptime.data[lc_mission_author_index[j]]}s...")
+        print(f"Plotting the single raw light curve for {mission} Author {lc_mission.author} Exptime={lc_search_result.exptime.data[lc_mission_author_index[j]]}s...")
         lc_mission_plot, ax_lc_mission = plt.subplots(figsize=(20, 5))
         lc_mission.plot(ax=ax_lc_mission, label=f"CDPP={lc_mission.estimate_cdpp():.2f}")
-        ax_lc_mission.set_title(f"{name} {mission} {stage} {getattr(lc_mission, attribute)} Pipeline {lc_mission.author} Raw Light Curve Exptime={lc_search_result.exptime.data[lc_mission_author_index[j]]}s")
+        ax_lc_mission.set_title(f"{name} {mission} {stage} {getattr(lc_mission, attribute)} Author {lc_mission.author} Raw Light Curve Exptime={lc_search_result.exptime.data[lc_mission_author_index[j]]}s")
         ax_lc_mission.legend(loc='upper right')
         lc_mission_plot.figure.tight_layout()
-        lc_mission_plot.figure.savefig(raw_lightcurve_plots_mission_parent_dir + f"/{name} {mission} {stage} {getattr(lc_mission, attribute)} Pipeline {lc_mission.author} Raw Light Curve Exptime={lc_search_result.exptime.data[lc_mission_author_index[j]]}s.png")
+        lc_mission_plot.figure.savefig(raw_lightcurve_plots_mission_parent_dir + f"/{name} {mission} {stage} {getattr(lc_mission, attribute)} Author {lc_mission.author} Raw Light Curve Exptime={lc_search_result.exptime.data[lc_mission_author_index[j]]}s.png")
     print("")
