@@ -39,7 +39,7 @@ source:
 ### Planet parameters ###
 planet:
   # from NASA Exoplanet Archive
-  name: "WASP-80 b"
+  name: "WASP-80_b"
   p: 3.06785234 # days, orbital period
   t0: 2456487.425006 # BJD, epoch time
   transit_duration: 0.09638 # days
@@ -106,7 +106,6 @@ directory:
 
   # used by D_Transit_Fitting_PyTransit
   pytransit_fitting_plots_dir: "/D_Transit_Fitting_PyTransit"
-
 
 
 ### ------ Script-specific parameters ------ ###
