@@ -448,6 +448,7 @@ if fold:
     lc_folded.errorbar(ax=ax_lc_folded, label=f"CDPP={lc_folded_cdpp:.2f} ppm", alpha=alpha_exptime / 2)
     ax_lc_folded.legend(loc='lower right')
     ax_lc_folded.set_title(f"{lc_plot_title} Period={p_fold:.4f}d Folded Light Curve")
+    ax_lc_folded.set_ylabel("Flux")
     lc_folded_plot.figure.tight_layout()
     lc_folded_plot.figure.savefig(pytransit_fitting_plots_dir_source_sector_lc + f"/{i:02}_Period={p_fold:.4f}d_Folded_Light_Curve.png")
     plt.close()
@@ -475,10 +476,12 @@ if bin:
     ax_lc_fnb.legend(loc='lower right')
     if fold:
         ax_lc_fnb.set_title(f"{lc_plot_title} Time-bin-size={time_bin_size:.1f} Binned\nPeriod={p_fold:.4f}d Folded Light Curve")
+        ax_lc_fnb.set_ylabel("Flux")
         lc_fnb_plot.figure.tight_layout()
         lc_fnb_plot.figure.savefig(pytransit_fitting_plots_dir_source_sector_lc + f"/{i:02}_Time-Bin-Size={time_bin_size.value}s_Binned_Period={p_fold:.4f}d_Folded_Light_Curve.png")
     else:
         ax_lc_fnb.set_title(f"{lc_plot_title} Time-bin-size={time_bin_size:.1f} Binned Light Curve")
+        ax_lc_fnb.set_ylabel("Flux")
         lc_fnb_plot.figure.tight_layout()
         lc_fnb_plot.figure.savefig(pytransit_fitting_plots_dir_source_sector_lc + f"/{i:02}_Time-Bin-Size={time_bin_size.value}s_Binned_Light_Curve.png")
     plt.close()
