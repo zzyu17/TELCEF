@@ -3,7 +3,7 @@ import os
 
 import lightkurve as lk
 
-from utils import search_matched_fits_file, format_fits_fn
+from utils import remove_subfolder, remove_zip, search_matched_fits_file, format_fits_fn
 from A_ab_Configuration_Loader import *
 
 
@@ -40,6 +40,12 @@ lc_downloaded_path = lc_downloaded_dir_source + lc_downloaded_fn
 matched_fits_file_path = search_matched_fits_file(lc_downloaded_dir_source, 'lc', matched_lc_config)
 if matched_fits_file_path is not None:
     print(f"Lightcurve file already exists in the data directory: {matched_fits_file_path}.\n")
+    if matched_fits_file_path != lc_downloaded_path:
+        # rename the existing FITS file to the standardized filename
+        shutil.copy(matched_fits_file_path, lc_downloaded_path)
+        remove_subfolder(lc_downloaded_dir_source)
+        remove_zip(lc_downloaded_dir_source)
+        print(f"Renamed to the standardized filename: {lc_downloaded_path}.\n")
 
 
 else:
@@ -66,7 +72,9 @@ else:
 
         if lc_downloaded_original is not None:
             # rename the downloaded FITS file to the standardized filename
-            os.rename(lc_downloaded_original.path, lc_downloaded_path)
+            shutil.copy(lc_downloaded_original.filename, lc_downloaded_path)
+            remove_subfolder(lc_downloaded_dir_source)
+            remove_zip(lc_downloaded_dir_source)
             print(f"Successfully downloaded and saved to the data directory of the source: {lc_downloaded_path}.\n")
         else:
             print(f"No lightcurve found for the specified criteria: source: {name}, mission: {mission}, sector: {sector}, author: {author}, exptime={exptime}s.\n")

@@ -6,7 +6,7 @@ import lightkurve as lk
 from astropy.io import fits
 from astroquery.mast import Tesscut
 
-from utils import remove_subfolder, search_matched_fits_file, format_fits_fn, remove_zip
+from utils import remove_subfolder, remove_zip, search_matched_fits_file, format_fits_fn
 from A_ab_Configuration_Loader import *
 
 
@@ -60,6 +60,13 @@ if matched_fits_file_path is not None:
         config = update_config(config_path, update_dict)
 
     print(f"TPF file already exists in the data directory: {matched_fits_file_path}.\n")
+
+    if matched_fits_file_path != tpf_downloaded_path:
+        # rename the existing FITS file to the standardized filename
+        shutil.copy(matched_fits_file_path, tpf_downloaded_path)
+        remove_subfolder(tpf_downloaded_dir_source)
+        remove_zip(tpf_downloaded_dir_source)
+        print(f"Renamed to the standardized filename: {tpf_downloaded_path}.\n")
 
 
 else:
@@ -128,7 +135,7 @@ else:
                 tpf_downloaded_path = tpf_downloaded_dir_source + tpf_downloaded_fn
 
             # rename the downloaded FITS file to the standardized filename
-            shutil.copy(tpf_downloaded_original.path, tpf_downloaded_path)
+            shutil.copy(tpf_downloaded_original.filename, tpf_downloaded_path)
             remove_subfolder(tpf_downloaded_dir_source)
             remove_zip(tpf_downloaded_dir_source)
             print(f"Successfully downloaded and saved to the data directory of the source: {tpf_downloaded_path}.\n")
