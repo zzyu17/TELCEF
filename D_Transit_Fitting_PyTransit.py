@@ -445,7 +445,7 @@ if fold:
 
     lc_folded_plot, ax_lc_folded = plt.subplots(figsize=(10, 5))
     lc_folded.scatter(ax=ax_lc_folded, label=None, s=0.1, alpha=1.0)
-    lc_folded.errorbar(ax=ax_lc_folded, label=f"CDPP={lc_folded_cdpp:.2f} ppm", alpha=alpha_exptime / 2)
+    lc_folded.errorbar(ax=ax_lc_folded, label=f"{cdpp_transit_duration:.3f}h-CDPP={lc_folded_cdpp:.2f}", alpha=alpha_exptime / 2)
     ax_lc_folded.legend(loc='lower right')
     ax_lc_folded.set_title(f"{lc_plot_title} Period={p_fold:.4f}d Folded Light Curve")
     ax_lc_folded.set_ylabel("Flux")
@@ -472,7 +472,7 @@ if bin:
 
     lc_fnb_plot, ax_lc_fnb = plt.subplots(figsize=(10, 5))
     lc_fnb.scatter(ax=ax_lc_fnb, label=None, s=0.1, alpha=1.0)
-    lc_fnb.errorbar(ax=ax_lc_fnb, label=f"CDPP={lc_fnb_cdpp:.2f} ppm", alpha=alpha_exptime * 5 if alpha_exptime <= 1/5 else 1.0)
+    lc_fnb.errorbar(ax=ax_lc_fnb, label=f"{cdpp_transit_duration:.3f}h-CDPP={lc_fnb_cdpp:.2f} ppm", alpha=alpha_exptime * 5 if alpha_exptime <= 1/5 else 1.0)
     ax_lc_fnb.legend(loc='lower right')
     if fold:
         ax_lc_fnb.set_title(f"{lc_plot_title} Time-bin-size={time_bin_size:.1f} Binned\nPeriod={p_fold:.4f}d Folded Light Curve")
