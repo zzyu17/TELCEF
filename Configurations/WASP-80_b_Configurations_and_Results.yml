@@ -63,6 +63,7 @@ directory:
   lc_extracted_dir: "/TPF_Extracted_Light_Curve" # used by B_ab_Light_Curve_Extracting_From_TPF
   eleanor_lc_dir: "/Eleanor_Light_Curve" # used by B_c_TESS_Light_Curve_Extracting_and_Preliminary_Processing_Eleanor
   lightkurve_lc_dir: "/Lightkurve_Processed_Light_Curve" # used by C_Light_Curve_Further_Processing_Lightkurve
+  lc_fnb_dir: "/Folded_and_Binned_Light_Curve" # used by D_Transit_Fitting_PyTransit
 
   # Lightkurve cache directories
   lightkurve_cache_root: "~/.lightkurve-cache"
@@ -384,6 +385,8 @@ transit_fitting:
 
   bin: true
   time_bin_size: # seconds; if left blank (i.e., set to None), it will be set to the exposure time
+
+  fnb: _Folded_&_Binned
 
   # Folded-and-binned transit fitting parameters
   fit_fnb: true

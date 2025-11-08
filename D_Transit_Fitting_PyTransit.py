@@ -37,6 +37,11 @@ os.makedirs(lightkurve_lc_dir, exist_ok=True)
 lightkurve_lc_dir_source = lightkurve_lc_dir + f"/{name}"
 os.makedirs(lightkurve_lc_dir_source, exist_ok=True)
 
+lc_fnb_dir = data_dir + config['directory']['lc_fnb_dir']
+os.makedirs(lc_fnb_dir, exist_ok=True)
+lc_fnb_dir_source = lc_fnb_dir + f"/{name}"
+os.makedirs(lc_fnb_dir_source, exist_ok=True)
+
 pytransit_fitting_plots_dir = base_dir + config["directory"]["pytransit_fitting_plots_dir"]
 os.makedirs(pytransit_fitting_plots_dir, exist_ok=True)
 pytransit_fitting_plots_dir_source_sector = pytransit_fitting_plots_dir + f"/{name}_Sector-{sector}"
@@ -490,6 +495,28 @@ if bin:
 else:
     lc_fnb = lc_folded.copy()
     lc_fnb_cdpp = calculate_cdpp(lc_fnb, exptime=exptime)
+
+
+
+
+# Save the folded-and-binned lightcurve into a FITS file
+if fold and bin:
+    fnb = "_Folded_&_Binned"
+elif fold and not bin:
+    fnb = "_Folded"
+elif not fold and bin:
+    fnb = "_Binned"
+else:
+    fnb = ""
+
+config = update_config(config_path, {'transit_fitting.fnb': fnb})
+
+lc_fnb_fn = lc_fn.replace("_LC", f"{fnb}_LC", -1)
+lc_fnb_path = lc_fnb_dir_source + f"/{lc_fnb_fn}"
+lc_fnb.to_fits(path=lc_fnb_path, overwrite=True)
+
+
+print(f"Successfully folded and/or binned the light curve and saved it to the data directory of the source: {lc_fnb_path}.\n")
 
 
 
