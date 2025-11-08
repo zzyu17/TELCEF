@@ -78,7 +78,7 @@ for l in range(len(fits_fn_list)):
 if lc_path is None:
     raise FileNotFoundError("The specified lightcurve file does not exist in the data directory. Please check if the file exists and run the light curve extracting/downloading scripts first if necessary.")
 else:
-    lc = lk.read(lc_path)
+    lc = lk.read(lc_path).normalize() # Force lightcurve normalization before fitting
     print(f"Successfully found and read the specified lightcurve file: {lc_path}.\n")
 
 
