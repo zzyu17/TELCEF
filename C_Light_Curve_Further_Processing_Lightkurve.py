@@ -313,13 +313,15 @@ lightkurve_lc = lc_clipped.copy()
 lightkurve_lc_baseline = lc_clipped_baseline.copy()
 lightkurve_lc_transit = lc_clipped_transit.copy()
 
+sigma_transit_lower_correction = f'{sigma_transit_lower:.1f}' if sigma_transit_lower != float('inf') else 'inf'
+
 
 if flatten and clip:
-    correction = "_Flattened_&_Clipped"
+    correction = f"_Flattened-p{flatten_window_proportion:.2f}-l{flatten_window_length}-o{flatten_polyorder}_&_Clipped-b{sigma_baseline:.1f}-tu{sigma_transit_upper:.1f}-tl{sigma_transit_lower_correction}"
 elif flatten and not clip:
-    correction = "_Flattened"
+    correction = f"_Flattened-p{flatten_window_proportion:.2f}-l{flatten_window_length}-o{flatten_polyorder}"
 elif not flatten and clip:
-    correction = "_Clipped"
+    correction = f"_Clipped-b{sigma_baseline:.1f}-tu{sigma_transit_upper:.1f}-tl{sigma_transit_lower_correction}"
 else:
     correction = ""
 

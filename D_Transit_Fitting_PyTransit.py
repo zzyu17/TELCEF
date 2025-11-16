@@ -501,11 +501,11 @@ else:
 
 # Save the folded-and-binned lightcurve into a FITS file
 if fold and bin:
-    fnb = "_Folded_&_Binned"
+    fnb = f"_Folded-p{p_fold:.4f}-t{t0_fold:.4f}_&_Binned-t{time_bin_size.value:.1f}"
 elif fold and not bin:
-    fnb = "_Folded"
+    fnb = f"_Folded-p{p_fold:.4f}-t{t0_fold:.4f}"
 elif not fold and bin:
-    fnb = "_Binned"
+    fnb = f"_Binned-t{time_bin_size.value:.1f}"
 else:
     fnb = ""
 
