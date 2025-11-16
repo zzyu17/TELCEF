@@ -15,6 +15,11 @@ os.makedirs(tpf_downloaded_dir, exist_ok=True)
 tpf_downloaded_dir_source = tpf_downloaded_dir + f"/{name}"
 os.makedirs(tpf_downloaded_dir_source, exist_ok=True)
 
+lc_downloaded_dir = data_dir + config['directory']['lc_downloaded_dir']
+os.makedirs(lc_downloaded_dir, exist_ok=True)
+lc_downloaded_dir_source = lc_downloaded_dir + f"/{name}"
+os.makedirs(lc_downloaded_dir_source, exist_ok=True)
+
 eleanor_lc_dir = data_dir + config['directory']['eleanor_lc_dir']
 os.makedirs(eleanor_lc_dir, exist_ok=True)
 eleanor_lc_dir_source = eleanor_lc_dir + f"/{name}"
@@ -23,8 +28,13 @@ os.makedirs(eleanor_lc_dir_source, exist_ok=True)
 
 
 
+lc_downloaded_dir = data_dir + config['directory']['lc_downloaded_dir']
+os.makedirs(lc_downloaded_dir, exist_ok=True)
+lc_downloaded_dir_source = lc_downloaded_dir + f"/{name}"
+os.makedirs(lc_downloaded_dir_source, exist_ok=True)
+
 # Inspect each FITS file in the assigned directory (including sub-directories)
-for root, dirs, files in os.walk(tpf_downloaded_dir_source): ##### set the directory to be inspected #####
+for root, dirs, files in os.walk(lc_downloaded_dir_source): ##### set the directory to be inspected #####
     for file in files:
         if file.endswith(".fits"):
             fits_path = root + '/' + file
