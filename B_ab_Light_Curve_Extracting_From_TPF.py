@@ -166,12 +166,16 @@ if lightcurve_extracting_method == 'lightkurve_aperture':
 
     k = config['lightcurve_extracting']['lightkurve_aperture']['tpf_plot_cadence'] # set the cadence index
     ax_lc_ylim = config['lightcurve_extracting']['lightkurve_aperture']['lc_plot_ylim'] # set the y-axis limit of the light curve plot
+    plot_errorbar = config['lightcurve_extracting']['lightkurve_aperture']['plot_errorbar'] # set whether to plot the error bar of the light curve
 
     tpf_lc_plot, (ax_tpf, ax_lc) = plt.subplots(1, 2, figsize=(25, 5), gridspec_kw={'width_ratios': [1, 3]})
     aperture_overlay(tpf_selected.flux, aperture_mask=aperture_mask, data_type='Flux', cadence=k, ax=ax_tpf, show_colorbar=True)
     ax_tpf.set_title(f"{name} Sector {sector} Aperture {aperture_mask_type}\nTPF (Cadence {k:04}) Exptime={exptime}s")
-    lc_extracted.normalize().scatter(ax=ax_lc, label=None, s=0.1)
-    lc_extracted.normalize().errorbar(ax=ax_lc, label=f"{cdpp_transit_duration:.3f}h-CDPP={lc_extracted_cdpp:.2f} ppm")
+    if plot_errorbar:
+        lc_extracted.normalize().scatter(ax=ax_lc, label=None, s=0.1)
+        lc_extracted.normalize().errorbar(ax=ax_lc, label=f"{cdpp_transit_duration:.3f}h-CDPP={lc_extracted_cdpp:.2f} ppm")
+    else:
+        lc_extracted.normalize().scatter(ax=ax_lc, label=f"{cdpp_transit_duration:.3f}h-CDPP={lc_extracted_cdpp:.2f} ppm", s=0.1)
     if ax_lc_ylim is not None and all(ylim is not None for ylim in ax_lc_ylim):
         ax_lc.set_ylim(np.percentile(lc_extracted.remove_nans().normalize().flux, ax_lc_ylim[0]), np.percentile(lc_extracted.remove_nans().normalize().flux, ax_lc_ylim[1]))
         ax_lc.set_title(f"{name} Sector {sector} Aperture {aperture_mask_type} Light Curve ({ax_lc_ylim[0]}% - {ax_lc_ylim[1]}%) Exptime={exptime}s")

@@ -64,6 +64,10 @@ os.makedirs(lightkurve_processed_lightcurve_plots_dir_source_sector_lc, exist_ok
 lc_plot_title = lc_raw_fn_pure.replace(f"_{mission}", "", 1).replace("_LC", "", -1).replace("_", " ").replace("Sector-", "Sector ").replace("lightkurve aperture", "lightkurve_aperture")
 
 
+# Set whether to plot the error bar of the light curve
+plot_errorbar = config["lightkurve"]["plot_errorbar"]
+
+
 
 
 ### ------ Remove NaNs ------ ###
@@ -75,8 +79,11 @@ lc_raw_nans_removed = sort_lc(lc_raw.remove_nans()) # remove NaNs from the raw l
 lc_raw_nans_removed_cdpp = calculate_cdpp(lc_raw_nans_removed, exptime=exptime, cdpp_transit_duration=cdpp_transit_duration)
 
 lc_raw_nans_removed_plot, ax_lc_raw_nans_removed = plt.subplots(figsize=(20, 5))
-lc_raw_nans_removed.scatter(ax=ax_lc_raw_nans_removed, label=None, s=0.1)
-lc_raw_nans_removed.errorbar(ax=ax_lc_raw_nans_removed, label=f"{cdpp_transit_duration:.3f}h-CDPP={lc_raw_nans_removed_cdpp:.2f} ppm")
+if plot_errorbar:
+    lc_raw_nans_removed.scatter(ax=ax_lc_raw_nans_removed, label=None, s=0.1)
+    lc_raw_nans_removed.errorbar(ax=ax_lc_raw_nans_removed, label=f"{cdpp_transit_duration:.3f}h-CDPP={lc_raw_nans_removed_cdpp:.2f} ppm")
+else:
+    lc_raw_nans_removed.scatter(ax=ax_lc_raw_nans_removed, label=f"{cdpp_transit_duration:.3f}h-CDPP={lc_raw_nans_removed_cdpp:.2f} ppm", s=0.1)
 ax_lc_raw_nans_removed.set_title(f"{lc_plot_title} NaNs-Removed Raw Light Curve")
 lc_raw_nans_removed_plot.figure.tight_layout()
 lc_raw_nans_removed_plot.figure.savefig(lightkurve_processed_lightcurve_plots_dir_source_sector_lc + f"/{i:02}-{j:01}_NaNs-Removed_Raw_Light_Curve.png")
@@ -110,8 +117,11 @@ transit_mask_bls_raw_nans_removed = pg_bls_raw_nans_removed.get_transit_mask(per
 lc_fitted_bls_raw_nans_removed = pg_bls_raw_nans_removed.get_transit_model(period=p_bls_raw_nans_removed, transit_time=t0_bls_raw_nans_removed, duration=transit_duration_bls_raw_nans_removed)
 
 lc_fitted_bls_raw_nans_removed_plot, ax_lc_fitted_bls_raw_nans_removed = plt.subplots(figsize=(20, 5))
-lc_raw_nans_removed.scatter(ax=ax_lc_fitted_bls_raw_nans_removed, label=None, s=0.1)
-lc_raw_nans_removed.errorbar(ax=ax_lc_fitted_bls_raw_nans_removed, label=f"NaNs-Removed Raw Light Curve")
+if plot_errorbar:
+    lc_raw_nans_removed.scatter(ax=ax_lc_fitted_bls_raw_nans_removed, label=None, s=0.1)
+    lc_raw_nans_removed.errorbar(ax=ax_lc_fitted_bls_raw_nans_removed, label=f"NaNs-Removed Raw Light Curve")
+else:
+    lc_raw_nans_removed.scatter(ax=ax_lc_fitted_bls_raw_nans_removed, label=f"NaNs-Removed Raw Light Curve", s=0.1)
 lc_fitted_bls_raw_nans_removed.plot(ax=ax_lc_fitted_bls_raw_nans_removed, c='red', label=f"Best Fitted BLS Model")
 ax_lc_fitted_bls_raw_nans_removed.set_title(f"{lc_plot_title} BLS Best Fitted NaNs-Removed Raw Light Curve")
 lc_fitted_bls_raw_nans_removed_plot.figure.tight_layout()
@@ -126,8 +136,11 @@ lc_raw_nans_removed_transit = lc_raw_nans_removed[transit_mask_bls_raw_nans_remo
 lc_raw_nans_removed_baseline_cdpp = calculate_cdpp(lc_raw_nans_removed_baseline, exptime=exptime, cdpp_transit_duration=cdpp_transit_duration)
 
 lc_raw_nans_removed_baseline_plot, ax_lc_raw_nans_removed_baseline = plt.subplots(figsize=(20, 5))
-lc_raw_nans_removed_baseline.scatter(ax=ax_lc_raw_nans_removed_baseline, label=None, s=0.1)
-lc_raw_nans_removed_baseline.errorbar(ax=ax_lc_raw_nans_removed_baseline, label=f"{cdpp_transit_duration:.3f}h-CDPP={lc_raw_nans_removed_baseline_cdpp:.2f} ppm")
+if plot_errorbar:
+    lc_raw_nans_removed_baseline.scatter(ax=ax_lc_raw_nans_removed_baseline, label=None, s=0.1)
+    lc_raw_nans_removed_baseline.errorbar(ax=ax_lc_raw_nans_removed_baseline, label=f"{cdpp_transit_duration:.3f}h-CDPP={lc_raw_nans_removed_baseline_cdpp:.2f} ppm")
+else:
+    lc_raw_nans_removed_baseline.scatter(ax=ax_lc_raw_nans_removed_baseline, label=f"{cdpp_transit_duration:.3f}h-CDPP={lc_raw_nans_removed_baseline_cdpp:.2f} ppm", s=0.1)
 ax_lc_raw_nans_removed_baseline.set_title(f"{lc_plot_title} NaNs-Removed Raw Baseline")
 lc_raw_nans_removed_baseline_plot.figure.tight_layout()
 lc_raw_nans_removed_baseline_plot.figure.savefig(lightkurve_processed_lightcurve_plots_dir_source_sector_lc + f"/{i:02}-{j:01}_NaNs-Removed_Raw_Baseline.png")
@@ -164,8 +177,11 @@ if flatten:
 
     j = 1 # count the sub-step
     lc_flattened_plot, ax_lc_flattened = plt.subplots(figsize=(20, 5))
-    lc_flattened.scatter(ax=ax_lc_flattened, label=None, s=0.1)
-    lc_flattened.errorbar(ax=ax_lc_flattened, label=f"{cdpp_transit_duration:.3f}h-CDPP={lc_flattened_cdpp:.2f} ppm")
+    if plot_errorbar:
+        lc_flattened.scatter(ax=ax_lc_flattened, label=None, s=0.1)
+        lc_flattened.errorbar(ax=ax_lc_flattened, label=f"{cdpp_transit_duration:.3f}h-CDPP={lc_flattened_cdpp:.2f} ppm")
+    else:
+        lc_flattened.scatter(ax=ax_lc_flattened, label=f"{cdpp_transit_duration:.3f}h-CDPP={lc_flattened_cdpp:.2f} ppm", s=0.1)
     ax_lc_flattened.set_title(f"{lc_plot_title} {flatten_window_proportion * 100:.1f}% Window Flattened Light Curve")
     ax_lc_flattened.set_ylabel("Flux")
     lc_flattened_plot.figure.tight_layout()
@@ -174,8 +190,11 @@ if flatten:
 
     j += 1 # count the sub-step
     lc_flattened_trend_plot, (ax_lc_flattened, ax_lc_flattened_trend) = plt.subplots(2, 1, figsize=(20, 10))
-    lc_flattened.scatter(ax=ax_lc_flattened, label=None, s=0.1)
-    lc_flattened.errorbar(ax=ax_lc_flattened, label=f"{cdpp_transit_duration:.3f}h-CDPP={lc_flattened_cdpp:.2f} ppm")
+    if plot_errorbar:
+        lc_flattened.scatter(ax=ax_lc_flattened, label=None, s=0.1)
+        lc_flattened.errorbar(ax=ax_lc_flattened, label=f"{cdpp_transit_duration:.3f}h-CDPP={lc_flattened_cdpp:.2f} ppm")
+    else:
+        lc_flattened.scatter(ax=ax_lc_flattened, label=f"{cdpp_transit_duration:.3f}h-CDPP={lc_flattened_cdpp:.2f} ppm", s=0.1)
     ax_lc_flattened.set_title(f"{lc_plot_title} {flatten_window_proportion * 100:.1f}% Window Flattened Light Curve")
     ax_lc_flattened.set_ylabel("Flux")
     lc_flattened_trend.plot(ax=ax_lc_flattened_trend)
@@ -194,8 +213,11 @@ if flatten:
 
     j += 1 # count the sub-step
     lc_flattened_baseline_plot, ax_lc_flattened_baseline = plt.subplots(figsize=(20, 5))
-    lc_flattened_baseline.scatter(ax=ax_lc_flattened_baseline, label=None, s=0.1)
-    lc_flattened_baseline.errorbar(ax=ax_lc_flattened_baseline, label=f"{cdpp_transit_duration:.3f}h-CDPP={lc_flattened_baseline_cdpp:.2f} ppm")
+    if plot_errorbar:
+        lc_flattened_baseline.scatter(ax=ax_lc_flattened_baseline, label=None, s=0.1)
+        lc_flattened_baseline.errorbar(ax=ax_lc_flattened_baseline, label=f"{cdpp_transit_duration:.3f}h-CDPP={lc_flattened_baseline_cdpp:.2f} ppm")
+    else:
+        lc_flattened_baseline.scatter(ax=ax_lc_flattened_baseline, label=f"{cdpp_transit_duration:.3f}h-CDPP={lc_flattened_baseline_cdpp:.2f} ppm", s=0.1)
     ax_lc_flattened_baseline.set_title(f"{lc_plot_title} {flatten_window_proportion * 100:.1f}% Window Flattened Baseline Light Curve")
     ax_lc_flattened_baseline.set_ylabel("Flux")
     lc_flattened_baseline_plot.figure.tight_layout()
@@ -204,8 +226,11 @@ if flatten:
 
     j += 1 # count the sub-step
     lc_flattened_baseline_trend_plot, (ax_lc_flattened_baseline, ax_lc_flattened_baseline_trend) = plt.subplots(2, 1, figsize=(20, 10))
-    lc_flattened_baseline.scatter(ax=ax_lc_flattened_baseline, label=None, s=0.1)
-    lc_flattened_baseline.errorbar(ax=ax_lc_flattened_baseline, label=f"{cdpp_transit_duration:.3f}h-CDPP={lc_flattened_baseline_cdpp:.2f} ppm")
+    if plot_errorbar:
+        lc_flattened_baseline.scatter(ax=ax_lc_flattened_baseline, label=None, s=0.1)
+        lc_flattened_baseline.errorbar(ax=ax_lc_flattened_baseline, label=f"{cdpp_transit_duration:.3f}h-CDPP={lc_flattened_baseline_cdpp:.2f} ppm")
+    else:
+        lc_flattened_baseline.scatter(ax=ax_lc_flattened_baseline, label=f"{cdpp_transit_duration:.3f}h-CDPP={lc_flattened_baseline_cdpp:.2f} ppm", s=0.1)
     ax_lc_flattened_baseline.set_title(f"{lc_plot_title} {flatten_window_proportion * 100:.1f}% Window Flattened Baseline Light Curve")
     ax_lc_flattened_baseline.set_ylabel("Flux")
     lc_flattened_baseline_trend.plot(ax=ax_lc_flattened_baseline_trend)
@@ -250,8 +275,11 @@ if clip:
     lc_clipped_baseline_cdpp = calculate_cdpp(lc_clipped_baseline, exptime=exptime, cdpp_transit_duration=cdpp_transit_duration)
 
     lc_clipped_baseline_plot, ax_lc_clipped_baseline = plt.subplots(figsize=(20, 5))
-    lc_clipped_baseline.scatter(ax=ax_lc_clipped_baseline, label=None, s=0.1)
-    lc_clipped_baseline.errorbar(ax=ax_lc_clipped_baseline, label=f"{cdpp_transit_duration:.3f}h-CDPP={lc_clipped_baseline_cdpp:.2f} ppm")
+    if plot_errorbar:
+        lc_clipped_baseline.scatter(ax=ax_lc_clipped_baseline, label=None, s=0.1)
+        lc_clipped_baseline.errorbar(ax=ax_lc_clipped_baseline, label=f"{cdpp_transit_duration:.3f}h-CDPP={lc_clipped_baseline_cdpp:.2f} ppm")
+    else:
+        lc_clipped_baseline.scatter(ax=ax_lc_clipped_baseline, label=f"{cdpp_transit_duration:.3f}h-CDPP={lc_clipped_baseline_cdpp:.2f} ppm", s=0.1)
     ax_lc_clipped_baseline.set_title(f"{lc_plot_title} {sigma_baseline:.1f} Sigma Clipped Baseline")
     ax_lc_clipped_baseline.set_ylabel("Flux")
     lc_clipped_baseline_plot.figure.tight_layout()
@@ -266,8 +294,11 @@ if clip:
         lc_clipped_transit = lc_flattened_transit.remove_outliers(cenfunc=lambda x, **kwargs: lc_flattened_baseline_nanmedian, sigma_lower=sigma_transit_lower, sigma_upper=sigma_transit_upper) # remove the upper outliers in the transit based on the nanmedian of lc_flattened_baseline
 
         lc_clipped_transit_plot, ax_lc_clipped_transit = plt.subplots(figsize=(20, 5))
-        lc_clipped_transit.scatter(ax=ax_lc_clipped_transit, s=0.1)
-        lc_clipped_transit.errorbar(ax=ax_lc_clipped_transit)
+        if plot_errorbar:
+            lc_clipped_transit.scatter(ax=ax_lc_clipped_transit, s=0.1)
+            lc_clipped_transit.errorbar(ax=ax_lc_clipped_transit)
+        else:
+            lc_clipped_transit.scatter(ax=ax_lc_clipped_transit, s=0.1)
         ax_lc_clipped_transit.set_title(f"{lc_plot_title} {sigma_transit_upper:.1f} Upper Sigma Clipped Transit")
         ax_lc_clipped_transit.set_ylabel("Flux")
         lc_clipped_transit_plot.figure.tight_layout()
@@ -284,8 +315,11 @@ if clip:
     lc_clipped_cdpp = calculate_cdpp(lc_clipped, exptime=exptime, cdpp_transit_duration=cdpp_transit_duration)
 
     lc_clipped_plot, ax_lc_clipped = plt.subplots(figsize=(20, 5))
-    lc_clipped.scatter(ax=ax_lc_clipped, label=None, s=0.1)
-    lc_clipped.errorbar(ax=ax_lc_clipped, label=f"{cdpp_transit_duration:.3f}h-CDPP={lc_clipped_cdpp:.2f} ppm")
+    if plot_errorbar:
+        lc_clipped.scatter(ax=ax_lc_clipped, label=None, s=0.1)
+        lc_clipped.errorbar(ax=ax_lc_clipped, label=f"{cdpp_transit_duration:.3f}h-CDPP={lc_clipped_cdpp:.2f} ppm")
+    else:
+        lc_clipped.scatter(ax=ax_lc_clipped, label=f"{cdpp_transit_duration:.3f}h-CDPP={lc_clipped_cdpp:.2f} ppm", s=0.1)
     ax_lc_clipped.set_title(f"{lc_plot_title} {sigma_baseline:.1f} Sigma Clipped Light Curve")
     ax_lc_clipped.set_ylabel("Flux")
     lc_clipped_plot.figure.tight_layout()

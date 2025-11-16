@@ -174,6 +174,7 @@ lightcurve_extracting:
       # Lower and upper y limit for the extracted light curve plot, in percentile of the normalized flux. Recommended: [5, 80] if the CDPP is large. Leave it blank (i.e., set to None) for automatic limits when the CDPP is not that large.
       - 0
       - 99.8
+    plot_errorbar: true # whether to plot the error bar of the light curve
 
   lc_extracted_cdpp: 22000.646484375 # ppm
 
@@ -274,12 +275,14 @@ eleanor:
       - 0.0
       - -0.1
 
+    plot_errorbar_specific: true # whether to plot the error bar for the specific type of light curve on the individual light curve plots
+
+    tpf_margin: 3 # pixels, margin of the TPF plot when plotting the pixel-by-pixel light curves
+
     bkg_1d_offset:
       # $e^{-}s^{-1}$ (unit of flux), offsets for the 1D background plot, the first for 1D postcard background and the second for 1D TPF background
       - 2000.0
       - 0.0
-
-    tpf_margin: 3 # pixels, margin of the TPF plot when plotting the pixel-by-pixel light curves
 
     cadence: 0 # cadence index when plotting the 2D background, the aperture-overplotted & Gaia-overlay TPF and the Gaia-overlay TPF
 
@@ -293,6 +296,8 @@ lightkurve:
                                # 'downloaded' for light curve downloaded in B_bb_Light_Curve_Downloading;
                                # 'eleanor' for light curve extracted and preliminarily processed via eleanor in B_c_TESS_Light_Curve_Extracting_and_Preliminary_Processing_Eleanor.
 
+
+  plot_errorbar: true # whether to plot the error bar of the light curve
 
   p_bls_raw_nans_removed_range:
     # days, minimun and maximum period to search when fitting the NaNs-removed raw light curve using the Box Least Squares (BLS) method, recommended: [0.5, 27]
@@ -341,6 +346,9 @@ transit_fitting:
                                     # 'lightkurve' for light curve further processed via Lightkurve in C_Light_Curve_Further_Processing_Lightkurve.
 
 
+  plot_errorbar: true # whether to plot the error bar of the light curve and residuals
+
+
   # Global transit fitting parameters
   fit_global: true
 
@@ -354,7 +362,8 @@ transit_fitting:
   chain_discard_proportion_global: 0.2 # proportion of MCMC chain to discard as burn-in for global fitting
 
   # plotting parameters
-  alpha_exptime: # the plotting alpha coefficient of the light curve corresponding to the exposure time; if left blank (i.e., set to None), it will be set to the default values: 0.1 for 20s, 0.3 for 120s/200s, 0.5 for 600s/1800s.
+  alpha_exptime: # the plotting alpha coefficient of the light curve corresponding to the exposure time; if left blank (i.e., set to None), it will be set to the default values: 0.1 for (0, 80]s, 0.3 for (80, 400]s, 0.5 for (400, inf)s.
+  scatter_point_size_exptime: # the scatter point size coefficient of the light curve corresponding to the exposure time; if left blank (i.e., set to None), it will be set to the default values: 0.025 for (0, 80]s, 0.25 for (80, 400]s, 0.75 for (400, inf)s.
   chain_thin_global: 10 # thinning factor of the sample chain when visualizing the process and result for global fitting, recommended: 10
   running_mean_window_proportion_global: 0.05 # window length proportion of the thinned-unflattened MCMC chain to calculate the running means of the parameters when visualizing the process and result for global fitting, recommended: 0.05
 

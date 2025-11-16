@@ -256,14 +256,19 @@ for lc_type in lc_type_list:
 
 # Plot the individual light curve of the specific type
 i += 1 # count the step
+plot_errorbar_specific = config['eleanor']['visualize']['plot_errorbar_specific'] # set whether to plot the error bar for the specific type of light curve
 for l in range(len(lc_list)):
     lc = lc_list[l]
     lc_type = lc_type_list[l]
+    lc_cdpp = lc_cdpp_list[l]
     eleanor_processed_lightcurve_plots_dir_source_sector_pc_lc = eleanor_processed_lightcurve_plots_dir_source_sector_pc_lc_list[l]
 
     lc_plot, ax_lc = plt.subplots(figsize=(20, 5))
-    lc.normalize().scatter(ax=ax_lc, s=0.1)
-    lc.normalize().errorbar(ax=ax_lc)
+    if plot_errorbar_specific:
+        lc.normalize().scatter(ax=ax_lc, label=None, s=0.1)
+        lc.normalize().errorbar(ax=ax_lc, label=f"{lc_type}, {cdpp_transit_duration:.3f}h-CDPP={lc_cdpp:.2f} ppm")
+    else:
+        lc.normalize().scatter(ax=ax_lc, label=f"{lc_type}, {cdpp_transit_duration:.3f}h-CDPP={lc_cdpp:.2f} ppm", s=0.1)
     ax_lc.set_title(f"{name} Sector {sector} Eleanor {lc_type} Light Curve Exptime={exptime}s")
     lc_plot.figure.tight_layout()
     lc_plot.figure.savefig(eleanor_processed_lightcurve_plots_dir_source_sector_pc_lc + f"/{i:02}-{l:01}_{name}_Sector-{sector}_Eleanor_{lc_type}_Light_Curve_Exptime={exptime}s.png")
