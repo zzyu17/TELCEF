@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.ticker import ScalarFormatter
 
-from utils import update_dict, format_lc_fits_fn_by_provenance, calculate_cdpp, run_transit_fitting, split_indiviual_lc, plot_trace_evolution, plot_posterior_corner
+from utils import update_dict, epoch_time_to_btjd, format_lc_fits_fn_by_provenance, calculate_cdpp, run_transit_fitting, split_indiviual_lc, plot_trace_evolution, plot_posterior_corner
 from A_ab_Configuration_Loader import *
 
 
@@ -140,7 +140,7 @@ running_mean_window_length_global = int(running_mean_window_proportion_global * 
 
 # Set the initial global fitted transit parameters
 k_global_initial = np.sqrt(transit_depth_bls_raw_nans_removed) if transit_depth_bls_raw_nans_removed is not None else np.sqrt(transit_depth_nasa) # k: normalized planetary radius, i.e., R_p/R_s
-t0_global_initial = t0_bls_raw_nans_removed if t0_bls_raw_nans_removed is not None else t0_nasa # t0: epoch time in BTJD
+t0_global_initial = t0_bls_raw_nans_removed if t0_bls_raw_nans_removed is not None else epoch_time_to_btjd(t0_nasa, p_nasa) # t0: epoch time in BTJD
 p_global_initial = p_bls_raw_nans_removed if p_bls_raw_nans_removed is not None else p_nasa # p: orbital period in days
 a_global_initial = 10.0 # a: normalized semi-major axis, i.e., a/R_s
 i_global_initial = np.pi / 2 # i: orbital inclination in radians
