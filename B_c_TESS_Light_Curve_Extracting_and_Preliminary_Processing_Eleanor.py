@@ -152,7 +152,7 @@ for k in range(len(lc_list)):
     eleanor_lc_headers_update_dict = {0: {'TICID': (tic, "unique tess target identifier"), 'KEPLERID': None,
                                           'MISSION': 'TESS', 'TELESCOP': 'TESS', 'INSTRUME': 'TESS Photometer',
                                           'SECTOR': (sector, "Observing sector"), 'CAMERA': (camera, "Camera number"), 'CCD': (ccd, "CCD chip number"),
-                                          'ORIGIN': 'Eleanor', 'CREATOR': f'Eleanor-{lc_type_list[k]}',
+                                          'ORIGIN': 'Eleanor', 'CREATOR': f'Eleanor-{lc_type_list[k]}-LightCurve',
                                           'EXPTIME': (exptime, "exposure time in seconds")}}
     update_fits_headers(eleanor_lc_path_list[k], eleanor_lc_headers_update_dict)
     print(f"Successfully extracted the {lc_type_list[k]} light curve of the source via Eleanor and saved it to the data directory of the source: {eleanor_lc_path_list[k]}.")
