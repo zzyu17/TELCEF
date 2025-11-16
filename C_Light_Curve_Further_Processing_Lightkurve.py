@@ -240,10 +240,7 @@ clip = config['lightkurve']['clip']
 clip_transit = config['lightkurve']['clip_transit']
 sigma_baseline = config['lightkurve']['sigma_baseline']
 sigma_transit_upper = config['lightkurve']['sigma_transit_upper']
-sigma_transit_lower = config['lightkurve']['sigma_transit_lower']
-
-if sigma_transit_lower is None:
-    sigma_transit_lower = np.inf
+sigma_transit_lower = config['lightkurve']['sigma_transit_lower'] if config['lightkurve']['sigma_transit_lower'] is not None else float('inf')
 
 
 if clip:

@@ -309,7 +309,7 @@ lightkurve:
   clip_transit: true
   sigma_baseline: 3.0 # the sigma threshold above and below the baseline light curve to clip outliers
   sigma_transit_upper: 0.4 # the sigma threshold above the median of baseline light curve to clip outliers around the transit light curve
-  sigma_transit_lower: # the sigma threshold below the median of baseline light curve to clip outliers around the transit light curve; if left blank (i.e., set to None), sigma_transit_lower will be set to np.inf to avoid clipping the real transit.
+  sigma_transit_lower: # the sigma threshold below the median of baseline light curve to clip outliers around the transit light curve; if left blank (i.e., set to None), sigma_transit_lower will be set to inf to avoid clipping the real transit.
 
   correction: _Flattened_&_Clipped
 

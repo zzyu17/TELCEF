@@ -876,7 +876,7 @@ def max_deviation(arr):
     median_clipped = np.nanmedian(array_clipped)
     std_clipped = np.nanstd(array_clipped)
 
-    max_dev_n_stds = np.abs(max_dev_value - median_clipped) / std_clipped if std_clipped != 0 else np.inf
+    max_dev_n_stds = np.abs(max_dev_value - median_clipped) / std_clipped if std_clipped != 0 else float('inf')
 
     return max_dev_index, max_dev_value, max_dev_n_stds
 
@@ -1145,7 +1145,7 @@ def log_prior_multi(params, lc):
     if (0 < k < 1 and np.min(lc.time.value) < t0 < np.max(lc.time.value) and p > 0 and a > 1 and -np.pi/2 < i < np.pi/2 and 0 < ldc1 < 1 and 0 < ldc2 < 1):
         model_log_prior = 0.0
     else:
-        model_log_prior = -np.inf
+        model_log_prior = -float('inf')
 
     return model_log_prior
 
@@ -1160,7 +1160,7 @@ def log_probability_multi(params, transit_model, lc):
     if np.isfinite(model_log_prior):
         return model_log_probability
     else:
-        return -np.inf
+        return -float('inf')
 
 
 ### Single-transit Fitting Model ###
@@ -1222,7 +1222,7 @@ def log_prior_single(params, p, lc):
     if (0 < k < 1 and np.min(lc.time.value) < t0 < np.max(lc.time.value) and p > 0 and a > 1 and -np.pi/2 < i < np.pi/2 and 0 < ldc1 < 1 and 0 < ldc2 < 1):
         model_log_prior = 0.0
     else:
-        model_log_prior = -np.inf
+        model_log_prior = -float('inf')
 
     return model_log_prior
 
@@ -1237,7 +1237,7 @@ def log_probability_single(params, p, transit_model, lc):
     if np.isfinite(model_log_prior):
         return model_log_probability
     else:
-        return -np.inf
+        return -float('inf')
 
 
 ### Transit Properties Calculation ###
