@@ -193,6 +193,8 @@ lightkurve_search_lightcurve:
     - "Kepler"
     - "K2SFF"
     - "EVEREST"
+    - "K2SC"
+    - "K2VARCAT"
 
   TESS_supported_author: # supported authors for TESS light curve products in Lightkurve (v2.0.11)
     - "QLP"
