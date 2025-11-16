@@ -91,7 +91,7 @@ def update_config(config_path, dict_update, decimal=True, precision=16):
     decimal : bool, optional
         Whether to use decimal notation for floats. If `False`, scientific notation is used. Default is `True`.
     precision : int, optional
-        Precision for float representation. Default is 16.
+        Precision for float representation. Default is `16`.
     """
     yaml = YAML()
 
@@ -890,7 +890,7 @@ def format_value_with_uncertainty(param, precision=8):
     param : float or tuple/list/`numpy.ndarray` of three values
         The parameter value. It can be a single value or a tuple/list/array of three values: value, lower uncertainty, upper uncertainty.
     precision : int, optional
-        The number of decimal places to round the value and uncertainties to. Default is 8.
+        The number of decimal places to round the value and uncertainties to. Default is `8`.
 
     Returns
     ----------
@@ -932,13 +932,13 @@ def aperture_overlay(data, aperture_mask, data_type='Flux', cadence=0, ax=None,
     ax : `matplotlib.axes.Axes`, optional
         The matplotlib Axes object to plot on. If no Axes is provided, a new one will be generated.
     data_type : str, optional
-        Type of data to plot, e.g., 'Flux', 'Flux_err', etc. Will be displayed in the colorbar label. Default is 'Flux'.
+        Type of data to plot, e.g., 'Flux', 'Flux_err', etc. Will be displayed in the colorbar label. Default is `'Flux'`.
     cadence : int, optional
-        Cadence index to display. Default is 0 (i.e., the first cadence).
+        Cadence index to display. Default is `0` (i.e., the first cadence).
     aperture_color : str, optional
-        Color name for the aperture overlay. Default is 'red'.
+        Color name for the aperture overlay. Default is `'red'`.
     hatch_density : int, optional
-        Density of hatch pattern (number of lines). Default is 5.
+        Density of hatch pattern (number of lines). Default is `5`.
     show_colorbar : bool, optional
         Whether to show the colorbar. Default is `True`.
     kwargs : dict
@@ -1025,7 +1025,7 @@ def calculate_cdpp(lc, exptime=None, cdpp_transit_duration=6.5):
         The exposure time of the light curve in units of `seconds`.
         If not provided, will be calculated from the time array of the light curve.
     cdpp_transit_duration : float, optional
-        The transit duration in units of `hours` to calculate `CDPP`. Default is 6.5.
+        The transit duration in units of `hours` to calculate `CDPP`. Default is `6.5`.
 
     Returns
     -------
@@ -1059,7 +1059,7 @@ def calculate_cdpp(lc, exptime=None, cdpp_transit_duration=6.5):
 
 def sort_lc(lc):
     """
-    Ensure the light curve is sorted in strictly increasing time order.
+    Sort a `lightkurve.LightCurve` object by time in ascending order.
     """
     time = lc.time
     flux = lc.flux
@@ -1301,17 +1301,17 @@ def run_transit_fitting(lc, transit_model_name, fit_type, params_initial=None,
         Dictionary of initial fitted transit parameters, should contain keys: `k`, `t0`, `p`, `a`, `i`, `ldc1`, `ldc2`.
         If not provided or invalid, default initial parameters will be used.
     n_walkers : int, optional
-        Number of `MCMC` walkers. Default is 32.
+        Number of `MCMC` walkers. Default is `32`.
     n_steps : int, optional
-        Number of `MCMC` steps. Default is 5000.
+        Number of `MCMC` steps. Default is `5000`.
     chain_discard_proportion : float, optional
-        Proportion of `MCMC` chain to discard as burn-in. Default is 0.2.
+        Proportion of `MCMC` chain to discard as burn-in. Default is `0.2`.
     chain_thin : int, optional
-        Thinning factor of the sample chain when visualizing the process and result. Default is 10.
+        Thinning factor of the sample chain when visualizing the process and result. Default is `10`.
     max_iter : int, optional
-        Maximum number of outliers removal iterations. Default is 3.
+        Maximum number of outliers removal iterations. Default is `3`.
     sigma : float, optional
-        `Sigma` threshold for outliers removal. Default is 3.0.
+        `Sigma` threshold for outliers removal. Default is `3.0`.
     transit_index : int, optional
         Index of the transit to be fitted for individual transit fitting.
 
@@ -1320,7 +1320,7 @@ def run_transit_fitting(lc, transit_model_name, fit_type, params_initial=None,
     results : dict
         A dictionary containing the `MCMC` fitting results, including best fitted transit parameters and their uncertainties, best fitted model and residuals, and goodness-of-fit metrics.
     """
-    # Validate and parse input parameters
+    # Validate and parse transit_model_name
     if transit_model_name.lower() == 'quadratic':
         tm = QuadraticModel()
     elif transit_model_name.lower() == 'quadraticcl':
@@ -1334,6 +1334,7 @@ def run_transit_fitting(lc, transit_model_name, fit_type, params_initial=None,
     else:
         raise ValueError(f"Unsupported transit model: {transit_model_name}. Currently supported models are: 'Quadratic', 'QuadraticCL', 'RoadRunner', 'QPower2', 'General'.")
 
+    # Validate and parse fit_type
     if fit_type.lower() == 'global':
         fit_range = 'multi'
         n_dim = 7
@@ -1529,7 +1530,7 @@ def split_indiviual_lc(lc, p, t0, transit_duration, individual_transit_check_coe
         The transit duration of the planet in `days`.
     individual_transit_check_coefficient : float, optional
         The coefficient of transit duration span to check if the individual transit light curve contains transit event.
-        Default is 1.0.
+        Default is `1.0`.
 
     Returns
     --------
@@ -1614,7 +1615,7 @@ def plot_trace_evolution(results, running_mean_window_length=20):
     results : dict
         The `MCMC` fitting results dictionary.
     running_mean_window_length : int, optional
-        Window length of the thinned-unflattened `MCMC` chain to calculate the running means of the parameters. Default is 20.
+        Window length of the thinned-unflattened `MCMC` chain to calculate the running means of the parameters. Default is `20`.
 
     Returns
     --------
@@ -1685,7 +1686,7 @@ def plot_posterior_corner(results, quantiles=[0.16, 0.5, 0.84], **kwargs):
         The `MCMC` fitting results dictionary.
     quantiles : iterable, optional
         A list of fractional quantiles to show on the 1D histograms as vertical dashed lines.
-        Will be passed to `corner.corner()` as the `quantiles` argument. Default is [0.16, 0.5, 0.84].
+        Will be passed to `corner.corner()` as the `quantiles` argument. Default is `[0.16, 0.5, 0.84]`.
     kwargs : dict
         Dictionary of additional arguments to be passed to `corner.corner()`.
 

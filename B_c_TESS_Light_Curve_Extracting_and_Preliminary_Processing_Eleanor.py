@@ -201,7 +201,7 @@ tpf_animation_step = config['eleanor']['visualize']['tpf_animation_step'] ##### 
 
 
 if render_tpf_animation:
-    tpf_animation_start_time = time.time()  # measure the start time
+    tpf_animation_start_time = time.time() # measure the start time
     if render_aperture_overplotted_tpf_animation:
         print(f"Rendering the {name} Sector {sector} Eleanor TPF animation WITH aperture overplotted...")
     else:
@@ -221,7 +221,7 @@ if render_tpf_animation:
     tpf_animation = animation.ArtistAnimation(fig=tpf_animation_plot, artists=tpf_animation_artists, interval=int(1000/tpf_animation_framerate), blit=True)
     tpf_animation_writer = animation.FFMpegWriter(fps=int(tpf_animation_framerate), metadata=dict(artist='TELCEF'), bitrate=2000)
     tpf_animation.save(filename=eleanor_processed_lightcurve_plots_dir_source_sector_pc + f"/{i:02}_{name}_Sector-{sector}_Eleanor_Step-{tpf_animation_step}_TPF_Animation_Exptime={exptime}s.mp4", writer=tpf_animation_writer)
-    tpf_animation_end_time = time.time()  # measure the end time
+    tpf_animation_end_time = time.time() # measure the end time
     tpf_animation_rendering_time = tpf_animation_end_time - tpf_animation_start_time # calculate the rendering time
     print(f"Rendered {name} Sector {sector} Eleanor TPF animation in {tpf_animation_rendering_time:.3f} seconds.\n")
     config = update_config(config_path, {'eleanor.visualize.tpf_animation_rendering_time': round(tpf_animation_rendering_time, 3)})
@@ -368,7 +368,7 @@ bkg_2d_animation_step = config['eleanor']['visualize']['bkg_2d_animation_step'] 
 
 
 if render_bkg_2d_animation:
-    bkg_2d_animation_start_time = time.time()  # measure the start time
+    bkg_2d_animation_start_time = time.time() # measure the start time
     print(f"Rendering the {name} Sector {sector} Eleanor 2D background animation...")
     bkg_2d_animation_framerate = 25 # set the framerate
     bkg_2d_animation_plot, ax_bkg_2d_animation = plt.subplots(figsize=(10, 10))
@@ -381,7 +381,7 @@ if render_bkg_2d_animation:
     bkg_2d_animation = animation.ArtistAnimation(fig=bkg_2d_animation_plot, artists=bkg_2d_animation_artists, interval=int(1000/bkg_2d_animation_framerate), blit=True)
     bkg_2d_animation_writer = animation.FFMpegWriter(fps=int(bkg_2d_animation_framerate), metadata=dict(artist='TELCEF'), bitrate=2000)
     bkg_2d_animation.save(filename=eleanor_processed_lightcurve_plots_dir_source_sector_pc + f"/{i:02}_{name}_Sector-{sector}_Eleanor_Step-{bkg_2d_animation_step}_2D_Background_Animation_Exptime={exptime}s.mp4", writer=bkg_2d_animation_writer)
-    bkg_2d_animation_end_time = time.time()  # measure the end time
+    bkg_2d_animation_end_time = time.time() # measure the end time
     bkg_2d_animation_rendering_time = bkg_2d_animation_end_time - bkg_2d_animation_start_time # calculate the rendering time
     print(f"Rendered {name} Sector {sector} Eleanor 2D Background animation in {bkg_2d_animation_rendering_time:.3f} seconds.\n")
     config = update_config(config_path, {'eleanor.visualize.bkg_2d_animation_rendering_time': round(bkg_2d_animation_rendering_time, 3)})
@@ -401,7 +401,7 @@ postcard_animation_step = config['eleanor']['visualize']['postcard_animation_ste
 
 
 if render_postcard_animation:
-    postcard_animation_start_time = time.time()  # measure the start time
+    postcard_animation_start_time = time.time() # measure the start time
     print(f"Rendering the {name} Sector {sector} Eleanor Postcard animation...")
     postcard_animation_framerate = 25 # set the framerate
     if postcard:
@@ -417,7 +417,7 @@ if render_postcard_animation:
     postcard_animation = animation.ArtistAnimation(fig=postcard_animation_plot, artists=postcard_animation_artists, interval=int(1000/postcard_animation_framerate), blit=True)
     postcard_animation_writer = animation.FFMpegWriter(fps=int(postcard_animation_framerate), metadata=dict(artist='zzyu'), bitrate=2000)
     postcard_animation.save(filename=eleanor_processed_lightcurve_plots_dir_source_sector_pc + f"/{i:02}_{name}_Sector-{sector}_Eleanor_Step-{postcard_animation_step}_Postcard_Animation_Exptime={exptime}s.mp4", writer=postcard_animation_writer)
-    postcard_animation_end_time = time.time()  # measure the end time
+    postcard_animation_end_time = time.time() # measure the end time
     postcard_animation_rendering_time = postcard_animation_end_time - postcard_animation_start_time  # calculate the rendering time
     print(f"Rendered {name} Sector {sector} Eleanor Postcard animation in {postcard_animation_rendering_time:.3f} seconds.\n")
     config = update_config(config_path, {'eleanor.visualize.postcard_animation_rendering_time': round(postcard_animation_rendering_time, 3)})

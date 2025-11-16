@@ -16,7 +16,7 @@ tess_time = config['mission']['tess_time'] # BJD
 attribute = attribute_map.get(mission)
 stage = stage_map.get(mission)
 
-##### Define the source  parameters #####
+##### Define the source parameters #####
 name = config['source']['name']
 sectors = config['source']['available_sectors']
 tpf_exptimes = config['source']['available_tpf_exptimes']
