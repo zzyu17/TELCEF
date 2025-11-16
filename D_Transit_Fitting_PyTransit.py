@@ -1,13 +1,8 @@
 import os
-import warnings
 
-from pytransit import QuadraticModel, QuadraticModelCL, RoadRunnerModel, QPower2Model, GeneralModel
 import astropy.units as u
 import numpy as np
-import corner
-from matplotlib import rcParams
 import matplotlib.pyplot as plt
-from matplotlib.gridspec import GridSpec
 from matplotlib.ticker import ScalarFormatter
 
 from utils import update_dict, format_lc_fits_fn_by_provenance, calculate_cdpp, run_transit_fitting, split_indiviual_lc, plot_trace_evolution, plot_posterior_corner
