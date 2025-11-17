@@ -1,5 +1,6 @@
 import os
 import subprocess
+import argparse
 
 import lightkurve as lk
 import numpy as np
@@ -11,9 +12,15 @@ from utils import load_config, update_config
 
 # Define the base directory
 base_dir = os.path.dirname(__file__) ##### set the base directory of input and output #####
+
+# Parse the command-line argument to get the configuration filename
+parser = argparse.ArgumentParser()
+parser.add_argument("--config")
+args = parser.parse_args()
+
 # Load the configurations and set the "config" global variable
 config_dir = base_dir + "/Configurations"
-config_fn = "/WASP-80_b_Configurations_and_Results.yml" ##### set the configuration filename based on the source star and planet name #####
+config_fn = args.config if args.config is not None else "/WASP-80_b_Configurations_and_Results.yml" ##### set the configuration filename based on the source star and planet name #####
 config_path = config_dir + config_fn
 config = load_config(config_path)
 

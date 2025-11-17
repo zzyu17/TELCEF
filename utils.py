@@ -3,7 +3,10 @@ from ruamel.yaml import YAML
 import shutil
 import re
 import os
+import sys
+import subprocess
 import warnings
+import time
 
 import astropy.units as u
 from astropy.io import fits
@@ -37,6 +40,70 @@ stage_map = {
     'K2': 'Campaign',
     'TESS': 'Sector'
 }
+
+
+
+
+### ------ TELCEF Runner ------ ###
+def run_script(script_name, args=None, max_retries=0, retry_delay=5.0):
+    """
+    Run a Python script with optional arguments in a command-line subprocess, with retry mechanism on failure.
+
+    Parameters
+    ----------
+    script_name : str
+        The name of the Python script to run.
+    args : list of str, optional
+        A list of arguments to pass to the command-line subprocess. Default is `None`.
+    max_retries : int, optional
+        The maximum number of retries on failure. Default is `0` (i.e., no retries).
+    retry_delay : float, optional
+        The delay (in seconds) before each retry. Default is `5.0`.
+
+    Returns
+    -------
+    `True` if the script ran successfully, `False` otherwise.
+    """
+    print(f">>> Running: {script_name}...\n")
+
+    # Construct the command to run the script
+    cmd = [sys.executable, script_name]
+    if args:
+        cmd.extend(args)
+
+    retry = 0
+    while True:
+        try:
+            process = subprocess.Popen(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                bufsize=1
+            )
+            for line in process.stdout:
+                print(line.rstrip("\n"), flush=True)
+            process.wait()
+        except KeyboardInterrupt:
+            if process and process.poll() is None:
+                process.terminate()
+            raise
+
+        # If succeeded, return True
+        if process.returncode == 0:
+            print(f"\u2713 Completed running {script_name}.\n\n")
+            return True
+
+        # If failed, check whether to retry
+        print(f"\u2715 Failed running {script_name}.\n")
+        if retry >= max_retries:
+            print(f"Exceeded max retries ({max_retries}). Given up on {script_name}.\n\n")
+            return False
+
+        # Sleep before retrying
+        retry += 1
+        print(f"Retrying ({retry}/{max_retries}) in {retry_delay} seconds...\n")
+        time.sleep(retry_delay)
 
 
 

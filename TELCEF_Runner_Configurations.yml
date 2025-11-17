@@ -1,0 +1,82 @@
+### Configurations for specific sources ###
+sources:
+  WD1856+534_Sector-40:
+    config_fn: "/WD1856+534_b_Sector-40_Author-SPOC_Configurations_and_Results.yml"
+    scripts:
+      - "D_Transit_Fitting_PyTransit.py"
+  WD1856+534_Sector-41:
+    config_fn: "/WD1856+534_b_Sector-41_Author-SPOC_Configurations_and_Results.yml"
+    scripts:
+      - "D_Transit_Fitting_PyTransit.py"
+  WD1856+534_Sector-49:
+    config_fn: "/WD1856+534_b_Sector-49_Author-SPOC_Configurations_and_Results.yml"
+    scripts:
+      - "D_Transit_Fitting_PyTransit.py"
+  WD1856+534_Sector-53:
+    config_fn: "/WD1856+534_b_Sector-53_Author-SPOC_Configurations_and_Results.yml"
+    scripts:
+      - "D_Transit_Fitting_PyTransit.py"
+  WD1856+534_Sector-54:
+    config_fn: "/WD1856+534_b_Sector-54_Author-SPOC_Configurations_and_Results.yml"
+    scripts:
+      - "D_Transit_Fitting_PyTransit.py"
+  WD1856+534_Sector-55:
+    config_fn: "/WD1856+534_b_Sector-55_Author-SPOC_Configurations_and_Results.yml"
+    scripts:
+      - "D_Transit_Fitting_PyTransit.py"
+  WD1856+534_Sector-56:
+    config_fn: "/WD1856+534_b_Sector-56_Author-SPOC_Configurations_and_Results.yml"
+    scripts:
+      - "D_Transit_Fitting_PyTransit.py"
+  WD1856+534_Sector-59:
+    config_fn: "/WD1856+534_b_Sector-59_Author-SPOC_Configurations_and_Results.yml"
+    scripts:
+      - "D_Transit_Fitting_PyTransit.py"
+  WD1856+534_Sector-73:
+    config_fn: "/WD1856+534_b_Sector-73_Author-SPOC_Configurations_and_Results.yml"
+    scripts:
+      - "D_Transit_Fitting_PyTransit.py"
+  WD1856+534_Sector-74:
+    config_fn: "/WD1856+534_b_Sector-74_Author-SPOC_Configurations_and_Results.yml"
+    scripts:
+      - "D_Transit_Fitting_PyTransit.py"
+  WD1856+534_Sector-75:
+    config_fn: "/WD1856+534_b_Sector-75_Author-SPOC_Configurations_and_Results.yml"
+    scripts:
+      - "D_Transit_Fitting_PyTransit.py"
+  WD1856+534_Sector-76:
+    config_fn: "/WD1856+534_b_Sector-76_Author-SPOC_Configurations_and_Results.yml"
+    scripts:
+      - "D_Transit_Fitting_PyTransit.py"
+  WD1856+534_Sector-79:
+    config_fn: "/WD1856+534_b_Sector-79_Author-SPOC_Configurations_and_Results.yml"
+    scripts:
+      - "D_Transit_Fitting_PyTransit.py"
+  WD1856+534_Sector-80:
+    config_fn: "/WD1856+534_b_Sector-80_Author-SPOC_Configurations_and_Results.yml"
+    scripts:
+      - "D_Transit_Fitting_PyTransit.py"
+  WD1856+534_Sector-81:
+    config_fn: "/WD1856+534_b_Sector-81_Author-SPOC_Configurations_and_Results.yml"
+    scripts:
+      - "D_Transit_Fitting_PyTransit.py"
+  WD1856+534_Sector-82:
+    config_fn: "/WD1856+534_b_Sector-82_Author-SPOC_Configurations_and_Results.yml"
+    scripts:
+      - "D_Transit_Fitting_PyTransit.py"
+  WD1856+534_Sector-83:
+    config_fn: "/WD1856+534_b_Sector-83_Author-SPOC_Configurations_and_Results.yml"
+    scripts:
+      - "D_Transit_Fitting_PyTransit.py"
+  WD1856+534_Sector-86:
+    config_fn: "/WD1856+534_b_Sector-86_Author-SPOC_Configurations_and_Results.yml"
+    scripts:
+      - "D_Transit_Fitting_PyTransit.py"
+
+
+### Global settings ###
+settings:
+  stop_on_failure: # whether to stop the entire pipeline if a script fails; if left blank (i.e., set to None), it will be set to false
+  max_retries: # Number of retries for failed script(s) after the first attempt. Set this to any number larger than 0 only when running scripts that needs Internet connection, e.g., the searching and/or downloading scripts.
+               # If left blank (i.e., set to None), it will be set to 0.
+  retry_delay: # seconds, delay between retries; if left blank (i.e., set to None), it will be set to 5.0
