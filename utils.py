@@ -15,7 +15,7 @@ from astroquery.mast import Observations
 from tess_stars2px import tess_stars2px_function_entry as tess_stars2px
 import lightkurve as lk
 from eleanor.mast import coords_from_name, tic_from_coords, gaia_from_coords
-from pytransit import QuadraticModel, QuadraticModelCL, RoadRunnerModel, QPower2Model, GeneralModel
+from pytransit import QuadraticModel, RoadRunnerModel
 import emcee
 import numpy as np
 import corner
@@ -1154,6 +1154,31 @@ def sort_lc(lc):
 
 
 ### ------ Transit Fitting ------ ###
+### General ###
+def _parse_transit_model(transit_model_name):
+    """
+    Parse the transit model name and return the corresponding `PyTransit` transit model instance.
+
+    Parameters
+    ----------
+    transit_model_name : str
+        Name of the `PyTransit` transit model to use. Currently supported models are: `Quadratic`, `RoadRunner_Quadratic`.
+
+    Returns
+    -------
+    transit_model : `PyTransit.TransitModel`
+        A `PyTransit` transit model instance corresponding to the provided `transit_model_name`.
+    """
+    if transit_model_name.lower() == 'quadratic':
+        transit_model = QuadraticModel()
+    elif transit_model_name.lower() == 'roadrunner_quadratic':
+        transit_model = RoadRunnerModel('quadratic')
+    else:
+        raise ValueError(f"Unsupported transit model: {transit_model_name}. Currently supported models are: 'Quadratic', 'RoadRunner_Quadratic'.")
+
+    return transit_model
+
+
 ### Multiple-transit Fitting Model ###
 def model_multi(params, transit_model, time):
     """
@@ -1324,18 +1349,7 @@ def calculate_transit_depth(k, a, i, ldc, transit_model_name):
     Function to calculate the transit depth based on the normalized planetary radius (`k`), normalized semi-major axis (`a`),
     orbital inclination (`i`), limb darkening coefficients (`ldc`) and the transit model.
     """
-    if transit_model_name.lower() == 'quadratic':
-        tm = QuadraticModel()
-    elif transit_model_name.lower() == 'quadraticcl':
-        tm = QuadraticModelCL()
-    elif transit_model_name.lower() == 'roadrunner':
-        tm = RoadRunnerModel()
-    elif transit_model_name.lower() == 'qpower2':
-        tm = QPower2Model()
-    elif transit_model_name.lower() == 'general':
-        tm = GeneralModel()
-    else:
-        raise ValueError(f"Unsupported transit model: {transit_model_name}. Currently supported models are: 'Quadratic', 'QuadraticCL', 'RoadRunner', 'QPower2', 'General'.")
+    tm = _parse_transit_model(transit_model_name)
 
     t0 = 0.0 # t0 should be set to 0.0
     p = 1.0 # p can be set randomly
@@ -1361,7 +1375,7 @@ def run_transit_fitting(lc, transit_model_name, fit_type, params_initial=None,
     lc : `lightkurve.LightCurve`
         The `LightCurve` object. Must contain `flux` and `flux_err` columns.
     transit_model_name : str
-        Name of the `PyTransit` transit model to use. Currently supported models are: `Quadratic`, `QuadraticCL`, `RoadRunner`, `QPower2`, `General`.
+        Name of the `PyTransit` transit model to use. Currently supported models are: `Quadratic`, `RoadRunner_Quadratic`.
     fit_type : str
         Type of fit, should be `global`, `individual` or `folded`.
     params_initial : dict, optional
@@ -1388,18 +1402,7 @@ def run_transit_fitting(lc, transit_model_name, fit_type, params_initial=None,
         A dictionary containing the `MCMC` fitting results, including best fitted transit parameters and their uncertainties, best fitted model and residuals, and goodness-of-fit metrics.
     """
     # Validate and parse transit_model_name
-    if transit_model_name.lower() == 'quadratic':
-        tm = QuadraticModel()
-    elif transit_model_name.lower() == 'quadraticcl':
-        tm = QuadraticModelCL()
-    elif transit_model_name.lower() == 'roadrunner':
-        tm = RoadRunnerModel()
-    elif transit_model_name.lower() == 'qpower2':
-        tm = QPower2Model()
-    elif transit_model_name.lower() == 'general':
-        tm = GeneralModel()
-    else:
-        raise ValueError(f"Unsupported transit model: {transit_model_name}. Currently supported models are: 'Quadratic', 'QuadraticCL', 'RoadRunner', 'QPower2', 'General'.")
+    tm = _parse_transit_model(transit_model_name)
 
     # Validate and parse fit_type
     if fit_type.lower() == 'global':
