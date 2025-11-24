@@ -1434,12 +1434,14 @@ def run_transit_fitting(lc, transit_model_name, fit_type, params_initial=None,
 
     unexpected_keys = set(params_initial.keys()) - set(params_initial_default.keys())
     if unexpected_keys:
-        warnings.warn(f"'params_initial_dict' contains unexpected keys: {sorted(list(unexpected_keys))}. Expected keys: {sorted(list(params_initial_default.keys()))}. Default initial parameters will be used.")
-        params_initial = params_initial_default
+        warnings.warn(f"'params_initial' contains unexpected keys: {sorted(list(unexpected_keys))}. These keys will be ignored.")
+        for key in unexpected_keys:
+            params_initial.pop(key)
 
     params_initial, updated_keys = update_dict_none(params_initial, params_initial_default)
     if updated_keys:
-        warnings.warn(f"'params_initial' lacks or contains `None` values for keys: {sorted(list(updated_keys))}. Default initial parameters will be used for these keys.")
+        updated_map = {k: params_initial_default[k] for k in sorted(updated_keys)}
+        warnings.warn(f"'params_initial' lacks or contains `None` values for keys: {sorted(list(updated_keys))}. The default initial parameters will be used for these keys: {updated_map}.")
 
     if fit_range.lower() == 'multi':
         params_initial_array = np.array([params_initial[key] for key in params_name])
