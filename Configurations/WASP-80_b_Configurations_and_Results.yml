@@ -297,6 +297,7 @@ lightkurve:
                                # 'extracted' for light curve extracted from TPF in B_ab_Light_Curve_Extracting_From_TPF;
                                # 'downloaded' for light curve downloaded in B_bb_Light_Curve_Downloading;
                                # 'eleanor' for light curve extracted and preliminarily processed via eleanor in B_c_TESS_Light_Curve_Extracting_and_Preliminary_Processing_Eleanor.
+  flux_column: # The column in the FITS file to be read as 'flux' for 'downloaded' light curve, typically 'pdcsap_flux' or 'sap_flux'. If left blank (i.e., set to None), it will be set to 'pdcsap_flux' by Lightkurve's default.
 
 
   plot_errorbar: true # whether to plot the error bar of the light curve
@@ -346,6 +347,7 @@ transit_fitting:
                                     # 'downloaded' for light curve downloaded in B_bb_Light_Curve_Downloading;
                                     # 'eleanor' for light curve extracted and preliminarily processed via eleanor in B_c_TESS_Light_Curve_Extracting_and_Preliminary_Processing_Eleanor;
                                     # 'lightkurve' for light curve further processed via Lightkurve in C_Light_Curve_Further_Processing_Lightkurve.
+  flux_column: # The column in the FITS file to be read as 'flux' for 'downloaded' lightcurves, typically 'pdcsap_flux' or 'sap_flux'. If left blank (i.e., set to None), it will be set to 'pdcsap_flux' by Lightkurve's default.
 
 
   plot_errorbar: true # whether to plot the error bar of the light curve and residuals

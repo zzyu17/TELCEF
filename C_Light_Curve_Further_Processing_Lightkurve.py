@@ -1,4 +1,5 @@
 import os
+import warnings
 import time
 
 import astropy.units as u
@@ -27,10 +28,12 @@ os.makedirs(lightkurve_processed_lightcurve_plots_dir_source_sector, exist_ok=Tr
 
 
 ### ------ Lightcurve Selecting ------ ###
-# Set the lightcurve selecting criteria
+# Set the lightcurve selecting and reading parameters
 lc_raw_provenance = config['lightkurve']['lightcurve_provenance']
+flux_column = config['lightkurve']['flux_column']
 if lc_raw_provenance == "lightkurve":
     raise ValueError("The 'lightcurve_provenance' parameter can't be set to 'lightkurve' in C_Light_Curve_Further_Processing_Lightkurve. Please set it to 'extracted', 'downloaded' or 'eleanor' in the configuration file.")
+
 lc_raw_fn = format_lc_fits_fn_by_provenance(lc_raw_provenance, config)
 
 # Search for the lightcurve file in the data directory
@@ -46,7 +49,13 @@ for l in range(len(fits_fn_list)):
 if lc_raw_path is None:
     raise FileNotFoundError("The specified lightcurve file does not exist in the data directory. Please check if the file exists and run the light curve extracting/downloading scripts first if necessary.")
 else:
-    lc_raw = lk.read(lc_raw_path)
+    if lc_raw_provenance == "downloaded" and flux_column is not None and flux_column.lower() != "pdcsap_flux":
+        lc_raw = lk.read(lc_raw_path, flux_column=flux_column)
+    elif lc_raw_provenance != "downloaded" and flux_column is not None:
+        warnings.warn("The 'flux_column' parameter is only used for downloaded light curve (i.e., when 'lightcurve_provenance' is set to 'downloaded'). The 'flux_column' parameter will be ignored.")
+        lc_raw = lk.read(lc_raw_path)
+    else:
+        lc_raw = lk.read(lc_raw_path)
     print(f"Successfully found and read the specified lightcurve file: {lc_raw_path}.\n")
 
 
@@ -358,6 +367,9 @@ elif not flatten and clip:
     correction = f"_Clipped-b{sigma_baseline:.1f}-tu{sigma_transit_upper:.1f}-tl{sigma_transit_lower_correction}"
 else:
     correction = ""
+
+if lc_raw_provenance == "downloaded" and flux_column is not None and flux_column.lower() != "pdcsap_flux":
+    correction += f"_{flux_column}".strip("_flux").capitalize()
 
 config = update_config(config_path, {'lightkurve.correction': correction})
 

@@ -1,4 +1,5 @@
 import os
+import warnings
 
 import astropy.units as u
 import numpy as np
@@ -56,8 +57,10 @@ transit_depth_bls_raw_nans_removed = config['lightkurve']['raw_nans_removed_bls_
 
 
 ### ------ Lightcurve Selecting ------ ###
-# Set the lightcurve selecting criteria
+# Set the lightcurve selecting and reading parameters
 lc_provenance = config['transit_fitting']['lightcurve_provenance']
+flux_column = config['transit_fitting']['flux_column']
+
 lc_fn = format_lc_fits_fn_by_provenance(lc_provenance, config)
 
 # Search for the lightcurve file in the data directory
@@ -73,7 +76,14 @@ for l in range(len(fits_fn_list)):
 if lc_path is None:
     raise FileNotFoundError("The specified lightcurve file does not exist in the data directory. Please check if the file exists and run the light curve extracting/downloading scripts first if necessary.")
 else:
-    lc = lk.read(lc_path).normalize() # Force lightcurve normalization before fitting
+    if lc_provenance == "downloaded" and flux_column is not None and flux_column.lower() != "pdcsap_flux":
+        lc = lk.read(lc_path, flux_column=flux_column)
+    elif lc_provenance != "downloaded" and flux_column is not None:
+        warnings.warn("The 'flux_column' parameter is only used for downloaded light curve (i.e., when 'lightcurve_provenance' is set to 'downloaded'). The 'flux_column' parameter will be ignored.")
+        lc = lk.read(lc_path)
+    else:
+        lc = lk.read(lc_path)
+    lc = lc.normalize() # Force lightcurve normalization before fitting
     print(f"Successfully found and read the specified lightcurve file: {lc_path}.\n")
 
 
