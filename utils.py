@@ -2,6 +2,8 @@ import yaml
 from ruamel.yaml import YAML
 import shutil
 import re
+import numbers
+from collections.abc import Mapping, Iterable
 import os
 import sys
 import subprocess
@@ -309,12 +311,46 @@ def _deep_update(d, keys, value):
             raise TypeError(f"Cannot traverse into type {type(d)} at key '{current_key}'.")
 
 
-def to_python_floats(arr):
-    """A helper function to convert a numpy array or an array-like object / a single value to a list of native Python floats / a native Python float."""
-    array = np.asarray(arr)
-    if array.ndim == 0:
-        return float(array)
-    return array.tolist()
+def to_python_floats(obj):
+    """Recursively convert all numeric values in `obj` to native Python floats. Booleans and non-numeric types are preserved."""
+    # For dictionary-like objects (dict, OrderedDict, etc.)
+    if isinstance(obj, Mapping):
+        return obj.__class__((k, to_python_floats(v)) for k, v in obj.items())
+
+    # For astropy Quantity objects, use their value
+    if isinstance(obj, u.Quantity):
+        return to_python_floats(obj.value)
+
+    # For numpy arrays, convert to list and recurse
+    if isinstance(obj, np.ndarray):
+        return to_python_floats(obj.tolist())
+
+    # For numpy scalar types
+    if isinstance(obj, np.generic):
+        if isinstance(obj, (np.bool_, np.bool8)):
+            return bool(obj)
+        if isinstance(obj, np.integer):
+            return int(obj)
+        if isinstance(obj, np.floating):
+            return float(obj)
+        return obj.item()
+
+    # For general iterables (list, tuple, set), but not strings/bytes/bytearray
+    if isinstance(obj, Iterable) and not isinstance(obj, (str, bytes, bytearray)):
+        # Preserve the original container type (list, tuple, set)
+        return obj.__class__(to_python_floats(item) for item in obj)
+
+    # For native Python numeric types
+    if isinstance(obj, bool):
+        return obj
+    if isinstance(obj, numbers.Integral):
+        return int(obj)
+    if isinstance(obj, numbers.Real):
+        return float(obj)
+
+    else:
+        warnings.warn(f"Cannot convert {obj} of type {type(obj)} to Python floats, or all numeric values have been converted already. The object is returned as is.")
+        return obj
 
 
 def update_dict(dict1, dict2):
