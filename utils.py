@@ -168,30 +168,41 @@ def update_config(config_path, dict_update, decimal=True, precision=16):
     yaml.preserve_quotes = True  # preserve the quote style
     yaml.indent(mapping=2, sequence=4, offset=2)  # preserve the indentation format
 
+    # Customize float construction
+    # define custom float constructor
+    def yaml_float_constructor(self, node):
+        value = self.construct_scalar(node)
+        try:
+            # try parsing as a normal float first
+            return float(value)
+        except ValueError:
+            if 'e' in value.lower():
+                # if scientific notation, parse directly
+                return float(value)
+            elif '.' not in value:
+                # if integer-like, parse as int
+                return int(value)
+            else:
+                return float(value)
+    # add custom float constructor
+    yaml.constructor.add_constructor('tag:yaml.org,2002:float', yaml_float_constructor)
+
     # Customize float representation
-    # set custom float representers
+    # define custom float representers
     def decimal_float_representer(dumper, value):
-        if value == 0:
-            # represent zero as '0.0'
-            formatted = '0.0'
+        if isinstance(value, float) and value.is_integer():
+            # represent as integer
+            return dumper.represent_int(int(value))
         else:
             # decimal notation with specified precision, removing trailing zeros
-            formatted = f"{value:.{precision}f}"
-            if '.' in formatted:
-                while formatted.endswith('0'):
-                    formatted = formatted[:-1]
-                if formatted.endswith('.'):
-                    formatted = formatted[:-1]
-        return dumper.represent_scalar('tag:yaml.org,2002:float', formatted)
+            formatted = f"{value:.{precision}f}".rstrip('0')
+            return dumper.represent_scalar('tag:yaml.org,2002:float', formatted)
     def scientific_float_representer(dumper, value):
         # scientific notation with specified precision
         formatted = f"{value:.{precision}e}"
         return dumper.represent_scalar('tag:yaml.org,2002:float', formatted)
     # add custom float representers
-    if decimal:
-        yaml.representer.add_representer(float, decimal_float_representer)
-    else:
-        yaml.representer.add_representer(float, scientific_float_representer)
+    yaml.representer.add_representer(float, decimal_float_representer if decimal else scientific_float_representer)
 
     # Load the existing configuration
     with open(config_path, 'r') as f:
