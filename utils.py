@@ -144,7 +144,7 @@ def load_config(config_path):
     return config
 
 
-def update_config(config_path, dict_update, decimal=True, precision=16):
+def update_config(config_path, dict_update, precision=15):
     """
     Update the specific key-value pairs in a YAML configuration file with new ones,
     while preserving the original formatting, comments and other contents.
@@ -157,10 +157,8 @@ def update_config(config_path, dict_update, decimal=True, precision=16):
     dict_update : dict
         Dictionary where keys are dot-separated key paths and values are the new values.
         For updating specific list indices, use the format: 'key.path[index]' or 'key.path[index].nested_key'.
-    decimal : bool, optional
-        Whether to use decimal notation for floats. If `False`, scientific notation is used. Default is `True`.
     precision : int, optional
-        Precision for float representation. Default is `16`.
+        Precision for float representation. Default is `15` (avoiding edge cases where rounding affects the last digit because of IEEE-754 floating point behavior).
     """
     yaml = YAML()
 
@@ -176,11 +174,18 @@ def update_config(config_path, dict_update, decimal=True, precision=16):
             # try parsing as a normal float first
             return float(value)
         except ValueError:
+            # handle scientific notation
             if 'e' in value.lower():
-                # if scientific notation, parse directly
                 return float(value)
+            # handle special float values
+            elif value.lower() in ['.inf', 'inf']:
+                return float('inf')
+            elif value.lower() in ['-.inf', '-inf']:
+                return float('-inf')
+            elif value.lower() in ['.nan', 'nan']:
+                return float('nan')
+            # handle integer-like floats
             elif '.' not in value:
-                # if integer-like, parse as int
                 return int(value)
             else:
                 return float(value)
@@ -190,19 +195,21 @@ def update_config(config_path, dict_update, decimal=True, precision=16):
     # Customize float representation
     # define custom float representers
     def decimal_float_representer(dumper, value):
-        if isinstance(value, float) and value.is_integer():
+        if value.is_integer():
             # represent as integer
             return dumper.represent_int(int(value))
+        elif np.isinf(value):
+            formatted = '.inf' if value > 0 else '-.inf'
+            return dumper.represent_scalar('tag:yaml.org,2002:float', formatted)
+        elif np.isnan(value):
+            formatted = '.nan'
+            return dumper.represent_scalar('tag:yaml.org,2002:float', formatted)
         else:
             # decimal notation with specified precision, removing trailing zeros
             formatted = f"{value:.{precision}f}".rstrip('0')
             return dumper.represent_scalar('tag:yaml.org,2002:float', formatted)
-    def scientific_float_representer(dumper, value):
-        # scientific notation with specified precision
-        formatted = f"{value:.{precision}e}"
-        return dumper.represent_scalar('tag:yaml.org,2002:float', formatted)
     # add custom float representers
-    yaml.representer.add_representer(float, decimal_float_representer if decimal else scientific_float_representer)
+    yaml.representer.add_representer(float, decimal_float_representer)
 
     # Load the existing configuration
     with open(config_path, 'r') as f:
@@ -296,10 +303,10 @@ def _deep_update(d, keys, value):
                     d[current_key] = value
                 else:
                     raise IndexError(f"Index {current_key} out of range for list of length {len(d)}.")
-            else:
+            elif isinstance(current_key, str):
                 raise TypeError(f"Cannot use string key '{current_key}' with list.")
         else:
-            raise TypeError(f"Cannot set value on type {type(d)}.")
+            raise TypeError(f"Cannot set value on type {type(d)} at key '{current_key}'.")
 
     else:
         # Traverse deeper at the current key when it's not the final one
@@ -315,7 +322,7 @@ def _deep_update(d, keys, value):
                     _deep_update(d[current_key], remaining_keys, value)
                 else:
                     raise IndexError(f"Index {current_key} out of range for list of length {len(d)}.")
-            else:
+            elif isinstance(current_key, str):
                 raise TypeError(f"Cannot use string key '{current_key}' with list.")
 
         else:
