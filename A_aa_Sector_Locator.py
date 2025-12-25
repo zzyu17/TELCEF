@@ -20,7 +20,7 @@ args = parser.parse_args()
 
 # Load the configurations and set the "config" global variable
 config_dir = base_dir + "/Configurations"
-config_fn = args.config if args.config is not None else "/WASP-80_b_Configurations_and_Results.yml" ##### set the configuration filename based on the source star and planet name #####
+config_fn = args.config if args.config is not None else "/WASP-80/WASP-80_b_Configurations_and_Results.yml" ##### set the configuration filename based on the source star and planet name #####
 config_path = config_dir + config_fn
 config = load_config(config_path)
 
@@ -29,6 +29,7 @@ config = load_config(config_path)
 
 ##### Define the source parameters #####
 name = config['source']['name'] ##### define the source name #####
+config_dir_source = config_dir + f"/{name}"
 
 
 
@@ -81,7 +82,7 @@ if __name__ == "__main__":
 
 
     # Write the sector, camera, CCD, CCD coordinates and exptime information to a text file
-    scce_path = config_dir + f"/{name}_SCCE_Info.txt"
+    scce_path = config_dir_source + f"/{name}_SCCE_Info.txt"
     scce_file = open(scce_path, "w", encoding='utf-8')
 
     scce_file.write(f"Found {name} in {sector_num} sector(s), with the following sector, camera, CCD, CCD coordinates and exptime information:\n")

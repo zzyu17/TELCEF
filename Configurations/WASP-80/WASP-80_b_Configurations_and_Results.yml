@@ -1,0 +1,1314 @@
+### ------ TELCEF global parameters ------ ###
+### Mission (Kepler, K2 or TESS) parameters ###
+mission:
+  mission: "TESS" # currently only supports "TESS"
+  tess_time: 2457000 # BJD, the starting point of TESS observation time
+
+### Source (Stellar) parameters ###
+source:
+  name: "WASP-80"
+  available_sectors:
+    - 54
+  available_tpf_exptimes:
+    # seconds
+    -   -
+          20
+        - 120
+        - 600
+  available_lc_exptimes:
+    # seconds
+    -   -
+          20
+        - 120
+        - 600
+        - 1800
+  sector: 54 # set the single sector to be processed
+  camera: 1
+  ccd: 4
+  ccd_coords:
+    # [x, y] pixel coordinates on the CCD
+    - 859.355606227571229
+    - 2002.979561461885623
+  exptime: 20 # seconds, set the exptime to be processed
+  tic: 243921117
+  RA: 303.167372083333248    # degrees
+  Dec: -2.144218611111111      # degrees
+  gaia: 4223507222112425344
+  tess_mag: 10.3622
+
+### Planet parameters ###
+planet:
+  name: "WASP-80_b"
+  # from NASA Exoplanet Archive
+  k: 0.17137                # normalized planetary radius, i.e., R_p/R_s
+  t0_bjd: 2456726.717482999898493  # epoch time in BJD
+  t0: 2.824193615466356      # epoch time in BTJD
+  p: 3.06785234             # orbital period in days
+  a: 12.630000000000001     # normalized semi-major axis, i.e., a/R_s
+  i: 1.55369                # orbital inclination in radians
+  transit_duration: 0.0888                 # days
+
+  cdpp_transit_duration: # hours, can be set different from ['planet']['transit_duration']; if left blank (i.e., set to None), ['planet']['transit_duration'] (after converted into hours) will be used for CDPP calculation
+
+
+### (Relative) Directories ###
+# Specify the following directories only if you want to change the default ones
+directory:
+  base_dir: "." # The base directory of the project, all other directories are relative to. Modify it only if the 'base_dir' in A_aa_Sector_Locator has been changed.
+
+  # configuration directory
+  configurations_dir: "/Configurations" # Configuration files directory. Modify it only if the 'config_dir' in A_aa_Sector_Locator has been changed.
+
+  # data directories
+  data_dir: "/Data"
+  lc_downloaded_dir: "/Downloaded_Light_Curve" # used by B_bb_Light_Curve_Downloading
+  tpf_downloaded_dir: "/Downloaded_TPF" # used by B_aab_TPF_Downloading
+  lc_extracted_dir: "/TPF_Extracted_Light_Curve" # used by B_ab_Light_Curve_Extracting_From_TPF
+  eleanor_lc_dir: "/Eleanor_Light_Curve" # used by B_c_TESS_Light_Curve_Extracting_and_Preliminary_Processing_Eleanor
+  lightkurve_lc_dir: "/Lightkurve_Processed_Light_Curve" # used by C_Light_Curve_Further_Processing_Lightkurve
+  lc_fnb_dir: "/Folded_and_Binned_Light_Curve" # used by D_Transit_Fitting_PyTransit
+
+  # Lightkurve cache directories
+  lightkurve_cache_root: "~/.lightkurve-cache"
+  lightkurve_cache_root_tesscut: "/tesscut"
+  lightkurve_cache_root_tpf: "/tpf"
+  lightkurve_cache_root_lc: "/lightcurve"
+
+  # eleanor cache directories
+  eleanor_root: "~/.eleanor"
+  eleanor_root_metadata: "/metadata"
+  eleanor_root_metadata_sector: "/s00{sector}"
+  eleanor_root_tesscut: "/tesscut"
+
+  # used by A_b_FITS_Inspection
+  fits_inspection_dir: "/A_b_FITS_Inspection"
+
+  # used by A_c_TESS_stars2px_Inspection
+  tess_stars2px_inspection_dir: "/A_c_tess_stars2px_Inspection"
+
+  # used by A_d_TESScut_and_TPF_Inspection
+  tesscut_and_tpf_inspection_dir: "/A_d_TESScut_and_TPF_Inspection"
+
+  # used by B_aaa_TPF_Searching
+  tpf_searching_dir: "/B_aaa_TPF_Searching"
+  tpf_search_result_dir: "/TPF_Search_Result"
+  tpf_plots_dir: "/TPF_Plots"
+
+  # used by B_ab_Light_Curve_Extracting_From_TPF
+  tpf_extracted_lightcurve_plots_dir: "/B_ab_Light_Curve_Extracting_From_TPF"
+
+  # used by B_ba_Light_Curve_Searching
+  lc_searching_dir: "/B_ba_Light_Curve_Searching"
+  lc_search_result_dir: "/Light_Curve_Search_Result"
+  lc_raw_plots_dir: "/Raw_Light_Curve_Plots"
+
+  # used by B_c_TESS_Light_Curve_Extracting_and_Preliminary_Processing_Eleanor
+  eleanor_processed_lightcurve_plots_dir: "/B_c_TESS_Light_Curve_Extracting_and_Preliminary_Processing_Eleanor"
+
+  # used by C_Light_Curve_Further_Processing_Lightkurve
+  lightkurve_processed_lightcurve_plots_dir: "/C_Light_Curve_Further_Processing_Lightkurve"
+
+  # used by D_Transit_Fitting_PyTransit
+  pytransit_fitting_plots_dir: "/D_Transit_Fitting_PyTransit"
+
+
+### ------ Script-specific parameters ------ ###
+### A_d TESScut and TPF Inspection parameters ###
+tesscut_and_tpf_inspection:
+  tpf_method: search_targetpixelfile # 'search_tesscut' for lightkurve.search_tesscut(), 'search_targetpixelfile' for lightkurve.search_targetpixelfile(),
+                                       # 'read' for lightkurve.read() (if FITS file already exists) or 'astroquery_tesscut' for astroquery.mast.Tesscut.download_cutouts()
+
+  tpf_type: tpf # 'tesscut' or 'tpf'
+  tesscut_size_1d: 31 # pixels, only used when tpf_type is 'tesscut'
+  tpf_height: 5 # pixels, only used when tpf_type is 'tpf'
+  tpf_width: 5 # pixels, only used when tpf_type is 'tpf'
+
+
+
+
+### B_aa TPF Searching and Downloading parameters ###
+tpf_plot:
+  cadence:
+    # Set which cadence to be plotted. If a list that have the same length as tpf_collection_mission_stage is passed, the corresponding cadence will be plotted for each TPF;
+    # if a single value is passed, the same cadence will be plotted for all TPFs.
+    - 0
+
+
+tpf_downloading_criteria:
+  # can be assigned manually after running B_aaa_TPF_Searching
+  author: "SPOC" # "SPOC" for downloading via lightkurve.search_targetpixelfile(), and "TESScut" for downloading via astroquery.mast.Tesscut.download_cutouts()
+  exptime: # seconds, can be set different from ['source']['exptime']; if left blank (i.e., set to None), ['source']['exptime'] will be used for TPF downloading
+  tpf_height: 11 # pixels, should be 11 when author is "SPOC"
+  tpf_width: 11 # pixels, should be 11 when author is "SPOC"
+
+
+
+
+### B_ab Light Curve Extracting From TPF parameters ###
+tpf_selecting_criteria:
+  author: "SPOC" # "SPOC" for TPF downloaded via lightkurve.search_targetpixelfile(), and "TESScut" for TPF downloaded via astroquery.mast.Tesscut.download_cutouts()
+  exptime: # seconds, can be set different from ['source']['exptime']; if left blank (i.e., set to None), ['source']['exptime'] will be used for TPF selecting
+  tpf_height: 11 # pixels, should be 11 when author is "SPOC"
+  tpf_width: 11 # pixels, should be 11 when author is "SPOC"
+
+
+lightcurve_extracting:
+  method: lightkurve_aperture # 'lightkurve_aperture' for aperture photometry via lightkurve.TESSTargetPixelFile.extract_aperture_photometry() method
+
+  lightkurve_aperture:
+    # only used when method is 'lightkurve_aperture' (see Lightkurve documentation for details)
+    aperture_mask_type: pipeline # Should be 'custom', ‘pipeline’, ‘threshold’, ‘default’, or ‘all’ (before running the script).
+                           # If 'custom', the array-like object defined in the B_ab_Light_Curve_Extracting_From_TPF script will be used as the custom aperture mask;
+                           # if 'pipeline', the official pipeline aperture mask will be used (only available when author is 'SPOC');
+                           # if 'threshold', a custom threshold aperture mask with the threshold defined below created via lightkurve.TESSTargetPixelFile.create_threshold_mask() method will be used, and the 'aperture_mask_type' parameter will be updated to 'threshold-{threshold}' after running the script;
+                           # if 'default', the official pipeline aperture mask will be used if available, with the default 3-sigma threshold aperture mask as the fallback;
+                           # if left blank (i.e., set to None) or 'all', all pixels in the TPF will be used as the aperture mask.
+    threshold: 3           # sigma above a median brightness, only used when aperture_mask is 'threshold'
+    flux_method: sum # Should be 'sum', 'median', or 'mean'. 'sum' by default. Determines how the pixel values within the aperture mask are combined at each cadence.
+    centroid_method: moments # Should be 'moments' or 'quadratic'. 'moments' by default. Defines which method to use to estimate the centroids.
+                             # ‘moments’ computes the centroid based on the sample moments of the data. ‘quadratic’ fits a 2D polynomial to the data and returns the coordinate of the peak of that polynomial.
+
+    render_aperture_overlay_tpf_animation: false # whether to render the aperture-overlay TPF animation
+    aperture_overlay_tpf_animation_step: 2 # step size when rendering the aperture-overlay TPF animation
+    tpf_animation_rendering_time: 8128.338999999999942   # seconds
+
+    tpf_plot_cadence: 0 # cadence index when plotting the aperture-overlay TPF and the extracted light curve
+    lc_plot_ylim:
+      # Lower and upper y limit for the extracted light curve plot, in percentile of the normalized flux. Recommended: [5, 80] if the CDPP is large. Leave it blank (i.e., set to None) for automatic limits when the CDPP is not that large.
+      - 0
+      - 99.799999999999997
+    plot_errorbar: true # whether to plot the error bar of the light curve
+
+  lc_extracted_cdpp: 22000.646484375        # ppm
+
+
+
+
+### B_b Light Curve Searching and Downloading parameters ###
+# The following mission-specific supported authors are those supported by the file format reader function in the specified Lightkurve version,
+# change them only if you have changed the Lightkurve version.
+lightkurve_search_lightcurve:
+  Kepler_supported_author: # supported authors for Kepler light curve products in Lightkurve (v2.0.11), untested
+    - "Kepler"
+    - "KEPSEISMIC"
+
+  K2_supported_author: # supported authors for K2 light curve products in Lightkurve (v2.0.11), untested
+    - "Kepler"
+    - "K2SFF"
+    - "EVEREST"
+    - "K2SC"
+    - "K2VARCAT"
+
+  TESS_supported_author: # supported authors for TESS light curve products in Lightkurve (v2.0.11)
+    - "QLP"
+    - "SPOC"
+    - "TASOC"
+    - "PATHOS"
+    - "CDIPS"
+
+
+lightcurve_downloading_criteria:
+  # can be assigned manually after running B_ba_Light_Curve_Searching
+  author: "SPOC" # Not limited to the supported authors listed above: as long as the author exists in the searching result, it can be assigned here. If a "not-supported" error occurs, ignore it because it's just related to the file format reader function, searching and downloading should be fine.
+  exptime: # seconds, can be set different from ['source']['exptime']; if left blank (i.e., set to None), ['source']['exptime'] will be used for lightcurve downloading
+
+
+
+
+### B_c Eleanor processing parameters ###
+eleanor:
+  source:
+    # can be assigned manually after running A_ab_Configuration_Loader and should be mutually exclusive
+    # If postcard is true after running A_ab_Configuration_Loader, postcard can be set to true or false; if postcard is false after running A_ab_Configuration_Loader, postcard must be set to false because no postcard is available.
+    postcard: false
+    postcard_size: (148, 104) # (width, height) in pixels, only used when postcard is true
+    tesscut: true
+    tesscut_size_1d: 31 # pixels, only used when tesscut is true
+
+    location_on_postcard/tesscut:
+      # [x, y] pixel coordinates on the Postcard or TESScut
+      - 16
+      - 16
+    preserve_formatting: # This key is for preserving the formatting of the configuration file. Ignore it and leave it blank.
+
+
+  targetdata:
+    do_pca: true
+    do_psf: true
+    tpf_height: 15 # pixels
+    tpf_width: 15 # pixels
+    bkg_size: 31 # pixels
+    aperture_mode: normal # 'normal', 'small', 'large' or 'all'
+    cal_cadences: # should be left blank (i.e., set to None) or tuple, i.e., start and end cadence numbers to use for optimal aperture selection
+    regressors: # should be left blank (i.e., set to None), ‘corner’ or have shape (len(data.time), N)
+    quality_mask: Default # Should be 'Default' or np.ndarray. If 'Default', will use eleanor.TargetData.quality.
+
+    location_on_tpf:
+      # [x, y] pixel coordinates on the TPF
+      - 7
+      - 7
+    bkg_type: PC_LEVEL
+
+
+  lc_raw_cdpp: 7045.237048154722288   # ppm
+  lc_corr_cdpp: 8256.426573930699305   # ppm
+  lc_pca_cdpp: 5831.170611583408572   # ppm
+  lc_psf_cdpp: 9802.542425053352417   # ppm
+
+  # can be assigned manually after running B_c_TESS_Light_Curve_Extracting_and_Preliminary_Processing_Eleanor
+  lc_type: PCA       # Should be 'Raw', 'Corrected', 'PCA' or 'PSF'. Automatically will be set to the type of light curve with the lowest CDPP after running B_c_TESS_Light_Curve_Extracting_and_Preliminary_Processing_Eleanor.
+
+
+  visualize:
+    render_tpf_animation: false
+    render_aperture_overplotted_tpf_animation: false # Whether to render the TPF animation with aperture overplotted，Set this to true only when render_tpf_animation is true.
+    tpf_animation_step: 1 # step size when rendering the TPF animation
+    tpf_animation_rendering_time: 947.744000000000028    # seconds
+
+    render_bkg_2d_animation: false # do not render the 2D background animation when using TESScut because the 2D background is the same as the TESScut postcard when using TESScut
+    bkg_2d_animation_rendering_time: 70.954999999999998     # seconds
+    bkg_2d_animation_step: 1 # step size when rendering the 2D background animation
+
+    render_postcard_animation: false
+    postcard_animation_rendering_time: 67.254000000000005     # seconds
+    postcard_animation_step: 1 # step size when rendering the Postcard animation
+
+    lcs_offset:
+      # dimensionless (in unit of normalized flux), offsets for the all-in-one light curves plot, from top to bottom in the order of 'Raw', 'Corrected', 'PCA' and 'PSF'
+      - 0.2
+      - 0.1
+      - 0
+      - -0.1
+
+    plot_errorbar_specific: true # whether to plot the error bar for the specific type of light curve on the individual light curve plots
+
+    tpf_margin: 3 # pixels, margin of the TPF plot when plotting the pixel-by-pixel light curves
+
+    bkg_1d_offset:
+      # $e^{-}s^{-1}$ (unit of flux), offsets for the 1D background plot, the first for 1D postcard background and the second for 1D TPF background
+      - 2000
+      - 0
+
+    cadence: 0 # cadence index when plotting the 2D background, the aperture-overplotted & Gaia-overlay TPF and the Gaia-overlay TPF
+
+
+
+
+### C Lightkurve processing parameters ###
+lightkurve:
+  lightcurve_provenance: downloaded # Should be 'extracted', 'downloaded' or 'eleanor'. The provenance of the light curve to be processed. The metadata of the light curve to be processed will be collected automatically according to the provenance.
+                               # 'extracted' for light curve extracted from TPF in B_ab_Light_Curve_Extracting_From_TPF;
+                               # 'downloaded' for light curve downloaded in B_bb_Light_Curve_Downloading;
+                               # 'eleanor' for light curve extracted and preliminarily processed via eleanor in B_c_TESS_Light_Curve_Extracting_and_Preliminary_Processing_Eleanor.
+  flux_column: # The column in the FITS file to be read as 'flux', typically 'pdcsap_flux' or 'sap_flux'. If left blank (i.e., set to None), it will be set to 'pdcsap_flux' by Lightkurve's default.
+  flux_err_column: # The column in the FITS file to be read as 'flux_err', typically 'pdcsap_flux_err' or 'sap_flux_err'. If left blank (i.e., set to None), it will be set to f'{flux_column}_err' by Lightkurve's default. If such a column does not exist, 'flux_err' will be populated with NaN values.
+
+
+  plot_errorbar: true # whether to plot the error bar of the light curve
+
+  p_bls_raw_nans_removed_range:
+    # days, minimun and maximum period to search when fitting the NaNs-removed raw light curve using the Box Least Squares (BLS) method, recommended: [0.5, 27]
+    - 0.5
+    - 27
+  transit_mask_bls_raw_nans_removed_span_coefficient: # the coefficient of BLS transit mask span in duration; if left blank (i.e., set to None), it will be set to 1.8
+
+  flatten: true
+  flatten_window_proportion: 0                      # proportion of the light curve length to be used as the window length when flattening the light curve
+  flatten_window_length: 101  # will be set to int(flatten_window_proportion * len(lc.time)) and made odd automatically
+  flatten_polyorder: 3 # the polynomial order to be used when flattening the light curve
+
+  clip: true
+  clip_transit: true
+  sigma_baseline: 3           # the sigma threshold above and below the baseline light curve to clip outliers
+  sigma_transit_upper: 0.4                    # the sigma threshold above the median of baseline light curve to clip outliers around the transit light curve
+  sigma_transit_lower: # the sigma threshold below the median of baseline light curve to clip outliers around the transit light curve; if left blank (i.e., set to None), sigma_transit_lower will be set to inf to avoid clipping the real transit.
+
+  correction: _Flattened_&_Clipped
+
+
+  lc_raw_nans_removed_baseline_cdpp: 1450.1126708984375     # ppm
+  lc_raw_nans_removed_cdpp: 4014.26806640625       # ppm
+
+  raw_nans_removed_bls_fitted_parameters:
+    k: 0.1744354              # normalized planetary radius, i.e., R_p/R_s
+    p: 3.068106810681068      # days, orbital period
+    t0: 2770.026493147850033   # BTJD, epoch time
+    transit_duration: 0.08799769471065 # days
+    transit_depth: 0.03042772594381       # dimensionless (in unit of normalized flux)
+
+  lc_flattened_baseline_cdpp: 162.533115641902128    # ppm
+  lc_flattened_cdpp: 4250.667887536854323   # ppm
+
+  lc_clipped_baseline_cdpp: 158.821098269823722    # ppm
+  lc_clipped_cdpp: 4256.667855163372224   # ppm
+
+
+
+
+### D Transit fitting parameters ###
+transit_fitting:
+  lightcurve_provenance: lightkurve # Should be 'extracted', 'downloaded', 'eleanor' or 'lightkurve'. The provenance of the light curve to be fitted. The metadata of the light curve to be fitted will be collected automatically according to the provenance.
+                                    # 'extracted' for light curve extracted from TPF in B_ab_Light_Curve_Extracting_From_TPF;
+                                    # 'downloaded' for light curve downloaded in B_bb_Light_Curve_Downloading;
+                                    # 'eleanor' for light curve extracted and preliminarily processed via eleanor in B_c_TESS_Light_Curve_Extracting_and_Preliminary_Processing_Eleanor;
+                                    # 'lightkurve' for light curve further processed via Lightkurve in C_Light_Curve_Further_Processing_Lightkurve.
+  flux_column: # The column in the FITS file to be read as 'flux', typically 'pdcsap_flux' or 'sap_flux'. If left blank (i.e., set to None), it will be set to 'pdcsap_flux' by Lightkurve's default.
+  flux_err_column: # The column in the FITS file to be read as 'flux_err', typically 'pdcsap_flux_err' or 'sap_flux_err'. If left blank (i.e., set to None), it will be set to f'{flux_column}_err' by Lightkurve's default. If such a column does not exist, 'flux_err' will be populated with NaN values.
+
+
+  # Priors and initial fitted transit parameters
+  # Priors and initial fitted transit parameters will be loaded from 'priors_{fit_type}' and 'params_initial_{fit_type}' respectively according to the stage of fit (i.e., 'global', 'individual' or 'fnb') first;
+  # if the priors and initial fitted transit parameters are left blank (i.e., set to None) for specific parameters there, the corresponding values will be loaded from 'priors' and 'params_initial' respectively.
+  intitial_transit_parameters:
+    # Initial fitted transit parameters.
+    k: # normalized planetary radius, i.e., R_p/R_s
+    t0: # epoch time in BTJD
+    p: # orbital period in days
+    a: # normalized semi-major axis, i.e., a/R_s
+    i: # orbital inclination in radians
+    ldc1: # linear limb darkening coefficient
+    ldc2: # quadratic limb darkening coefficient
+  priors:
+    # Prior distributions of the fitted transit parameters.
+    # `'fixed(v)'` for a fixed value `v`;
+    # `'u(a, b)'` & `'U(a, b)'` for uniform distribution between `a` and `b`;
+    # `'hu(a, b)'` & `'HU(a, b)'` for hard boundaries uniform distribution between `a` and `b`;
+    # `'n(mu, sigma)'` & `'N(mu, sigma)'` for normal distribution with mean `mu` and standard deviation `sigma`.
+    k: # normalized planetary radius, i.e., R_p/R_s
+    t0: # epoch time in BTJD
+    p: # orbital period in days
+    a: # normalized semi-major axis, i.e., a/R_s
+    i: # orbital inclination in radians
+    ldc1: # linear limb darkening coefficient
+    ldc2: # quadratic limb darkening coefficient
+  global_intitial_transit_parameters:
+    # Initial fitted transit parameters for global fitting.
+    k: 0.16620649655          # normalized planetary radius, i.e., R_p/R_s
+    t0: 2770.026185965416062   # epoch time in BTJD
+    p: 3.06787073455098       # orbital period in days
+    a: 12.762348774291425     # normalized semi-major axis, i.e., a/R_s
+    i: 1.558014503699911      # orbital inclination in radians
+    ldc1: 0.4                    # linear limb darkening coefficient
+    ldc2: 0.2                    # quadratic limb darkening coefficient
+  global_priors:
+    # Prior distributions of the fitted transit parameters for global fitting.
+    # `'fixed(v)'` for a fixed value `v`;
+    # `'u(a, b)'` & `'U(a, b)'` for uniform distribution between `a` and `b`;
+    # `'hu(a, b)'` & `'HU(a, b)'` for hard boundaries uniform distribution between `a` and `b`;
+    # `'n(mu, sigma)'` & `'N(mu, sigma)'` for normal distribution with mean `mu` and standard deviation `sigma`.
+    k: hu(0, inf) # normalized planetary radius, i.e., R_p/R_s
+    t0: hu(2769.903969760563, 2796.1345037123065) # epoch time in BTJD
+    p: hu(0, inf) # orbital period in days
+    a: hu(1, inf) # normalized semi-major axis, i.e., a/R_s
+    i: hu(-1.5707963267948966, 1.5707963267948966) # orbital inclination in radians
+    ldc1: hu(0, 1) # linear limb darkening coefficient
+    ldc2: hu(0, 1) # quadratic limb darkening coefficient
+  individual_intitial_transit_parameters:
+    # Initial fitted transit parameters for individual fitting for the first valid transit.
+    k: 0.167720649652355      # normalized planetary radius, i.e., R_p/R_s
+    t0: 2770.026141884350181   # epoch time in BTJD
+    p: 3.067883220732992      # orbital period in days
+    a: 12.799642250116454     # normalized semi-major axis, i.e., a/R_s
+    i: 1.555909199159534      # orbital inclination in radians
+    ldc1: 0.4310599822477        # linear limb darkening coefficient
+    ldc2: 0.177567726552294      # quadratic limb darkening coefficient
+  individual_priors:
+    # Prior distributions of the fitted transit parameters for individual fitting for the first valid transit.
+    # `'fixed(v)'` for a fixed value `v`;
+    # `'u(a, b)'` & `'U(a, b)'` for uniform distribution between `a` and `b`;
+    # `'hu(a, b)'` & `'HU(a, b)'` for hard boundaries uniform distribution between `a` and `b`;
+    # `'n(mu, sigma)'` & `'N(mu, sigma)'` for normal distribution with mean `mu` and standard deviation `sigma`.
+    k: hu(0, inf) # normalized planetary radius, i.e., R_p/R_s
+    t0: hu(2769.903969760563, 2771.5600307061377) # epoch time in BTJD
+    p: fixed(3.0678832207329916) # orbital period in days
+    a: hu(1, inf) # normalized semi-major axis, i.e., a/R_s
+    i: hu(-1.5707963267948966, 1.5707963267948966) # orbital inclination in radians
+    ldc1: hu(0, 1) # linear limb darkening coefficient
+    ldc2: hu(0, 1) # quadratic limb darkening coefficient
+  fnb_intitial_transit_parameters:
+    # Initial fitted transit parameters for folded-and-binned fitting.
+    k: 0.167720649652355 # normalized planetary radius, i.e., R_p/R_s
+    t0: 0 # epoch time in BTJD
+    p: 3.067883220732992  # orbital period in days
+    a: 12.799642250116454  # normalized semi-major axis, i.e., a/R_s
+    i: 1.555909199159534  # orbital inclination in radians
+    ldc1: 0.4310599822477 # linear limb darkening coefficient
+    ldc2: 0.177567726552294  # quadratic limb darkening coefficient
+  fnb_priors:
+    # Prior distributions of the fitted transit parameters for folded-and-binned fitting.
+    # `'fixed(v)'` for a fixed value `v`;
+    # `'u(a, b)'` & `'U(a, b)'` for uniform distribution between `a` and `b`;
+    # `'hu(a, b)'` & `'HU(a, b)'` for hard boundaries uniform distribution between `a` and `b`;
+    # `'n(mu, sigma)'` & `'N(mu, sigma)'` for normal distribution with mean `mu` and standard deviation `sigma`.
+    k: hu(0, inf) # normalized planetary radius, i.e., R_p/R_s
+    t0: hu(-1.5337325532092114, 1.533860039383381) # epoch time in BTJD
+    p: fixed(3.0678832207329916) # orbital period in days
+    a: hu(1, inf) # normalized semi-major axis, i.e., a/R_s
+    i: hu(-1.5707963267948966, 1.5707963267948966) # orbital inclination in radians
+    ldc1: hu(0, 1) # linear limb darkening coefficient
+    ldc2: hu(0, 1) # quadratic limb darkening coefficient
+
+
+  plot_errorbar: true # whether to plot the error bar of the light curve and residuals
+
+
+  # Global transit fitting parameters
+  fit_global: true
+
+  # transit fitting parameters
+  max_iter_global: 3 # maximum number of iterations for the global fitting after removing outliers each time
+  sigma_global: 3   # sigma for the global fitting outliers removal
+
+  transit_model_name_global: Quadratic # name of the transit model to use for global fitting, should be 'Quadratic', 'QuadraticCL', 'RoadRunner', 'QPower2' or 'General'
+  n_walkers_global: 32 # number of MCMC walkers for global fitting
+  n_steps_global: 10000 # number of MCMC steps for global fitting
+  chain_discard_proportion_global: 0.2                    # proportion of MCMC chain to discard as burn-in for global fitting
+  chain_thin_global: 10 # thinning factor of the MCMC chain for global fitting
+
+  # plotting parameters
+  alpha_exptime: # the plotting alpha coefficient of the light curve corresponding to the exposure time; if left blank (i.e., set to None), it will be set to the default values: 0.1 for (0, 80]s, 0.3 for (80, 400]s, 0.5 for (400, inf)s.
+  scatter_point_size_exptime: # the scatter point size coefficient of the light curve corresponding to the exposure time; if left blank (i.e., set to None), it will be set to the default values: 0.025 for (0, 80]s, 0.25 for (80, 400]s, 0.75 for (400, inf)s.
+  running_mean_window_proportion_global: 0.05                      # Window length proportion of the unflattened MCMC chain to calculate the running means of the parameters when visualizing the process and result for global fitting, recommended: 0.05.
+                                              # If left blank (i.e., set to None), the default window length of 20 will be used.
+
+
+  # Individual transit fitting parameters
+  fit_individual: true
+
+  # transit fitting parameters
+  max_iter_individual: 3 # maximum number of iterations for the individual fitting after removing outliers each time
+  sigma_individual: 3   # sigma for the individual fitting outlier removal
+
+  transit_model_name_individual: Quadratic # name of the transit model to use for individual fitting, should be 'Quadratic', 'QuadraticCL', 'RoadRunner', 'QPower2' or 'General'
+  n_walkers_individual: 32 # number of MCMC walkers for individual fitting
+  n_steps_individual: 10000 # number of MCMC steps for individual fitting
+  chain_discard_proportion_individual: 0.2                    # proportion of MCMC chain to discard as burn-in for individual fitting
+  chain_thin_individual: 10 # thinning factor of the MCMC chain for individual fitting
+
+  individual_transit_check_coefficient: 1.2                    # the coefficient of transit duration span to check if the individual transit light curve contains transit event
+
+  # plotting parameters
+  running_mean_window_proportion_individual: 0.05                      # Window length proportion of the unflattened MCMC chain to calculate the running means of the parameters when visualizing the process and result for individual fitting, recommended: 0.05.
+                                                  # If left blank (i.e., set to None), the default window length of 20 will be used.
+  individual_transit_plot_coefficient: 2 # the coefficient of the individual transit plot span
+  all_in_one_individual_transit_plot_col_row:
+    # (columns, rows) for the all-in-one individual transit plots. If left blank (i.e., set to None), it will be set to (n_valid_transits, 1) by default.
+    - 2
+    - 3
+
+
+  # Folding and binning parameters
+  fold: true
+  p_fold: # days, period to fold the light curve; if left blank (i.e., set to None), it will be set to either global or BLS-fitted or NASA-exoplanet-archive orbital period
+  t0_fold: # BTJD, epoch time to fold the light curve; if left blank (i.e., set to None), it will be set to either global or BLS-fitted or NASA-exoplanet-archive epoch time
+
+  bin: true
+  time_bin_size: # seconds; if left blank (i.e., set to None), it will be set to the exposure time
+
+  fnb: '_Folded-p3.0679-t2770.0261_&_Binned-t20.0'
+
+  # Folded-and-binned transit fitting parameters
+  fit_fnb: true
+
+  # transit fitting parameters
+  max_iter_fnb: 3 # maximum number of iterations for the folded-and-binned fitting after removing outliers each time
+  sigma_fnb: 3   # sigma for the folded-and-binned fitting outliers removal
+
+  transit_model_name_fnb: Quadratic # name of the transit model to use for folded-and-binned fitting, should be 'Quadratic', 'QuadraticCL', 'RoadRunner', 'QPower2' or 'General'
+  n_walkers_fnb: 32 # number of MCMC walkers for folded-and-binned fitting
+  n_steps_fnb: 10000 # number of MCMC steps for folded-and-binned fitting
+  chain_discard_proportion_fnb: 0.2                    # proportion of MCMC chain to discard as burn-in for folded-and-binned fitting
+  chain_thin_fnb: 10 # thinning factor of the MCMC chain for folded-and-binned fitting
+
+  # plotting parameters
+  running_mean_window_proportion_fnb: 0.05                      # Window length proportion of the unflattened MCMC chain to calculate the running means of the parameters when visualizing the process and result for folded-and-binned fitting, recommended: 0.05.
+                                           # If left blank (i.e., set to None), the default window length of 20 will be used.
+  folded_transit_plot_coefficient: 2 # the coefficient of the folded-and-binned transit plot span, only used when 'fold' is set to true (i.e., the lightcurve is folded)
+
+
+  # Global fitted transit parameters ([value, lower_error, upper_error])
+  global_fitted_transit_parameters:
+    n_iterations: 2
+    k:
+      # normalized planetary radius, i.e., R_p/R_s
+      - 0.167720649652355
+      - 0.001523915248998
+      - 0.001475877538013
+    t0:
+      # BTJD, epoch time
+      - 2770.026141884350181
+      - 0.0000934552927
+      - 0.000095022870482
+    p:
+      # days, orbital period
+      - 3.067883220732992
+      - 0.000020214371754
+      - 0.000019441888747
+    a:
+      # normalized semi-major axis, i.e., a/R_s
+      - 12.799642250116454
+      - 0.158382468133531
+      - 0.139448517015655
+    i:
+      # radians, orbital inclination
+      - 1.555909199159534
+      - 0.005733534974926
+      - 0.00808355175774
+    i_in_degree:
+      # degrees, orbital inclination
+      - 89.147030417421178
+      - 0.3285073557539
+      - 0.463153399194098
+    ldc1:
+      # linear limb darkening coefficient
+      - 0.4310599822477
+      - 0.05553516360765
+      - 0.043331787039764
+    ldc2:
+      # quadratic limb darkening coefficient
+      - 0.177567726552294
+      - 0.115245500629851
+      - 0.146061262537985
+    ldc:
+      # limb darkening coefficients
+      -   -
+            0.4310599822477
+          - 0.177567726552294
+      -   - 0.05553516360765
+          - 0.115245500629851
+      -   - 0.043331787039764
+          - 0.146061262537985
+    transit_duration:
+      # days
+      - 0.087984070364167
+      - 0.000372942461164
+      - 0.000419158945045
+    transit_depth:
+      # dimensionless (in unit of normalized flux)
+      - 0.033654327863592
+      - 0.000127064549699
+      - 0.000121226523934
+    residual_std: 0.003115298752         # standard deviation of fitting residuals
+    chi_square: 62651.063745509251021
+    reduced_chi_square: 1.037526931282756
+    r_hat:
+    # Gelman-Rubin statistic for MCMC convergence check
+      k: 1
+      t0: 1
+      p: 1
+      a: 1
+      i: 1.07
+      ldc1: 1
+      ldc2: 1
+    ess_bulk:
+    # effective sample size for bulk of the MCMC chain
+      k: 469
+      t0: 2126
+      p: 1995
+      a: 491
+      i: 339
+      ldc1: 1829
+      ldc2: 1182
+    ess_tail:
+    # effective sample size for tail of the MCMC chain
+      k: 1892
+      t0: 5784
+      p: 5234
+      a: 1635
+      i: 784
+      ldc1: 4581
+      ldc2: 3360
+  preserve_formatting: # This key is for preserving the formatting of the configuration file. Ignore it and leave it blank.
+
+  individual_fitted_transit_parameters:
+    n_possible_transits: 9
+    n_valid_transits: 6
+    no_data_transit_indices:
+      - 2
+      - 3
+      - 7
+    valid_transit_indices:
+      - 0
+      - 1
+      - 4
+      - 5
+      - 6
+      - 8
+    n_iterations:
+      - 2
+      - 1
+      - 
+      - 
+      - 2
+      - 2
+      - 1
+      - 
+      - 2
+    k:
+      # normalized planetary radius, i.e., R_p/R_s
+      -   -
+            0.169085573672136
+          - 0.001800155720424
+          - 0.00157065681331
+      -   - 0.168948463657062
+          - 0.002021078843706
+          - 0.001881084262002
+      -   - 
+          - 
+          - 
+      -   - 
+          - 
+          - 
+      -   - 0.157953759752
+          - 0.002928217544388
+          - 0.002803760763334
+      -   - 0.166478432628623
+          - 0.004366040301399
+          - 0.005347152252507
+      -   - 0.167112831453017
+          - 0.003055506445551
+          - 0.002770939589916
+      -   - 
+          - 
+          - 
+      -   - 0.17121484
+          - 0.001817075932226
+          - 0.00158427842817
+    t0:
+      # BTJD, epoch time
+      -   -
+            2770.026277908580596
+          - 0.00012365243174
+          - 0.000123708027786
+      -   - 2773.094297510268916
+          - 0.000137945651659
+          - 0.000134554833494
+      -   - 
+          - 
+          - 
+      -   - 
+          - 
+          - 
+      -   - 2782.296763622217441
+          - 0.000136478755394
+          - 0.000137913652452
+      -   - 2785.365697844158603
+          - 0.000140142022701
+          - 0.000138641420108
+      -   - 2788.433500390688096
+          - 0.000140422770983
+          - 0.0001436652542
+      -   - 
+          - 
+          - 
+      -   - 2794.569562998756282
+          - 0.000133893106977
+          - 0.00014098719339
+    p:
+      # days, orbital period
+      -   -
+            3.067883220732992
+          - 0
+          - 0
+      -   - 3.067883220732992
+          - 0
+          - 0
+      -   - 
+          - 
+          - 
+      -   - 
+          - 
+          - 
+      -   - 3.067883220732992
+          - 0
+          - 0
+      -   - 3.067883220732992
+          - 0
+          - 0
+      -   - 3.067883220732992
+          - 0
+          - 0
+      -   - 
+          - 
+          - 
+      -   - 3.067883220732992
+          - 0
+          - 0
+    a:
+      # normalized semi-major axis, i.e., a/R_s
+      -   -
+            12.869845057732345
+          - 0.210009932943969
+          - 0.15507504867012
+      -   - 12.841363858808357
+          - 0.242278474926543
+          - 0.175031528609411
+      -   - 
+          - 
+          - 
+      -   - 
+          - 
+          - 
+      -   - 12.622333759544773
+          - 0.294046038886949
+          - 0.257126072172666
+      -   - 12.116421357885237
+          - 0.377732454692394
+          - 0.314576848391171
+      -   - 12.568542173377406
+          - 0.32954029274437
+          - 0.262969758573337
+      -   - 
+          - 
+          - 
+      -   - 13.047805858775533
+          - 0.189168383557694
+          - 0.139943701710905
+    i:
+      # radians, orbital inclination
+      -   -
+            1.5612782735433
+          - 0.007658806983592
+          - 0.006418441943963
+      -   - 1.559898754353258
+          - 0.008831521497675
+          - 0.007294475119978
+      -   - 
+          - 
+          - 
+      -   - 
+          - 
+          - 
+      -   - 1.557759373070996
+          - 0.01022486804727
+          - 0.008996335494417
+      -   - 1.546406807132754
+          - 0.011605145866313
+          - 0.01491319999885
+      -   - 1.555357878875905
+          - 0.010222851604131
+          - 0.010136592883767
+      -   - 
+          - 
+          - 
+      -   - 1.563407158179405
+          - 0.0073815569721
+          - 0.005111147514701
+    i_in_degree:
+      # degrees, orbital inclination
+      -   -
+            89.454655719502725
+          - 0.438817316265136
+          - 0.367749634438824
+      -   - 89.375615092156039
+          - 0.506008908495838
+          - 0.417942638138
+      -   - 
+          - 
+          - 
+      -   - 
+          - 
+          - 
+      -   - 89.253037573913119
+          - 0.585841785186785
+          - 0.515452054913854
+      -   - 88.602583459007874
+          - 0.664925878773435
+          - 0.854463418968615
+      -   - 89.115442092009246
+          - 0.585726251505272
+          - 0.580783990882174
+      -   - 
+          - 
+          - 
+      -   - 89.57663182422182
+          - 0.422932060736727
+          - 0.292847181061172
+    ldc1:
+      # linear limb darkening coefficient
+      -   -
+            0.419846163818233
+          - 0.089511243570473
+          - 0.064268601322932
+      -   - 0.46111383952
+          - 0.084762761283477
+          - 0.066728537220218
+      -   - 
+          - 
+          - 
+      -   - 
+          - 
+          - 
+      -   - 0.315558073118113
+          - 0.102239274133283
+          - 0.110001618340605
+      -   - 0.240502990466091
+          - 0.1062557
+          - 0.107118775761245
+      -   - 0.450186161388727
+          - 0.109077594224026
+          - 0.081247941936425
+      -   - 
+          - 
+          - 
+      -   - 0.288885605880067
+          - 0.11650222227588
+          - 0.09084325967237
+    ldc2:
+      # quadratic limb darkening coefficient
+      -   -
+            0.187938454028971
+          - 0.133041715217856
+          - 0.22326343758787
+      -   - 0.163255951594086
+          - 0.118843126808922
+          - 0.2038044650445
+      -   - 
+          - 
+          - 
+      -   - 
+          - 
+          - 
+      -   - 0.580144423265702
+          - 0.295239629373495
+          - 0.270565369906937
+      -   - 0.68223766
+          - 0.339954531359237
+          - 0.225490469076185
+      -   - 0.247839905354597
+          - 0.178040798113927
+          - 0.313592326557315
+      -   - 
+          - 
+          - 
+      -   - 0.275286433084044
+          - 0.187719460176624
+          - 0.270014390877117
+    ldc:
+      # limb darkening coefficients
+      -   -
+              - 0.419846163818233
+              - 0.187938454028971
+          -   - 0.089511243570473
+              - 0.133041715217856
+          -   - 0.064268601322932
+              - 0.22326343758787
+      -   -   - 0.46111383952
+              - 0.163255951594086
+          -   - 0.084762761283477
+              - 0.118843126808922
+          -   - 0.066728537220218
+              - 0.2038044650445
+      -   -   - 
+              - 
+          -   - 
+              - 
+          -   - 
+              - 
+      -   -   - 
+              - 
+          -   - 
+              - 
+          -   - 
+              - 
+      -   -   - 0.315558073118113
+              - 0.580144423265702
+          -   - 0.102239274133283
+              - 0.295239629373495
+          -   - 0.110001618340605
+              - 0.270565369906937
+      -   -   - 0.240502990466091
+              - 0.68223766
+          -   - 0.1062557
+              - 0.339954531359237
+          -   - 0.107118775761245
+              - 0.225490469076185
+      -   -   - 0.450186161388727
+              - 0.247839905354597
+          -   - 0.109077594224026
+              - 0.178040798113927
+          -   - 0.081247941936425
+              - 0.313592326557315
+      -   -   - 
+              - 
+          -   - 
+              - 
+          -   - 
+              - 
+      -   -   - 0.288885605880067
+              - 0.275286433084044
+          -   - 0.11650222227588
+              - 0.187719460176624
+          -   - 0.09084325967237
+              - 0.270014390877117
+    transit_duration:
+      # days
+      -   -
+            0.088156380871283
+          - 0.000680770943
+          - 0.000817088905546
+      -   - 0.088158888272024
+          - 0.000721873200317
+          - 0.000862681754388
+      -   - 
+          - 
+          - 
+      -   - 
+          - 
+          - 
+      -   - 0.088452259117806
+          - 0.001152714268841
+          - 0.001256525960086
+      -   - 0.09096138832742
+          - 0.001023575099974
+          - 0.001050787444197
+      -   - 0.0891565820036
+          - 0.00092292874
+          - 0.001305363624058
+      -   - 
+          - 
+          - 
+      -   - 0.087274904090162
+          - 0.000651612771772
+          - 0.00083072663615
+    transit_depth:
+      # dimensionless (in unit of normalized flux)
+      -   -
+            0.034317734694348
+          - 0.00026924987382
+          - 0.000255763166242
+      -   - 0.034631138490679
+          - 0.000290983527532
+          - 0.00027479738015
+      -   - 
+          - 
+          - 
+      -   - 
+          - 
+          - 
+      -   - 0.030900565131931
+          - 0.000272590215419
+          - 0.000283394413848
+      -   - 0.033649619387911
+          - 0.000274624398358
+          - 0.000282194019041
+      -   - 0.034186568549858
+          - 0.00029977389929
+          - 0.000296266950853
+      -   - 
+          - 
+          - 
+      -   - 0.03409257916336
+          - 0.000322584486
+          - 0.000316079105331
+    residual_std:
+      # standard deviation of fitting residuals
+      - 0.002922175216713
+      - 0.00317697439024
+      - 
+      - 
+      - 0.003108896143928
+      - 0.003034024243572
+      - 0.003220060644778
+      - 
+      - 0.003046838910942
+    chi_square:
+      - 7293.521549927003434
+      - 13352.09382965812074
+      - 
+      - 
+      - 7373.007381973475276
+      - 13619.007063550170642
+      - 12057.359166526912304
+      - 
+      - 7832.827006320349028
+    reduced_chi_square:
+      - 1.030595103847252
+      - 1.0179228352259
+      - 
+      - 
+      - 1.090842932678425
+      - 1.0351936047089
+      - 1.000444670305917
+      - 
+      - 1.026851993487198
+    r_hat:
+      # Gelman-Rubin statistic for MCMC convergence check
+      k:
+        - 1
+        - 1
+        - 
+        - 
+        - 1
+        - 1.08
+        - 1
+        - 
+        - 1
+      t0:
+        - 1
+        - 1
+        - 
+        - 
+        - 1
+        - 1
+        - 1
+        - 
+        - 1
+      a:
+        - 1
+        - 1
+        - 
+        - 
+        - 1
+        - 1.06
+        - 1
+        - 
+        - 1
+      i:
+        - 1
+        - 1
+        - 
+        - 
+        - 1
+        - 1.1
+        - 1
+        - 
+        - 1
+      ldc1:
+        - 1
+        - 1
+        - 
+        - 
+        - 1
+        - 1
+        - 1
+        - 
+        - 1
+      ldc2:
+        - 1
+        - 1
+        - 
+        - 
+        - 1
+        - 1
+        - 1
+        - 
+        - 1
+    ess_bulk:
+      # effective sample size for bulk of the MCMC chain
+      k:
+        - 2032
+        - 1519
+        - 
+        - 
+        - 1376
+        - 294
+        - 1261
+        - 
+        - 2188
+      t0:
+        - 2490
+        - 2106
+        - 
+        - 
+        - 2618
+        - 1771
+        - 2253
+        - 
+        - 2719
+      a:
+        - 1721
+        - 1624
+        - 
+        - 
+        - 996
+        - 355
+        - 1325
+        - 
+        - 2124
+      i:
+        - 1491
+        - 1226
+        - 
+        - 
+        - 719
+        - 234
+        - 943
+        - 
+        - 1795
+      ldc1:
+        - 2612
+        - 2293
+        - 
+        - 
+        - 2171
+        - 1735
+        - 2049
+        - 
+        - 2315
+      ldc2:
+        - 2508
+        - 2118
+        - 
+        - 
+        - 2227
+        - 628
+        - 1955
+        - 
+        - 2394
+    ess_tail:
+      # effective sample size for tail of the MCMC chain
+      k:
+        - 3791
+        - 2736
+        - 
+        - 
+        - 2286
+        - 1619
+        - 2179
+        - 
+        - 3979
+      t0:
+        - 7606
+        - 7265
+        - 
+        - 
+        - 6535
+        - 4978
+        - 6959
+        - 
+        - 7843
+      a:
+        - 3083
+        - 3007
+        - 
+        - 
+        - 2205
+        - 1566
+        - 2771
+        - 
+        - 3327
+      i:
+        - 2060
+        - 2166
+        - 
+        - 
+        - 888
+        - 727
+        - 1993
+        - 
+        - 2117
+      ldc1:
+        - 6003
+        - 5061
+        - 
+        - 
+        - 4664
+        - 3616
+        - 5427
+        - 
+        - 7063
+      ldc2:
+        - 5506
+        - 4050
+        - 
+        - 
+        - 6628
+        - 3739
+        - 3970
+        - 
+        - 5847
+    preserve_formatting: # This key is for preserving the formatting of the configuration file. Ignore it and leave it blank.
+
+  fnb_fitted_transit_parameters:
+    n_iterations: 2
+    k:
+      # normalized planetary radius, i.e., R_p/R_s
+      - 0.167808807557187
+      - 0.001380497173954
+      - 0.001396979264065
+    t0:
+      # BTJD, epoch time
+      - 0.000025463763866
+      - 0.000056388979712
+      - 0.000055531299313
+    p:
+      # days, orbital period
+      - 3.067883220732992
+      - 0
+      - 0
+    a:
+      # normalized semi-major axis, i.e., a/R_s
+      - 12.820547467153773
+      - 0.158820225427727
+      - 0.136975556287073
+    i:
+      # radians, orbital inclination
+      - 1.556640516790534
+      - 0.005773107994835
+      - 0.008483803433588
+    i_in_degree:
+      # degrees, orbital inclination
+      - 89.188931831160957
+      - 0.330774722777298
+      - 0.48608613096317
+    ldc1:
+      # linear limb darkening coefficient
+      - 0.425337888992433
+      - 0.052340292088258
+      - 0.045519475617504
+    ldc2:
+      # quadratic limb darkening coefficient
+      - 0.187021309419735
+      - 0.112065641789112
+      - 0.139338263354186
+    ldc:
+      # limb darkening coefficients
+      -   -
+            0.425337888992433
+          - 0.187021309419735
+      -   - 0.052340292088258
+          - 0.112065641789112
+      -   - 0.045519475617504
+          - 0.139338263354186
+    transit_duration:
+      # days
+      - 0.087968614745125
+      - 0.000391584303253
+      - 0.000436768443004
+    transit_depth:
+      # dimensionless (in unit of normalized flux)
+      - 0.033723254122726
+      - 0.00012528038582
+      - 0.000123324445058
+    residual_std: 0.001448570516912      # standard deviation of fitting residuals
+    chi_square: 13295.691241276123037
+    reduced_chi_square: 1.007096746044245
+    r_hat:
+    # Gelman-Rubin statistic for MCMC convergence check
+      k: 1
+      t0: 1
+      p: .nan
+      a: 1.06
+      i: 1.07
+      ldc1: 1
+      ldc2: 1
+    ess_bulk:
+    # effective sample size for bulk of the MCMC chain
+      k: 567
+      t0: 1176
+      p: 12800
+      a: 469
+      i: 412
+      ldc1: 666
+      ldc2: 821
+    ess_tail:
+    # effective sample size for tail of the MCMC chain
+      k: 1106
+      t0: 3206
+      p: 12800
+      a: 1158
+      i: 695
+      ldc1: 2693
+      ldc2: 1881
+    preserve_formatting: # This key is for preserving the formatting of the configuration file. Ignore it and leave it blank.
