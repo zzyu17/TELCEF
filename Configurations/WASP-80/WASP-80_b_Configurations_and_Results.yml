@@ -107,9 +107,13 @@ directory:
 
   # used by C_Light_Curve_Further_Processing_Lightkurve
   lightkurve_processed_lightcurve_plots_dir: "/C_Light_Curve_Further_Processing_Lightkurve"
+  lightkurve_processed_lightcurve_plots_dir_source_sector_suffix:
+  lightkurve_processed_lightcurve_plots_suffix:
 
   # used by D_Transit_Fitting_PyTransit
   pytransit_fitting_plots_dir: "/D_Transit_Fitting_PyTransit"
+  pytransit_fitting_plots_dir_source_sector_suffix:
+  pytransit_fitting_plots_suffix:
 
 
 ### ------ Script-specific parameters ------ ###

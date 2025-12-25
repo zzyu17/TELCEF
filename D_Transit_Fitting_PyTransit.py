@@ -41,7 +41,11 @@ os.makedirs(lc_fnb_dir_source, exist_ok=True)
 pytransit_fitting_plots_dir = base_dir + config["directory"]["pytransit_fitting_plots_dir"]
 os.makedirs(pytransit_fitting_plots_dir, exist_ok=True)
 pytransit_fitting_plots_dir_source_sector = pytransit_fitting_plots_dir + f"/{name}_Sector-{sector}"
+pytransit_fitting_plots_dir_source_sector_suffix = config["directory"]["pytransit_fitting_plots_dir_source_sector_suffix"]
+if pytransit_fitting_plots_dir_source_sector_suffix is not None:
+    pytransit_fitting_plots_dir_source_sector += f"{pytransit_fitting_plots_dir_source_sector_suffix}"
 os.makedirs(pytransit_fitting_plots_dir_source_sector, exist_ok=True)
+pytransit_fitting_plots_suffix = config["directory"]["pytransit_fitting_plots_suffix"] if config["directory"]["pytransit_fitting_plots_suffix"] is not None else ""
 
 
 
@@ -192,7 +196,7 @@ if fit_global:
     params_global_trace_evolution_plot.axes[0].set_title("Trace Of Parameters", fontsize='x-large')
     params_global_trace_evolution_plot.axes[1].set_title(f"Evolution ({running_mean_window_proportion_global * 100}% Window Running Mean) Of Parameters", fontsize='x-large')
     params_global_trace_evolution_plot.suptitle(f"{lc_plot_title} Global Fitted Transit Parameters Trace and Evolution (Thinned By {chain_thin_global})", fontsize='xx-large')
-    params_global_trace_evolution_plot.figure.savefig(pytransit_fitting_plots_dir_source_sector_lc + f"/{i:02}-{j:01}_Global_Fitted_Transit_Parameters_Trace_and_Evolution.png")
+    params_global_trace_evolution_plot.figure.savefig(pytransit_fitting_plots_dir_source_sector_lc + f"/{i:02}-{j:01}_Global_Fitted_Transit_Parameters_Trace_and_Evolution{pytransit_fitting_plots_suffix}.png")
     plt.close()
 
 
@@ -201,7 +205,7 @@ if fit_global:
 
     params_global_corner_plot = plot_posterior_corner(results_global, quantiles=[0.16, 0.5, 0.84], show_titles=True, title_fmt=".4f", figsize=(20, 25))
     params_global_corner_plot.suptitle(f"{lc_plot_title} Global Fitted Transit Parameters Posterior Distribution Corner Plot", fontsize='xx-large', y=1.05)
-    params_global_corner_plot.figure.savefig(pytransit_fitting_plots_dir_source_sector_lc + f"/{i:02}-{j:01}_Global_Fitted_Transit_Parameters_Posterior_Distribution_Corner_Plot.png", bbox_inches='tight')
+    params_global_corner_plot.figure.savefig(pytransit_fitting_plots_dir_source_sector_lc + f"/{i:02}-{j:01}_Global_Fitted_Transit_Parameters_Posterior_Distribution_Corner_Plot{pytransit_fitting_plots_suffix}.png", bbox_inches='tight')
     plt.close()
 
 
@@ -232,7 +236,7 @@ if fit_global:
 
     lc_fitted_global_plot.suptitle(f"{lc_plot_title} Global Best Fitted Light Curve and Residuals")
     lc_fitted_global_plot.figure.tight_layout()
-    lc_fitted_global_plot.figure.savefig(pytransit_fitting_plots_dir_source_sector_lc + f"/{i:02}-{j:01}_Global_Best_Fitted_Light_Curve_and_Residuals.png")
+    lc_fitted_global_plot.figure.savefig(pytransit_fitting_plots_dir_source_sector_lc + f"/{i:02}-{j:01}_Global_Best_Fitted_Light_Curve_and_Residuals{pytransit_fitting_plots_suffix}.png")
     plt.close()
 
 
@@ -371,7 +375,7 @@ if fit_individual:
             params_individual_trace_evolution_plot.axes[0].set_title("Trace Of Parameters", fontsize='x-large')
             params_individual_trace_evolution_plot.axes[1].set_title(f"Evolution ({running_mean_window_proportion_individual * 100}% Window Running Mean) Of Parameters", fontsize='x-large')
             params_individual_trace_evolution_plot.suptitle(f"{lc_plot_title} Individual Transit {transit_index:02} Fitted Transit Parameters Trace and Evolution Plot (Thinned By {chain_thin_individual})", fontsize='xx-large')
-            params_individual_trace_evolution_plot.figure.savefig(pytransit_fitting_plots_dir_source_sector_lc_transit + f"/{i:02}-{j:01}-{transit_index:02}_Individual_Transit-{transit_index:02}_Fitted_Transit_Parameters_Trace_and_Evolution.png")
+            params_individual_trace_evolution_plot.figure.savefig(pytransit_fitting_plots_dir_source_sector_lc_transit + f"/{i:02}-{j:01}-{transit_index:02}_Individual_Transit-{transit_index:02}_Fitted_Transit_Parameters_Trace_and_Evolution{pytransit_fitting_plots_suffix}.png")
             plt.close()
 
 
@@ -380,7 +384,7 @@ if fit_individual:
 
             params_individual_corner_plot = plot_posterior_corner(results_individual, quantiles=[0.16, 0.5, 0.84], show_titles=True, title_fmt=".4f", figsize=(20, 25))
             params_individual_corner_plot.suptitle(f"{lc_plot_title} Individual Transit {transit_index:02} Fitted Transit Parameters Posterior Distribution Corner Plot", fontsize='xx-large', y=1.05)
-            params_individual_corner_plot.figure.savefig(pytransit_fitting_plots_dir_source_sector_lc_transit + f"/{i:02}-{j:01}-{transit_index:02}_Individual_Transit-{transit_index:02}_Fitted_Transit_Parameters_Posterior_Distribution_Corner_Plot.png", bbox_inches='tight')
+            params_individual_corner_plot.figure.savefig(pytransit_fitting_plots_dir_source_sector_lc_transit + f"/{i:02}-{j:01}-{transit_index:02}_Individual_Transit-{transit_index:02}_Fitted_Transit_Parameters_Posterior_Distribution_Corner_Plot{pytransit_fitting_plots_suffix}.png", bbox_inches='tight')
             plt.close()
 
 
@@ -421,7 +425,7 @@ if fit_individual:
 
             lc_fitted_individual_plot.suptitle(f"{lc_plot_title} Individual Transit {transit_index:02} Best Fitted Light Curve and Residuals")
             lc_fitted_individual_plot.figure.tight_layout()
-            lc_fitted_individual_plot.figure.savefig(pytransit_fitting_plots_dir_source_sector_lc_transit + f"/{i:02}-{j:01}-{transit_index:02}_Individual_Transit-{transit_index:02}_Best_Fitted_Light_Curve_and_Residuals.png")
+            lc_fitted_individual_plot.figure.savefig(pytransit_fitting_plots_dir_source_sector_lc_transit + f"/{i:02}-{j:01}-{transit_index:02}_Individual_Transit-{transit_index:02}_Best_Fitted_Light_Curve_and_Residuals{pytransit_fitting_plots_suffix}.png")
             plt.close()
 
 
@@ -522,12 +526,12 @@ if bin:
         ax_lc_fnb.set_title(f"{lc_plot_title} Time-bin-size={time_bin_size:.1f} Binned\nPeriod={p_fold:.4f}d Folded Light Curve")
         ax_lc_fnb.set_ylabel("Flux")
         lc_fnb_plot.figure.tight_layout()
-        lc_fnb_plot.figure.savefig(pytransit_fitting_plots_dir_source_sector_lc + f"/{i:02}_Time-Bin-Size={time_bin_size.value}s_Binned_Period={p_fold:.4f}d_Folded_Light_Curve.png")
+        lc_fnb_plot.figure.savefig(pytransit_fitting_plots_dir_source_sector_lc + f"/{i:02}_Time-Bin-Size={time_bin_size.value}s_Binned_Period={p_fold:.4f}d_Folded_Light_Curve{pytransit_fitting_plots_suffix}.png")
     else:
         ax_lc_fnb.set_title(f"{lc_plot_title} Time-bin-size={time_bin_size:.1f} Binned Light Curve")
         ax_lc_fnb.set_ylabel("Flux")
         lc_fnb_plot.figure.tight_layout()
-        lc_fnb_plot.figure.savefig(pytransit_fitting_plots_dir_source_sector_lc + f"/{i:02}_Time-Bin-Size={time_bin_size.value}s_Binned_Light_Curve.png")
+        lc_fnb_plot.figure.savefig(pytransit_fitting_plots_dir_source_sector_lc + f"/{i:02}_Time-Bin-Size={time_bin_size.value}s_Binned_Light_Curve{pytransit_fitting_plots_suffix}.png")
     plt.close()
 
 
@@ -632,13 +636,13 @@ if fit_fnb:
     params_fnb_trace_evolution_plot.axes[1].set_title(f"Evolution ({running_mean_window_proportion_fnb * 100}% Window Running Mean) Of Parameters", fontsize='x-large')
     if fold and bin:
         params_fnb_trace_evolution_plot.suptitle(f"{lc_plot_title} Folded-and-binned Fitted Transit Parameters Trace and Evolution (Thinned By {chain_thin_fnb})", fontsize='xx-large')
-        params_fnb_trace_evolution_plot.figure.savefig(pytransit_fitting_plots_dir_source_sector_lc + f"/{i:02}-{j:01}_Folded-and-binned_Fitted_Transit_Parameters_Trace_and_Evolution.png")
+        params_fnb_trace_evolution_plot.figure.savefig(pytransit_fitting_plots_dir_source_sector_lc + f"/{i:02}-{j:01}_Folded-and-binned_Fitted_Transit_Parameters_Trace_and_Evolution{pytransit_fitting_plots_suffix}.png")
     elif fold and not bin:
         params_fnb_trace_evolution_plot.suptitle(f"{lc_plot_title} Folded Fitted Transit Parameters Trace and Evolution (Thinned By {chain_thin_fnb})", fontsize='xx-large')
-        params_fnb_trace_evolution_plot.figure.savefig(pytransit_fitting_plots_dir_source_sector_lc + f"/{i:02}-{j:01}_Folded_Fitted_Transit_Parameters_Trace_and_Evolution.png")
+        params_fnb_trace_evolution_plot.figure.savefig(pytransit_fitting_plots_dir_source_sector_lc + f"/{i:02}-{j:01}_Folded_Fitted_Transit_Parameters_Trace_and_Evolution{pytransit_fitting_plots_suffix}.png")
     elif bin and not fold:
         params_fnb_trace_evolution_plot.suptitle(f"{lc_plot_title} Binned Fitted Transit Parameters Trace and Evolution (Thinned By {chain_thin_fnb})", fontsize='xx-large')
-        params_fnb_trace_evolution_plot.figure.savefig(pytransit_fitting_plots_dir_source_sector_lc + f"/{i:02}-{j:01}_Binned_Fitted_Transit_Parameters_Trace_and_Evolution.png")
+        params_fnb_trace_evolution_plot.figure.savefig(pytransit_fitting_plots_dir_source_sector_lc + f"/{i:02}-{j:01}_Binned_Fitted_Transit_Parameters_Trace_and_Evolution{pytransit_fitting_plots_suffix}.png")
     plt.close()
 
 
@@ -648,13 +652,13 @@ if fit_fnb:
     params_fnb_corner_plot = plot_posterior_corner(results_fnb, quantiles=[0.16, 0.5, 0.84], show_titles=True, title_fmt=".4f", figsize=(20, 25))
     if fold and bin:
         params_fnb_corner_plot.suptitle(f"{lc_plot_title} Folded-and-binned Fitted Transit Parameters Posterior Distribution Corner Plot", fontsize='xx-large', y=1.05)
-        params_fnb_corner_plot.figure.savefig(pytransit_fitting_plots_dir_source_sector_lc + f"/{i:02}-{j:01}_Folded-and-binned_Fitted_Transit_Parameters_Posterior_Distribution_Corner_Plot.png", bbox_inches='tight')
+        params_fnb_corner_plot.figure.savefig(pytransit_fitting_plots_dir_source_sector_lc + f"/{i:02}-{j:01}_Folded-and-binned_Fitted_Transit_Parameters_Posterior_Distribution_Corner_Plot{pytransit_fitting_plots_suffix}.png", bbox_inches='tight')
     elif fold and not bin:
         params_fnb_corner_plot.suptitle(f"{lc_plot_title} Folded Fitted Transit Parameters Posterior Distribution Corner Plot", fontsize='xx-large', y=1.05)
-        params_fnb_corner_plot.figure.savefig(pytransit_fitting_plots_dir_source_sector_lc + f"/{i:02}-{j:01}_Folded_Fitted_Transit_Parameters_Posterior_Distribution_Corner_Plot.png", bbox_inches='tight')
+        params_fnb_corner_plot.figure.savefig(pytransit_fitting_plots_dir_source_sector_lc + f"/{i:02}-{j:01}_Folded_Fitted_Transit_Parameters_Posterior_Distribution_Corner_Plot{pytransit_fitting_plots_suffix}.png", bbox_inches='tight')
     elif bin and not fold:
         params_fnb_corner_plot.suptitle(f"{lc_plot_title} Binned Fitted Transit Parameters Posterior Distribution Corner Plot", fontsize='xx-large', y=1.05)
-        params_fnb_corner_plot.figure.savefig(pytransit_fitting_plots_dir_source_sector_lc + f"/{i:02}-{j:01}_Binned_Fitted_Transit_Parameters_Posterior_Distribution_Corner_Plot.png", bbox_inches='tight')
+        params_fnb_corner_plot.figure.savefig(pytransit_fitting_plots_dir_source_sector_lc + f"/{i:02}-{j:01}_Binned_Fitted_Transit_Parameters_Posterior_Distribution_Corner_Plot{pytransit_fitting_plots_suffix}.png", bbox_inches='tight')
     plt.close()
 
 
@@ -696,13 +700,13 @@ if fit_fnb:
     if fold and bin:
         lc_fitted_fnb_plot.suptitle(f"{lc_plot_title} Folded-and-binned Best Fitted Light Curve and Residuals")
         lc_fitted_fnb_plot.figure.tight_layout()
-        lc_fitted_fnb_plot.figure.savefig(pytransit_fitting_plots_dir_source_sector_lc + f"/{i:02}-{j:01}_Folded-and-binned_Best_Fitted_Light_Curve_and_Residuals.png")
+        lc_fitted_fnb_plot.figure.savefig(pytransit_fitting_plots_dir_source_sector_lc + f"/{i:02}-{j:01}_Folded-and-binned_Best_Fitted_Light_Curve_and_Residuals{pytransit_fitting_plots_suffix}.png")
     elif fold and not bin:
         lc_fitted_fnb_plot.suptitle(f"{lc_plot_title} Folded Best Fitted Light Curve and Residuals")
         lc_fitted_fnb_plot.figure.tight_layout()
-        lc_fitted_fnb_plot.figure.savefig(pytransit_fitting_plots_dir_source_sector_lc + f"/{i:02}-{j:01}_Folded_Best_Fitted_Light_Curve_and_Residuals.png")
+        lc_fitted_fnb_plot.figure.savefig(pytransit_fitting_plots_dir_source_sector_lc + f"/{i:02}-{j:01}_Folded_Best_Fitted_Light_Curve_and_Residuals{pytransit_fitting_plots_suffix}.png")
     elif bin and not fold:
         lc_fitted_fnb_plot.suptitle(f"{lc_plot_title} Binned Best Fitted Light Curve and Residuals")
         lc_fitted_fnb_plot.figure.tight_layout()
-        lc_fitted_fnb_plot.figure.savefig(pytransit_fitting_plots_dir_source_sector_lc + f"/{i:02}-{j:01}_Binned_Best_Fitted_Light_Curve_and_Residuals.png")
+        lc_fitted_fnb_plot.figure.savefig(pytransit_fitting_plots_dir_source_sector_lc + f"/{i:02}-{j:01}_Binned_Best_Fitted_Light_Curve_and_Residuals{pytransit_fitting_plots_suffix}.png")
     plt.close()

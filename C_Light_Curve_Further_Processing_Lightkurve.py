@@ -22,7 +22,11 @@ os.makedirs(lightkurve_lc_dir_source, exist_ok=True)
 lightkurve_processed_lightcurve_plots_dir = base_dir + config["directory"]["lightkurve_processed_lightcurve_plots_dir"]
 os.makedirs(lightkurve_processed_lightcurve_plots_dir, exist_ok=True)
 lightkurve_processed_lightcurve_plots_dir_source_sector = lightkurve_processed_lightcurve_plots_dir + f"/{name}_Sector-{sector}"
+lightkurve_processed_lightcurve_plots_dir_source_sector_suffix = config["directory"]["lightkurve_processed_lightcurve_plots_dir_source_sector_suffix"]
+if lightkurve_processed_lightcurve_plots_dir_source_sector_suffix is not None:
+    lightkurve_processed_lightcurve_plots_dir_source_sector += f"{lightkurve_processed_lightcurve_plots_dir_source_sector_suffix}"
 os.makedirs(lightkurve_processed_lightcurve_plots_dir_source_sector, exist_ok=True)
+lightkurve_processed_lightcurve_plots_suffix = config["directory"]["lightkurve_processed_lightcurve_plots_suffix"] if config["directory"]["lightkurve_processed_lightcurve_plots_suffix"] is not None else ""
 
 
 
@@ -95,7 +99,7 @@ else:
     lc_raw_nans_removed.scatter(ax=ax_lc_raw_nans_removed, label=f"{cdpp_transit_duration:.3f}h-CDPP={lc_raw_nans_removed_cdpp:.2f} ppm", s=0.1)
 ax_lc_raw_nans_removed.set_title(f"{lc_plot_title} NaNs-Removed Raw Light Curve")
 lc_raw_nans_removed_plot.figure.tight_layout()
-lc_raw_nans_removed_plot.figure.savefig(lightkurve_processed_lightcurve_plots_dir_source_sector_lc + f"/{i:02}-{j:01}_NaNs-Removed_Raw_Light_Curve.png")
+lc_raw_nans_removed_plot.figure.savefig(lightkurve_processed_lightcurve_plots_dir_source_sector_lc + f"/{i:02}-{j:01}_NaNs-Removed_Raw_Light_Curve{lightkurve_processed_lightcurve_plots_suffix}.png")
 plt.close()
 
 
@@ -112,7 +116,7 @@ pg_bls_raw_nans_removed_plot, ax_pg_bls_raw_nans_removed = plt.subplots(figsize=
 pg_bls_raw_nans_removed.plot(ax=ax_pg_bls_raw_nans_removed)
 ax_pg_bls_raw_nans_removed.set_title(f"{lc_plot_title} NaNs-Removed Raw BLS Periodogram")
 pg_bls_raw_nans_removed_plot.figure.tight_layout()
-pg_bls_raw_nans_removed_plot.figure.savefig(lightkurve_processed_lightcurve_plots_dir_source_sector_lc + f"/{i:02}-{j:01}_NaNs-Removed_Raw_BLS_Periodogram.png")
+pg_bls_raw_nans_removed_plot.figure.savefig(lightkurve_processed_lightcurve_plots_dir_source_sector_lc + f"/{i:02}-{j:01}_NaNs-Removed_Raw_BLS_Periodogram{lightkurve_processed_lightcurve_plots_suffix}.png")
 plt.close()
 
 
@@ -134,7 +138,7 @@ else:
 lc_fitted_bls_raw_nans_removed.plot(ax=ax_lc_fitted_bls_raw_nans_removed, c='red', label=f"Best Fitted BLS Model")
 ax_lc_fitted_bls_raw_nans_removed.set_title(f"{lc_plot_title} BLS Best Fitted NaNs-Removed Raw Light Curve")
 lc_fitted_bls_raw_nans_removed_plot.figure.tight_layout()
-lc_fitted_bls_raw_nans_removed_plot.figure.savefig(lightkurve_processed_lightcurve_plots_dir_source_sector_lc + f"/{i:02}-{j:01}_BLS_Best_Fitted_NaNs-Removed_Raw_Light_Curve.png")
+lc_fitted_bls_raw_nans_removed_plot.figure.savefig(lightkurve_processed_lightcurve_plots_dir_source_sector_lc + f"/{i:02}-{j:01}_BLS_Best_Fitted_NaNs-Removed_Raw_Light_Curve{lightkurve_processed_lightcurve_plots_suffix}.png")
 plt.close()
 
 
@@ -152,7 +156,7 @@ else:
     lc_raw_nans_removed_baseline.scatter(ax=ax_lc_raw_nans_removed_baseline, label=f"{cdpp_transit_duration:.3f}h-CDPP={lc_raw_nans_removed_baseline_cdpp:.2f} ppm", s=0.1)
 ax_lc_raw_nans_removed_baseline.set_title(f"{lc_plot_title} NaNs-Removed Raw Baseline")
 lc_raw_nans_removed_baseline_plot.figure.tight_layout()
-lc_raw_nans_removed_baseline_plot.figure.savefig(lightkurve_processed_lightcurve_plots_dir_source_sector_lc + f"/{i:02}-{j:01}_NaNs-Removed_Raw_Baseline.png")
+lc_raw_nans_removed_baseline_plot.figure.savefig(lightkurve_processed_lightcurve_plots_dir_source_sector_lc + f"/{i:02}-{j:01}_NaNs-Removed_Raw_Baseline{lightkurve_processed_lightcurve_plots_suffix}.png")
 plt.close()
 
 config = update_config(config_path, {'lightkurve.lc_raw_nans_removed_cdpp': lc_raw_nans_removed_cdpp,
@@ -194,7 +198,7 @@ if flatten:
     ax_lc_flattened.set_title(f"{lc_plot_title} {flatten_window_proportion * 100:.1f}% Window Flattened Light Curve")
     ax_lc_flattened.set_ylabel("Flux")
     lc_flattened_plot.figure.tight_layout()
-    lc_flattened_plot.figure.savefig(lightkurve_processed_lightcurve_plots_dir_source_sector_lc + f"/{i:02}-{j:01}_{flatten_window_proportion * 100:.1f}%_Window_Flattened_Light_Curve.png")
+    lc_flattened_plot.figure.savefig(lightkurve_processed_lightcurve_plots_dir_source_sector_lc + f"/{i:02}-{j:01}_{flatten_window_proportion * 100:.1f}%_Window_Flattened_Light_Curve{lightkurve_processed_lightcurve_plots_suffix}.png")
     plt.close()
 
     j += 1 # count the sub-step
@@ -209,7 +213,7 @@ if flatten:
     lc_flattened_trend.plot(ax=ax_lc_flattened_trend)
     ax_lc_flattened_trend.set_title(f"{lc_plot_title} {flatten_window_proportion * 100:.1f}% Window Flatten Trend")
     lc_flattened_trend_plot.figure.tight_layout()
-    lc_flattened_trend_plot.figure.savefig(lightkurve_processed_lightcurve_plots_dir_source_sector_lc + f"/{i:02}-{j:01}_{flatten_window_proportion * 100:.1f}%_Window_Flatten_Trend.png")
+    lc_flattened_trend_plot.figure.savefig(lightkurve_processed_lightcurve_plots_dir_source_sector_lc + f"/{i:02}-{j:01}_{flatten_window_proportion * 100:.1f}%_Window_Flatten_Trend{lightkurve_processed_lightcurve_plots_suffix}.png")
     plt.close()
 
 
@@ -230,7 +234,7 @@ if flatten:
     ax_lc_flattened_baseline.set_title(f"{lc_plot_title} {flatten_window_proportion * 100:.1f}% Window Flattened Baseline Light Curve")
     ax_lc_flattened_baseline.set_ylabel("Flux")
     lc_flattened_baseline_plot.figure.tight_layout()
-    lc_flattened_baseline_plot.figure.savefig(lightkurve_processed_lightcurve_plots_dir_source_sector_lc + f"/{i:02}-{j:01}_{flatten_window_proportion * 100:.1f}%_Window_Flattened_Baseline_Light_Curve.png")
+    lc_flattened_baseline_plot.figure.savefig(lightkurve_processed_lightcurve_plots_dir_source_sector_lc + f"/{i:02}-{j:01}_{flatten_window_proportion * 100:.1f}%_Window_Flattened_Baseline_Light_Curve{lightkurve_processed_lightcurve_plots_suffix}.png")
     plt.close()
 
     j += 1 # count the sub-step
@@ -245,7 +249,7 @@ if flatten:
     lc_flattened_baseline_trend.plot(ax=ax_lc_flattened_baseline_trend)
     ax_lc_flattened_baseline_trend.set_title(f"{lc_plot_title} {flatten_window_proportion * 100:.1f}% Window Flattened Baseline Trend")
     lc_flattened_baseline_trend_plot.figure.tight_layout()
-    lc_flattened_baseline_trend_plot.figure.savefig(lightkurve_processed_lightcurve_plots_dir_source_sector_lc + f"/{i:02}-{j:01}_{flatten_window_proportion * 100:.1f}%_Window_Flattened_Baseline_Trend.png")
+    lc_flattened_baseline_trend_plot.figure.savefig(lightkurve_processed_lightcurve_plots_dir_source_sector_lc + f"/{i:02}-{j:01}_{flatten_window_proportion * 100:.1f}%_Window_Flattened_Baseline_Trend{lightkurve_processed_lightcurve_plots_suffix}.png")
     plt.close()
 
 
@@ -292,7 +296,7 @@ if clip:
     ax_lc_clipped_baseline.set_title(f"{lc_plot_title} {sigma_baseline:.1f} Sigma Clipped Baseline")
     ax_lc_clipped_baseline.set_ylabel("Flux")
     lc_clipped_baseline_plot.figure.tight_layout()
-    lc_clipped_baseline_plot.figure.savefig(lightkurve_processed_lightcurve_plots_dir_source_sector_lc + f"/{i:02}-{j:01}_{sigma_baseline:.1f}_Sigma_Clipped_Baseline.png")
+    lc_clipped_baseline_plot.figure.savefig(lightkurve_processed_lightcurve_plots_dir_source_sector_lc + f"/{i:02}-{j:01}_{sigma_baseline:.1f}_Sigma_Clipped_Baseline{lightkurve_processed_lightcurve_plots_suffix}.png")
     plt.close()
 
 
@@ -311,7 +315,7 @@ if clip:
         ax_lc_clipped_transit.set_title(f"{lc_plot_title} {sigma_transit_upper:.1f} Upper Sigma Clipped Transit")
         ax_lc_clipped_transit.set_ylabel("Flux")
         lc_clipped_transit_plot.figure.tight_layout()
-        lc_clipped_transit_plot.figure.savefig(lightkurve_processed_lightcurve_plots_dir_source_sector_lc + f"/{i:02}-{j:01}_{sigma_transit_upper:.1f}_Upper_Sigma_Clipped_Transit.png")
+        lc_clipped_transit_plot.figure.savefig(lightkurve_processed_lightcurve_plots_dir_source_sector_lc + f"/{i:02}-{j:01}_{sigma_transit_upper:.1f}_Upper_Sigma_Clipped_Transit{lightkurve_processed_lightcurve_plots_suffix}.png")
         plt.close()
 
     else:
@@ -332,7 +336,7 @@ if clip:
     ax_lc_clipped.set_title(f"{lc_plot_title} {sigma_baseline:.1f} Sigma Clipped Light Curve")
     ax_lc_clipped.set_ylabel("Flux")
     lc_clipped_plot.figure.tight_layout()
-    lc_clipped_plot.figure.savefig(lightkurve_processed_lightcurve_plots_dir_source_sector_lc + f"/{i:02}-{j:01}_{sigma_baseline:.1f}_Sigma_Clipped_Light_Curve.png")
+    lc_clipped_plot.figure.savefig(lightkurve_processed_lightcurve_plots_dir_source_sector_lc + f"/{i:02}-{j:01}_{sigma_baseline:.1f}_Sigma_Clipped_Light_Curve{lightkurve_processed_lightcurve_plots_suffix}.png")
     plt.close()
 
 
