@@ -2,11 +2,13 @@ import os
 import warnings
 
 import astropy.units as u
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib.ticker import ScalarFormatter
 
-from utils import update_dict, epoch_time_to_btjd, format_lc_fits_fn_by_provenance, calculate_cdpp, run_transit_fitting, split_indiviual_lc, plot_trace_evolution, plot_posterior_corner
+from utils import (update_dict, format_lc_fits_fn_by_provenance, calculate_cdpp,
+                   PARAMS_NAME, load_params_initial_from_config, load_priors_from_config, load_params_fold_from_config, print_params_initial_priors, update_t0_prior,
+                   run_transit_fitting, oversample_lc_fitted, split_indiviual_lc, plot_trace_evolution, plot_posterior_corner)
 from A_ab_Configuration_Loader import *
 
 
@@ -121,6 +123,7 @@ transit_model_name_global = config['transit_fitting']['transit_model_name_global
 n_walkers_global = config['transit_fitting']['n_walkers_global'] # number of MCMC walkers for global fitting
 n_steps_global = config['transit_fitting']['n_steps_global'] # number of MCMC steps for global fitting
 chain_discard_proportion_global = config['transit_fitting']['chain_discard_proportion_global'] # the proportion of MCMC chain to discard as burn-in for global fitting
+chain_thin_global = config['transit_fitting']['chain_thin_global'] # thinning factor of the MCMC chain for global fitting
 
 # plotting parameters
 # define the default plotting alpha coefficient of the light curve corresponding to the exposure time
@@ -141,55 +144,78 @@ elif exptime > 400:
     scatter_point_size_exptime_default = 1
 scatter_point_size_exptime = config['transit_fitting']['scatter_point_size_exptime'] if config['transit_fitting']['scatter_point_size_exptime'] is not None else scatter_point_size_exptime_default # the scatter point size coefficient of the light curve corresponding to the exposure time
 
-chain_thin_global = config['transit_fitting']['chain_thin_global'] # thinning factor of the sample chain when visualizing the process and result for global fitting
-running_mean_window_proportion_global = config['transit_fitting']['running_mean_window_proportion_global'] # window length proportion of the thinned-unflattened MCMC chain to calculate the running means of the parameters when visualizing the process and result for global fitting
-running_mean_window_length_global = int(running_mean_window_proportion_global * n_steps_global * (1 - chain_discard_proportion_global) / chain_thin_global)
+oversample_lcft = config['transit_fitting']['oversample_lc_fitted'] # whether to oversample the best fitted model lightcurve for plotting
+oversample_lcft_factor = config['transit_fitting']['oversample_lc_fitted_factor'] # the oversampling factor when oversampling the best fitted model lightcurve for plotting
+running_mean_window_proportion_global = config['transit_fitting']['running_mean_window_proportion_global'] # window length proportion of the unflattened MCMC chain to calculate the running means of the parameters when visualizing the process and result for global fitting
+running_mean_window_length_global = int(running_mean_window_proportion_global * n_steps_global * (1 - chain_discard_proportion_global) / chain_thin_global) if running_mean_window_proportion_global is not None else None
 
 
-# Set the initial global fitted transit parameters
-k_global_initial = np.sqrt(transit_depth_bls_raw_nans_removed) if transit_depth_bls_raw_nans_removed is not None else np.sqrt(transit_depth_nasa) # k: normalized planetary radius, i.e., R_p/R_s
-t0_global_initial = t0_bls_raw_nans_removed if t0_bls_raw_nans_removed is not None else epoch_time_to_btjd(t0_nasa, p_nasa) # t0: epoch time in BTJD
-p_global_initial = p_bls_raw_nans_removed if p_bls_raw_nans_removed is not None else p_nasa # p: orbital period in days
-a_global_initial = 10.0 # a: normalized semi-major axis, i.e., a/R_s
-i_global_initial = np.pi / 2 # i: orbital inclination in radians
-ldc1_global_initial = 0.2 # ldc1: linear limb darkening coefficient
-ldc2_global_initial = 0.3 # ldc2: quadratic limb darkening coefficient
-params_global_initial = {'k': k_global_initial, 't0': t0_global_initial, 'p': p_global_initial, 'a': a_global_initial, 'i': i_global_initial, 'ldc1': ldc1_global_initial, 'ldc2': ldc2_global_initial}
+# Set the global fitted transit parameters names
+params_global_name = PARAMS_NAME
+
+# Set the initial global fitted transit parameters and priors
+params_global_initial = load_params_initial_from_config(config, 'global', lc)
+priors_global = load_priors_from_config(config, 'global', lc)
+
+print_params_initial_priors(params_global_initial, priors_global, 'global', lc)
 
 
 if fit_global:
     # Run global transit fitting
-    results_global = run_transit_fitting(lc, transit_model_name_global, 'global', params_global_initial, n_walkers_global, n_steps_global, chain_discard_proportion_global, chain_thin_global, max_iter_global, sigma_global)
-    n_iter_global, n_dim_global, params_global_name, params_global_samples, params_global_samples_thinned_unflattened, params_global_best, params_global_best_lower_error, params_global_best_upper_error, lc, lc_fitted_global, lc_residual_global, residual_std_global, chi_square_global, reduced_chi_square_global = results_global.values()
+    results_global = run_transit_fitting(lc, transit_model_name_global, 'global', params_global_name, params_global_initial, priors_global, n_walkers_global, n_steps_global, chain_discard_proportion_global, chain_thin_global, max_iter_global, sigma_global)
+    [n_iter_global,
+     params_global_name_full,
+     n_params_global_free, params_global_name_free, params_global_name_fixed,
+     params_global_initial, priors_global,
+     params_global_samples_all, params_global_samples_unflattened_all,
+     params_global_best_full, params_global_best_lower_error_full, params_global_best_upper_error_full,
+     lc, lc_fitted_global, lc_residual_global,
+     residual_std_global, chi_square_global, reduced_chi_square_global,
+     r_hat_global, ess_bulk_global, ess_tail_global] = results_global.values()
 
-    config = update_config(config_path, {'transit_fitting.global_fitted_transit_parameters.n_iterations': n_iter_global,
+    params_global_name_fixed_string = ', '.join(params_global_name_fixed) if len(params_global_name_fixed) > 0 else 'None'
+    params_global_best_all = {key: params_global_best_full[key] for key in params_global_name}
 
-        'transit_fitting.global_fitted_transit_parameters.k': [params_global_best['k'], params_global_best_lower_error['k'], params_global_best_upper_error['k']],
-        'transit_fitting.global_fitted_transit_parameters.t0': [params_global_best['t0'], params_global_best_lower_error['t0'], params_global_best_upper_error['t0']],
-        'transit_fitting.global_fitted_transit_parameters.p': [params_global_best['p'], params_global_best_lower_error['p'], params_global_best_upper_error['p']],
-        'transit_fitting.global_fitted_transit_parameters.a': [params_global_best['a'], params_global_best_lower_error['a'], params_global_best_upper_error['a']],
-        'transit_fitting.global_fitted_transit_parameters.i': [params_global_best['i'], params_global_best_lower_error['i'], params_global_best_upper_error['i']],
-        'transit_fitting.global_fitted_transit_parameters.i_in_degree': [params_global_best['i_in_degree'], params_global_best_lower_error['i_in_degree'], params_global_best_upper_error['i_in_degree']],
-        'transit_fitting.global_fitted_transit_parameters.ldc1': [params_global_best['ldc1'], params_global_best_lower_error['ldc1'], params_global_best_upper_error['ldc1']],
-        'transit_fitting.global_fitted_transit_parameters.ldc2': [params_global_best['ldc2'], params_global_best_lower_error['ldc2'], params_global_best_upper_error['ldc2']],
-        'transit_fitting.global_fitted_transit_parameters.ldc': [params_global_best['ldc'], params_global_best_lower_error['ldc'], params_global_best_upper_error['ldc']],
-        'transit_fitting.global_fitted_transit_parameters.transit_duration': [params_global_best['transit_duration'], params_global_best_lower_error['transit_duration'], params_global_best_upper_error['transit_duration']],
-        'transit_fitting.global_fitted_transit_parameters.transit_depth': [params_global_best['transit_depth'], params_global_best_lower_error['transit_depth'], params_global_best_upper_error['transit_depth']],
+    config = update_config(config_path, {
+        'transit_fitting.global_fitted_transit_parameters.n_iterations': n_iter_global,
 
         'transit_fitting.global_fitted_transit_parameters.residual_std': residual_std_global,
         'transit_fitting.global_fitted_transit_parameters.chi_square': chi_square_global,
-        'transit_fitting.global_fitted_transit_parameters.reduced_chi_square': reduced_chi_square_global
+        'transit_fitting.global_fitted_transit_parameters.reduced_chi_square': reduced_chi_square_global,
     })
+
+    for key in params_global_name:
+        config = update_config(config_path, {
+            f'transit_fitting.global_intitial_transit_parameters.{key}': params_global_initial[f'{key}'],
+            f'transit_fitting.global_priors.{key}': priors_global[f'{key}']
+        })
+
+    for key in params_global_name_free:
+        config = update_config(config_path, {
+            f'transit_fitting.global_fitted_transit_parameters.r_hat.{key}': r_hat_global[f'{key}'],
+            f'transit_fitting.global_fitted_transit_parameters.ess_bulk.{key}': ess_bulk_global[f'{key}'],
+            f'transit_fitting.global_fitted_transit_parameters.ess_tail.{key}': ess_tail_global[f'{key}']
+        })
+
+    for key in params_global_name_full:
+        config = update_config(config_path, {
+            f'transit_fitting.global_fitted_transit_parameters.{key}': [params_global_best_full[f'{key}'],
+                                                                   params_global_best_lower_error_full[f'{key}'],
+                                                                   params_global_best_upper_error_full[f'{key}']]
+        })
 
 
     # Plot the visualization plots of the fitting process and result
     # plot the trace and evolution of MCMC parameters
     j = 1 # count the sub-step
 
-    params_global_trace_evolution_plot = plot_trace_evolution(results_global, running_mean_window_length_global)
+    if running_mean_window_length_global is None or running_mean_window_length_global < 1:
+        params_global_trace_evolution_plot = plot_trace_evolution(params_global_samples_unflattened_all)
+    else:
+        params_global_trace_evolution_plot = plot_trace_evolution(params_global_samples_unflattened_all, running_mean_window_length_global)
+        params_global_trace_evolution_plot.axes[1].set_title(f"Evolution ({running_mean_window_proportion_global * 100}% Window Running Mean) Of Parameters", fontsize='x-large')
     params_global_trace_evolution_plot.axes[0].set_title("Trace Of Parameters", fontsize='x-large')
-    params_global_trace_evolution_plot.axes[1].set_title(f"Evolution ({running_mean_window_proportion_global * 100}% Window Running Mean) Of Parameters", fontsize='x-large')
-    params_global_trace_evolution_plot.suptitle(f"{lc_plot_title} Global Fitted Transit Parameters Trace and Evolution (Thinned By {chain_thin_global})", fontsize='xx-large')
+    params_global_trace_evolution_plot.suptitle(f"{lc_plot_title} Global Fitted Transit Parameters Trace and Evolution\n(Fixed Parameters: {params_global_name_fixed_string})", fontsize='xx-large')
     params_global_trace_evolution_plot.figure.savefig(pytransit_fitting_plots_dir_source_sector_lc + f"/{i:02}-{j:01}_Global_Fitted_Transit_Parameters_Trace_and_Evolution{pytransit_fitting_plots_suffix}.png")
     plt.close()
 
@@ -197,7 +223,7 @@ if fit_global:
     # plot the MCMC parameters posterior distribution corner plot
     j += 1 # count the sub-step
 
-    params_global_corner_plot = plot_posterior_corner(results_global, quantiles=[0.16, 0.5, 0.84], show_titles=True, title_fmt=".4f", figsize=(20, 25))
+    params_global_corner_plot = plot_posterior_corner(params_global_samples_all, quantiles=[0.16, 0.5, 0.84], figsize=(20, 25), show_titles=True, title_fmt=".4f")
     params_global_corner_plot.suptitle(f"{lc_plot_title} Global Fitted Transit Parameters Posterior Distribution Corner Plot", fontsize='xx-large', y=1.05)
     params_global_corner_plot.figure.savefig(pytransit_fitting_plots_dir_source_sector_lc + f"/{i:02}-{j:01}_Global_Fitted_Transit_Parameters_Posterior_Distribution_Corner_Plot{pytransit_fitting_plots_suffix}.png", bbox_inches='tight')
     plt.close()
@@ -205,6 +231,13 @@ if fit_global:
 
     # plot the best fitted light curve and residuals
     j += 1 # count the sub-step
+
+    # oversample the best fitted model lightcurve for plotting
+    if oversample_lcft:
+        if oversample_lcft_factor is not None and oversample_lcft_factor > 1:
+            lc_fitted_global, lc_residual_global = oversample_lc_fitted(params_global_best_all, transit_model_name_global, lc, oversample_lcft_factor)
+        else:
+            lc_fitted_global, lc_residual_global = oversample_lc_fitted(params_global_best_all, transit_model_name_global, lc)
 
     # plot the best fitted model
     lc_fitted_global_plot, (ax_lc_fitted_global, ax_lc_residual_global) = plt.subplots(2, 1, figsize=(20, 10), sharex=True)
@@ -251,28 +284,39 @@ transit_model_name_individual = config['transit_fitting']['transit_model_name_in
 n_walkers_individual = config['transit_fitting']['n_walkers_individual'] # number of MCMC walkers for individual fitting
 n_steps_individual = config['transit_fitting']['n_steps_individual'] # number of MCMC steps for individual fitting
 chain_discard_proportion_individual = config['transit_fitting']['chain_discard_proportion_individual'] # the proportion of MCMC chain to discard as burn-in for individual fitting
+chain_thin_individual = config['transit_fitting']['chain_thin_individual'] # thinning factor of the MCMC chain for individual fitting
 
 individual_transit_check_coefficient = config['transit_fitting']['individual_transit_check_coefficient'] # the coefficient of transit duration span to check if the individual transit light curve contains transit event
 
 # plotting parameters
-chain_thin_individual = config['transit_fitting']['chain_thin_individual'] # thinning factor of the sample chain when visualizing the process and result for individual fitting
-running_mean_window_proportion_individual = config['transit_fitting']['running_mean_window_proportion_individual'] # window length proportion of the thinned-unflattened MCMC chain to calculate the running means of the parameters when visualizing the process and result for individual fitting
-running_mean_window_length_individual = int(running_mean_window_proportion_individual * n_steps_individual * (1 - chain_discard_proportion_individual) / chain_thin_individual)
+running_mean_window_proportion_individual = config['transit_fitting']['running_mean_window_proportion_individual'] # window length proportion of the unflattened MCMC chain to calculate the running means of the parameters when visualizing the process and result for individual fitting
+running_mean_window_length_individual = int(running_mean_window_proportion_individual * n_steps_individual * (1 - chain_discard_proportion_individual) / chain_thin_individual) if running_mean_window_proportion_individual is not None else None
 individual_transit_plot_coefficient = config['transit_fitting']['individual_transit_plot_coefficient'] # the coefficient of the individual transit plot span
 
+all_in_one_individual_transit_plot_col_row = config['transit_fitting']['all_in_one_individual_transit_plot_col_row'] # (columns, rows) for the all-in-one individual transit plot
+if None in all_in_one_individual_transit_plot_col_row:
+    all_in_one_individual_transit_plot_col_row = None
+if all_in_one_individual_transit_plot_col_row is not None:
+    all_in_one_individual_transit_plot_col, all_in_one_individual_transit_plot_row = all_in_one_individual_transit_plot_col_row
 
-# Set the initial individual fitted transit parameters
-k_individual_initial = params_global_best['k'] if fit_global else k_global_initial # k: normalized planetary radius, i.e., R_p/R_s
-t0_individual = params_global_best['t0'] if fit_global else t0_global_initial # t0: epoch time in BTJD
-p_individual = params_global_best['p'] if fit_global else p_global_initial # p: orbital period in days
-a_individual_initial = params_global_best['a'] if fit_global else 10.0 # a: normalized semi-major axis, i.e., a/R_s
-i_individual_initial = params_global_best['i'] if fit_global else np.pi / 2 # i: orbital inclination in radians
-ldc1_individual_initial = params_global_best['ldc1'] if fit_global else 0.2 # ldc1: linear limb darkening coefficient
-ldc2_individual_initial = params_global_best['ldc2'] if fit_global else 0.3 # ldc2: quadratic limb darkening coefficient
-params_individual_initial = {'k': k_individual_initial, 't0': t0_individual, 'p': p_individual, 'a': a_individual_initial, 'i': i_individual_initial, 'ldc1': ldc1_individual_initial, 'ldc2': ldc2_individual_initial}
+
+# Set the individual fitted transit parameters names
+params_individual_name = PARAMS_NAME
+
+# Set the initial individual fitted transit parameters and priors
+params_individual_initial = params_global_best_all if fit_global else load_params_initial_from_config(config,
+                                                                                                      'individual', lc)
+p_individual = params_individual_initial['p']
+t0_individual_first_transit = params_individual_initial['t0']
+
+priors_individual = load_priors_from_config(config, 'individual', lc)
+priors_individual['p'] = f'fixed({p_individual})'  # fix the period for individual transit fitting
+t0_prior_first_transit = priors_individual['t0']
+
+print_params_initial_priors(params_individual_initial, priors_individual, 'individual', lc)
 
 if fit_global:
-    transit_duration = params_global_best['transit_duration']
+    transit_duration = params_global_best_full['transit_duration']
 elif transit_duration_bls_raw_nans_removed is not None:
     transit_duration = transit_duration_bls_raw_nans_removed * transit_mask_bls_raw_nans_removed_span_coefficient
 else:
@@ -281,7 +325,7 @@ else:
 
 if fit_individual:
     # Split the light curve into individual transit light curves and check if they contain transit events
-    lc_individual_list, transit_info = split_indiviual_lc(lc, p_individual, t0_individual, transit_duration, individual_transit_check_coefficient)
+    lc_individual_list, transit_info = split_indiviual_lc(lc, p_individual, t0_individual_first_transit, transit_duration, individual_transit_check_coefficient)
     n_possible_transits = transit_info['n_possible_transits']
     n_valid_transits = transit_info['n_valid_transits']
     no_data_transit_indices = transit_info['no_data_transit_indices']
@@ -289,6 +333,7 @@ if fit_individual:
 
     lc_fitted_individual_list = [None] * n_possible_transits
     lc_residual_individual_list = [None] * n_possible_transits
+    individual_transit_plot_range_list = [None] * n_possible_transits
     individual_transit_plot_mask_list = [None] * n_possible_transits
 
     config = update_config(config_path, {
@@ -296,64 +341,93 @@ if fit_individual:
         'transit_fitting.individual_fitted_transit_parameters.n_valid_transits': n_valid_transits,
         'transit_fitting.individual_fitted_transit_parameters.no_data_transit_indices': no_data_transit_indices,
         'transit_fitting.individual_fitted_transit_parameters.valid_transit_indices': valid_transit_indices,
-
-        'transit_fitting.individual_fitted_transit_parameters.n_iterations': [None] * n_possible_transits,
-
-        'transit_fitting.individual_fitted_transit_parameters.k': [[None, None, None] for transit_index in range(n_possible_transits)],
-        'transit_fitting.individual_fitted_transit_parameters.t0': [[None, None, None] for transit_index in range(n_possible_transits)],
-        'transit_fitting.individual_fitted_transit_parameters.p': [None, None, None], # period is fixed for individual transit fitting
-        'transit_fitting.individual_fitted_transit_parameters.a': [[None, None, None] for transit_index in range(n_possible_transits)],
-        'transit_fitting.individual_fitted_transit_parameters.i': [[None, None, None] for transit_index in range(n_possible_transits)],
-        'transit_fitting.individual_fitted_transit_parameters.i_in_degree': [[None, None, None] for transit_index in range(n_possible_transits)],
-        'transit_fitting.individual_fitted_transit_parameters.ldc1': [[None, None, None] for transit_index in range(n_possible_transits)],
-        'transit_fitting.individual_fitted_transit_parameters.ldc2': [[None, None, None] for transit_index in range(n_possible_transits)],
-        'transit_fitting.individual_fitted_transit_parameters.ldc': [[[None, None], [None, None], [None, None]] for transit_index in range(n_possible_transits)],
-        'transit_fitting.individual_fitted_transit_parameters.transit_duration': [[None, None, None] for transit_index in range(n_possible_transits)],
-        'transit_fitting.individual_fitted_transit_parameters.transit_depth': [[None, None, None] for transit_index in range(n_possible_transits)],
-
-        'transit_fitting.individual_fitted_transit_parameters.residual_std': [None] * n_possible_transits,
-        'transit_fitting.individual_fitted_transit_parameters.chi_square': [None] * n_possible_transits,
-        'transit_fitting.individual_fitted_transit_parameters.reduced_chi_square': [None] * n_possible_transits
     })
 
 
     for transit_index in range(n_possible_transits):
         if transit_index in valid_transit_indices:
             lc_individual = lc_individual_list[transit_index]
-            t0_individual_initial = t0_individual + p_individual * transit_index # update t0 for each individual transit fitting
+            # update initial value and prior for t0 for each individual transit fitting
+            t0_individual_initial = t0_individual_first_transit + p_individual * transit_index
             params_individual_initial = update_dict(params_individual_initial, {'t0': t0_individual_initial})
+            t0_prior = update_t0_prior(t0_prior_first_transit, p_individual, transit_index, lc_individual)
+            priors_individual = update_dict(priors_individual, {'t0': t0_prior})
 
             # Run individual transit fitting
-            results_individual = run_transit_fitting(lc_individual, transit_model_name_individual, 'individual', params_individual_initial, n_walkers_individual, n_steps_individual, chain_discard_proportion_individual, chain_thin_individual, max_iter_individual, sigma_individual, transit_index=transit_index)
-            n_iter_individual, n_dim_individual, params_individual_name, params_individual_samples, params_individual_samples_thinned_unflattened, params_individual_best, params_individual_best_lower_error, params_individual_best_upper_error, lc_individual, lc_fitted_individual, lc_residual_individual, residual_std_individual, chi_square_individual, reduced_chi_square_individual = results_individual.values()
+            results_individual = run_transit_fitting(lc_individual, transit_model_name_individual, 'individual', params_individual_name, params_individual_initial, priors_individual, n_walkers_individual, n_steps_individual, chain_discard_proportion_individual, chain_thin_individual, max_iter_individual, sigma_individual, transit_index)
+            [n_iter_individual,
+             params_individual_name_full,
+             n_params_individual_free, params_individual_name_free, params_individual_name_fixed,
+             params_individual_initial, priors_individual,
+             params_individual_samples_all, params_individual_samples_unflattened_all,
+             params_individual_best_full, params_individual_best_lower_error_full, params_individual_best_upper_error_full,
+             lc_individual, lc_fitted_individual, lc_residual_individual,
+             residual_std_individual, chi_square_individual, reduced_chi_square_individual,
+             r_hat_individual, ess_bulk_individual, ess_tail_individual] = results_individual.values()
+
+            params_individual_name_fixed_string = ', '.join(params_individual_name_fixed) if len(params_individual_name_fixed) > 0 else 'None'
+            params_individual_best_all = {key: params_individual_best_full[key] for key in params_individual_name}
 
             # Store the individual light curve, the individual best fitted light curve and residuals into the lists
             lc_individual_list[transit_index] = lc_individual
             lc_fitted_individual_list[transit_index] = lc_fitted_individual
             lc_residual_individual_list[transit_index] = lc_residual_individual
 
+            if transit_index == valid_transit_indices[0]:
+                # Update the individual intitial transit parameters and priors only for the first valid transit
+                for key in params_individual_name:
+                    config = update_config(config_path, {
+                        f'transit_fitting.individual_intitial_transit_parameters.{key}': params_individual_initial[f'{key}'],
+                        f'transit_fitting.individual_priors.{key}': priors_individual[f'{key}'],
+                    })
+
+                # Initialize the individual fitted transit parameters lists
+                config = update_config(config_path, {
+                    f'transit_fitting.individual_fitted_transit_parameters.n_iterations': [None] * n_possible_transits,
+
+                    f'transit_fitting.individual_fitted_transit_parameters.residual_std': [None] * n_possible_transits,
+                    f'transit_fitting.individual_fitted_transit_parameters.chi_square': [None] * n_possible_transits,
+                    f'transit_fitting.individual_fitted_transit_parameters.reduced_chi_square': [None] * n_possible_transits,
+                })
+
+                for key in params_individual_name_free:
+                    config = update_config(config_path, {
+                        f'transit_fitting.individual_fitted_transit_parameters.r_hat.{key}': [None] * n_possible_transits,
+                        f'transit_fitting.individual_fitted_transit_parameters.ess_bulk.{key}': [None] * n_possible_transits,
+                        f'transit_fitting.individual_fitted_transit_parameters.ess_tail.{key}': [None] * n_possible_transits
+                    })
+
+                for key in params_individual_name_full:
+                    if key == 'ldc':
+                        config = update_config(config_path, {
+                            f'transit_fitting.individual_fitted_transit_parameters.{key}': [[[None, None], [None, None], [None, None]] for t in range(n_possible_transits)]
+                        })
+                    else:
+                        config = update_config(config_path, {
+                            f'transit_fitting.individual_fitted_transit_parameters.{key}': [[None, None, None] for t in range(n_possible_transits)]
+                        })
+
             config = update_config(config_path, {
                 f'transit_fitting.individual_fitted_transit_parameters.n_iterations[{transit_index}]': n_iter_individual,
 
-                f'transit_fitting.individual_fitted_transit_parameters.k[{transit_index}]': [params_individual_best['k'], params_individual_best_lower_error['k'], params_individual_best_upper_error['k']],
-                f'transit_fitting.individual_fitted_transit_parameters.t0[{transit_index}]': [params_individual_best['t0'], params_individual_best_lower_error['t0'], params_individual_best_upper_error['t0']],
-                f'transit_fitting.individual_fitted_transit_parameters.a[{transit_index}]': [params_individual_best['a'], params_individual_best_lower_error['a'], params_individual_best_upper_error['a']],
-                f'transit_fitting.individual_fitted_transit_parameters.i[{transit_index}]': [params_individual_best['i'], params_individual_best_lower_error['i'], params_individual_best_upper_error['i']],
-                f'transit_fitting.individual_fitted_transit_parameters.i_in_degree[{transit_index}]': [params_individual_best['i_in_degree'], params_individual_best_lower_error['i_in_degree'], params_individual_best_upper_error['i_in_degree']],
-                f'transit_fitting.individual_fitted_transit_parameters.ldc1[{transit_index}]': [params_individual_best['ldc1'], params_individual_best_lower_error['ldc1'], params_individual_best_upper_error['ldc1']],
-                f'transit_fitting.individual_fitted_transit_parameters.ldc2[{transit_index}]': [params_individual_best['ldc2'], params_individual_best_lower_error['ldc2'], params_individual_best_upper_error['ldc2']],
-                f'transit_fitting.individual_fitted_transit_parameters.ldc[{transit_index}]': [params_individual_best['ldc'], params_individual_best_lower_error['ldc'], params_individual_best_upper_error['ldc']],
-                f'transit_fitting.individual_fitted_transit_parameters.transit_duration[{transit_index}]': [params_individual_best['transit_duration'], params_individual_best_lower_error['transit_duration'], params_individual_best_upper_error['transit_duration']],
-                f'transit_fitting.individual_fitted_transit_parameters.transit_depth[{transit_index}]': [params_individual_best['transit_depth'], params_individual_best_lower_error['transit_depth'], params_individual_best_upper_error['transit_depth']],
-
                 f'transit_fitting.individual_fitted_transit_parameters.residual_std[{transit_index}]': residual_std_individual,
                 f'transit_fitting.individual_fitted_transit_parameters.chi_square[{transit_index}]': chi_square_individual,
-                f'transit_fitting.individual_fitted_transit_parameters.reduced_chi_square[{transit_index}]': reduced_chi_square_individual
+                f'transit_fitting.individual_fitted_transit_parameters.reduced_chi_square[{transit_index}]': reduced_chi_square_individual,
             })
 
-            # Update the period parameter only at the first valid transit fitting
-            if transit_index == valid_transit_indices[0]:
-                config = update_config(config_path, {f'transit_fitting.individual_fitted_transit_parameters.p': [params_individual_best['p'], params_individual_best_lower_error['p'], params_individual_best_upper_error['p']]}) # period is fixed for individual transit fitting
+            for key in params_individual_name_free:
+                config = update_config(config_path, {
+                    f'transit_fitting.individual_fitted_transit_parameters.r_hat.{key}[{transit_index}]': r_hat_individual[f'{key}'],
+                    f'transit_fitting.individual_fitted_transit_parameters.ess_bulk.{key}[{transit_index}]': ess_bulk_individual[f'{key}'],
+                    f'transit_fitting.individual_fitted_transit_parameters.ess_tail.{key}[{transit_index}]': ess_tail_individual[f'{key}']
+                })
+
+            for key in params_individual_name_full:
+                config = update_config(config_path, {
+                    f'transit_fitting.individual_fitted_transit_parameters.{key}[{transit_index}]': [params_individual_best_full[f'{key}'],
+                                                                                                     params_individual_best_lower_error_full[f'{key}'],
+                                                                                                     params_individual_best_upper_error_full[f'{key}']]
+                })
 
 
             # Plot the visualization plots of the fitting process and result
@@ -365,10 +439,13 @@ if fit_individual:
             # plot the trace and evolution of MCMC parameters
             j = 1 # count the sub-step
 
-            params_individual_trace_evolution_plot = plot_trace_evolution(results_individual, running_mean_window_length_individual)
+            if running_mean_window_length_individual is None or running_mean_window_length_individual < 1:
+                params_individual_trace_evolution_plot = plot_trace_evolution(params_individual_samples_unflattened_all)
+            else:
+                params_individual_trace_evolution_plot = plot_trace_evolution(params_individual_samples_unflattened_all, running_mean_window_length_individual)
+                params_individual_trace_evolution_plot.axes[1].set_title(f"Evolution ({running_mean_window_proportion_individual * 100}% Window Running Mean) Of Parameters", fontsize='x-large')
             params_individual_trace_evolution_plot.axes[0].set_title("Trace Of Parameters", fontsize='x-large')
-            params_individual_trace_evolution_plot.axes[1].set_title(f"Evolution ({running_mean_window_proportion_individual * 100}% Window Running Mean) Of Parameters", fontsize='x-large')
-            params_individual_trace_evolution_plot.suptitle(f"{lc_plot_title} Individual Transit {transit_index:02} Fitted Transit Parameters Trace and Evolution Plot (Thinned By {chain_thin_individual})", fontsize='xx-large')
+            params_individual_trace_evolution_plot.suptitle(f"{lc_plot_title} Individual Transit {transit_index:02} Fitted Transit Parameters Trace and Evolution\n(Fixed Parameters: {params_individual_name_fixed_string})", fontsize='xx-large')
             params_individual_trace_evolution_plot.figure.savefig(pytransit_fitting_plots_dir_source_sector_lc_transit + f"/{i:02}-{j:01}-{transit_index:02}_Individual_Transit-{transit_index:02}_Fitted_Transit_Parameters_Trace_and_Evolution{pytransit_fitting_plots_suffix}.png")
             plt.close()
 
@@ -376,7 +453,7 @@ if fit_individual:
             # plot the MCMC parameters posterior distribution corner plot
             j += 1 # count the sub-step
 
-            params_individual_corner_plot = plot_posterior_corner(results_individual, quantiles=[0.16, 0.5, 0.84], show_titles=True, title_fmt=".4f", figsize=(20, 25))
+            params_individual_corner_plot = plot_posterior_corner(params_individual_samples_all, quantiles=[0.16, 0.5, 0.84], figsize=(20, 25), show_titles=True, title_fmt=".4f")
             params_individual_corner_plot.suptitle(f"{lc_plot_title} Individual Transit {transit_index:02} Fitted Transit Parameters Posterior Distribution Corner Plot", fontsize='xx-large', y=1.05)
             params_individual_corner_plot.figure.savefig(pytransit_fitting_plots_dir_source_sector_lc_transit + f"/{i:02}-{j:01}-{transit_index:02}_Individual_Transit-{transit_index:02}_Fitted_Transit_Parameters_Posterior_Distribution_Corner_Plot{pytransit_fitting_plots_suffix}.png", bbox_inches='tight')
             plt.close()
@@ -386,12 +463,20 @@ if fit_individual:
             j += 1 # count the sub-step
 
             # create the individual transit plot mask, store it into the list and apply it to the lightcurves
-            individual_transit_plot_range = (params_individual_best['t0'] - params_individual_best['transit_duration'] / 2 * individual_transit_plot_coefficient, params_individual_best['t0'] + params_individual_best['transit_duration'] / 2 * individual_transit_plot_coefficient)
+            individual_transit_plot_range = (params_individual_best_full['t0'] - params_individual_best_full['transit_duration'] / 2 * individual_transit_plot_coefficient, params_individual_best_full['t0'] + params_individual_best_full['transit_duration'] / 2 * individual_transit_plot_coefficient)
             individual_transit_plot_mask = ((lc_individual.time.value >= individual_transit_plot_range[0]) & (lc_individual.time.value < individual_transit_plot_range[1]))
+            individual_transit_plot_range_list[transit_index] = individual_transit_plot_range
             individual_transit_plot_mask_list[transit_index] = individual_transit_plot_mask
             lc_individual_masked = lc_individual[individual_transit_plot_mask]
             lc_fitted_individual_masked = lc_fitted_individual[individual_transit_plot_mask]
             lc_residual_individual_masked = lc_residual_individual[individual_transit_plot_mask]
+
+            # oversample the best fitted model lightcurve for plotting
+            if oversample_lcft:
+                if oversample_lcft_factor is not None and oversample_lcft_factor > 1:
+                    lc_fitted_individual, lc_residual_individual = oversample_lc_fitted(params_individual_best_all, transit_model_name_individual, lc_individual, oversample_lcft_factor)
+                else:
+                    lc_fitted_individual, lc_residual_individual = oversample_lc_fitted(params_individual_best_all, transit_model_name_individual, lc_individual)
 
             # plot the best fitted model
             lc_fitted_individual_plot, (ax_lc_fitted_individual, ax_lc_residual_individual) = plt.subplots(2, 1, figsize=(20, 10), sharex=True)
@@ -424,13 +509,17 @@ if fit_individual:
 
 
     # plot the all-in-one best fitted light curves
-    lc_fitted_individual_all_plot, axes_lc_fitted_individual = plt.subplots(n_valid_transits, 1, figsize=(20, 5 * n_valid_transits))
-    if n_valid_transits == 1:
-        axes_lc_fitted_individual = [axes_lc_fitted_individual]
+    if all_in_one_individual_transit_plot_col_row is None:
+        all_in_one_individual_transit_plot_col = 1
+        all_in_one_individual_transit_plot_row = n_valid_transits
+    all_in_one_individual_transit_plot_figsize = (20 * all_in_one_individual_transit_plot_col, 5 * all_in_one_individual_transit_plot_row)
+    n_individual_transit_subplot = all_in_one_individual_transit_plot_col * all_in_one_individual_transit_plot_row
+
+    lc_fitted_individual_all_plot, axes_lc_fitted_individual = plt.subplots(all_in_one_individual_transit_plot_row, all_in_one_individual_transit_plot_col, figsize=all_in_one_individual_transit_plot_figsize)
+    axes_lc_fitted_individual = np.array(axes_lc_fitted_individual).flatten()
 
     for transit_plot_index, transit_index in enumerate(valid_transit_indices):
-        individual_transit_plot_range = (config['transit_fitting']['individual_fitted_transit_parameters']['t0'][transit_index][0] - config['transit_fitting']['individual_fitted_transit_parameters']['transit_duration'][transit_index][0] / 2 * individual_transit_plot_coefficient,
-                                         config['transit_fitting']['individual_fitted_transit_parameters']['t0'][transit_index][0] + config['transit_fitting']['individual_fitted_transit_parameters']['transit_duration'][transit_index][0] / 2 * individual_transit_plot_coefficient)
+        individual_transit_plot_range = individual_transit_plot_range_list[transit_index]
         individual_transit_plot_mask = individual_transit_plot_mask_list[transit_index]
         lc_individual_masked = lc_individual_list[transit_index][individual_transit_plot_mask]
         lc_fitted_individual_masked = lc_fitted_individual_list[transit_index][individual_transit_plot_mask]
@@ -443,7 +532,7 @@ if fit_individual:
             lc_individual_masked.scatter(ax=ax_lc_fitted_individual, label="Original Light Curve" if transit_plot_index == 0 else None, s=scatter_point_size_exptime * 6)
         lc_fitted_individual_masked.plot(ax=ax_lc_fitted_individual, c='red', label=f"Best Fitted {transit_model_name_individual} Model, chi-square={config['transit_fitting']['individual_fitted_transit_parameters']['chi_square'][transit_index]:.2f},\n"
                                                                                     f"reduced chi-square={config['transit_fitting']['individual_fitted_transit_parameters']['reduced_chi_square'][transit_index]:.2f}, residual std={config['transit_fitting']['individual_fitted_transit_parameters']['residual_std'][transit_index]:.6f}" if transit_plot_index == 0
-                                                                               else f"chi-square={config['transit_fitting']['individual_fitted_transit_parameters']['chi_square'][transit_index]:.2f}, reduced chi-square={config['transit_fitting']['individual_fitted_transit_parameters']['reduced_chi_square'][transit_index]:.2f},\n"
+                                                                                    else f"chi-square={config['transit_fitting']['individual_fitted_transit_parameters']['chi_square'][transit_index]:.2f}, reduced chi-square={config['transit_fitting']['individual_fitted_transit_parameters']['reduced_chi_square'][transit_index]:.2f},\n"
                                                                                     f"residual std={config['transit_fitting']['individual_fitted_transit_parameters']['residual_std'][transit_index]:.6f}")
         ax_lc_fitted_individual.legend(loc='lower right')
         ax_lc_fitted_individual.set_ylabel("Flux")
@@ -451,9 +540,14 @@ if fit_individual:
         ax_lc_fitted_individual.set_xlim(individual_transit_plot_range[0], individual_transit_plot_range[1])
         ax_lc_fitted_individual.set_title(f"Transit {transit_index:02}", fontsize='x-large')
 
+    # set unused axes invisible
+    for unused_index in range(n_valid_transits, n_individual_transit_subplot):
+        ax_unused = axes_lc_fitted_individual[unused_index]
+        ax_unused.set_visible(False)
+
     lc_fitted_individual_all_plot.suptitle(f"{lc_plot_title} All-in-one Individual Best Fitted Light Curves", fontsize='xx-large', y=1.00)
     lc_fitted_individual_all_plot.tight_layout()
-    lc_fitted_individual_all_plot.figure.savefig(pytransit_fitting_plots_dir_source_sector_lc + f"/{i:02}_All-in-one_Individual_Best_Fitted_Light_Curves.png", bbox_inches='tight')
+    lc_fitted_individual_all_plot.figure.savefig(pytransit_fitting_plots_dir_source_sector_lc + f"/{i:02}_All-in-one_Individual_Best_Fitted_Light_Curves{pytransit_fitting_plots_suffix}.png", bbox_inches='tight')
     plt.close()
 
 
@@ -461,8 +555,8 @@ if fit_individual:
 
 ##### Define the folding and binning parameters #####
 fold = config['transit_fitting']['fold']
-p_fold = config['transit_fitting']['p_fold'] if config['transit_fitting']['p_fold'] is not None else p_individual
-t0_fold = config['transit_fitting']['t0_fold'] if config['transit_fitting']['t0_fold'] is not None else t0_individual
+p_fold = load_params_fold_from_config(config, fit_global, params_global_best_all if fit_global else None)['p']
+t0_fold = load_params_fold_from_config(config, fit_global, params_global_best_all if fit_global else None)['t0']
 
 bin = config['transit_fitting']['bin']
 time_bin_size = config['transit_fitting']['time_bin_size'] * u.second if config['transit_fitting']['time_bin_size'] is not None else exptime * u.second
@@ -489,7 +583,7 @@ if fold:
     ax_lc_folded.set_title(f"{lc_plot_title} Period={p_fold:.4f}d Folded Light Curve")
     ax_lc_folded.set_ylabel("Flux")
     lc_folded_plot.figure.tight_layout()
-    lc_folded_plot.figure.savefig(pytransit_fitting_plots_dir_source_sector_lc + f"/{i:02}_Period={p_fold:.4f}d_Folded_Light_Curve.png")
+    lc_folded_plot.figure.savefig(pytransit_fitting_plots_dir_source_sector_lc + f"/{i:02}_Period={p_fold:.4f}d_Folded_Light_Curve{pytransit_fitting_plots_suffix}.png")
     plt.close()
 
 
@@ -548,12 +642,12 @@ else:
 
 config = update_config(config_path, {'transit_fitting.fnb': fnb})
 
-lc_fnb_fn = lc_fn.replace("_LC", f"{fnb}_LC", -1)
-lc_fnb_path = lc_fnb_dir_source + f"/{lc_fnb_fn}"
-lc_fnb.to_fits(path=lc_fnb_path, overwrite=True)
+if fold or bin:
+    lc_fnb_fn = lc_fn.replace("_LC", f"{fnb}_LC", -1)
+    lc_fnb_path = lc_fnb_dir_source + f"/{lc_fnb_fn}"
+    lc_fnb.to_fits(path=lc_fnb_path, overwrite=True)
 
-
-print(f"Successfully folded and/or binned the light curve and saved it to the data directory of the source: {lc_fnb_path}.\n")
+    print(f"Successfully folded and/or binned the light curve and saved it to the data directory of the source: {lc_fnb_path}.\n")
 
 
 
@@ -573,69 +667,93 @@ transit_model_name_fnb = config['transit_fitting']['transit_model_name_fnb'] # n
 n_walkers_fnb = config['transit_fitting']['n_walkers_fnb'] # number of MCMC walkers for folded-and-binned fitting
 n_steps_fnb = config['transit_fitting']['n_steps_fnb'] # number of MCMC steps for folded-and-binned fitting
 chain_discard_proportion_fnb = config['transit_fitting']['chain_discard_proportion_fnb'] # the proportion of MCMC chain to discard as burn-in for folded-and-binned fitting
+chain_thin_fnb = config['transit_fitting']['chain_thin_fnb'] # thinning factor of the MCMC chain for folded-and-binned fitting
 
 # plotting parameters
-chain_thin_fnb = config['transit_fitting']['chain_thin_fnb'] # thinning factor of the sample chain when visualizing the process and result for folded-and-binned fitting
-running_mean_window_proportion_fnb = config['transit_fitting']['running_mean_window_proportion_fnb'] # window length proportion of the thinned-unflattened MCMC chain to calculate the running means of the parameters when visualizing the process and result for folded-and-binned fitting
-running_mean_window_length_fnb = int(running_mean_window_proportion_fnb * n_steps_fnb * (1 - chain_discard_proportion_fnb) / chain_thin_fnb)
+running_mean_window_proportion_fnb = config['transit_fitting']['running_mean_window_proportion_fnb'] # window length proportion of the unflattened MCMC chain to calculate the running means of the parameters when visualizing the process and result for folded-and-binned fitting
+running_mean_window_length_fnb = int(running_mean_window_proportion_fnb * n_steps_fnb * (1 - chain_discard_proportion_fnb) / chain_thin_fnb) if running_mean_window_proportion_fnb is not None else None
 folded_transit_plot_coefficient = config['transit_fitting']['folded_transit_plot_coefficient'] # the coefficient of the folded-and-binned transit plot span, only used when 'fold' is set to true (i.e., the lightcurve is folded)
 
 
-# Set the initial folded-and-binned fitted transit parameters
-k_fnb_initial = params_global_best['k'] if fit_global else k_global_initial # k: normalized planetary radius, i.e., R_p/R_s
-p_fnb_initial = params_global_best['p'] if fit_global else p_global_initial # p: orbital period in days
-a_fnb_initial = params_global_best['a'] if fit_global else a_global_initial # a: normalized semi-major axis, i.e., a/R_s
-i_fnb_initial = params_global_best['i'] if fit_global else i_global_initial # i: orbital inclination in radians
-ldc1_fnb_initial = params_global_best['ldc1'] if fit_global else ldc1_global_initial # ldc1: linear limb darkening coefficient
-ldc2_fnb_initial = params_global_best['ldc2'] if fit_global else ldc2_global_initial # ldc2: quadratic limb darkening coefficient
+# Set the folded-and-binned fitted transit parameters names
+params_fnb_name = PARAMS_NAME
+
+# Set the initial folded-and-binned fitted transit parameters and priors
+params_fnb_initial = params_global_best_all if fit_global else load_params_initial_from_config(config, 'fnb', lc_fnb)
 if fold:
-    t0_fnb_initial = 0.0
-else:
-    t0_fnb_initial = params_global_best['t0'] if fit_global else t0_global_initial # t0: epoch time
-params_fnb_initial = {'k': k_fnb_initial, 't0': t0_fnb_initial, 'p': p_fnb_initial, 'a': a_fnb_initial, 'i': i_fnb_initial, 'ldc1': ldc1_fnb_initial, 'ldc2': ldc2_fnb_initial}
+    params_fnb_initial['t0'] = 0.0  # set initial epoch time to 0.0 for folded transit fitting
+p_fnb = params_fnb_initial['p']
+
+priors_fnb = load_priors_from_config(config, 'fnb', lc_fnb)
+if fold:
+    priors_fnb['p'] = f'fixed({p_fnb})'  # fix the period for folded transit fitting
+
+print_params_initial_priors(params_fnb_initial, priors_fnb, 'fnb', lc)
 
 
 if fit_fnb:
     # Run folded-and-binned transit fitting
-    results_fnb = run_transit_fitting(lc_fnb, transit_model_name_fnb, 'folded' if fold else 'global', params_fnb_initial, n_walkers_fnb, n_steps_fnb, chain_discard_proportion_fnb, chain_thin_fnb, max_iter_fnb, sigma_fnb)
-    n_iter_fnb, n_dim_fnb, params_fnb_name, params_fnb_samples, params_fnb_samples_thinned_unflattened, params_fnb_best, params_fnb_best_lower_error, params_fnb_best_upper_error, lc_fnb, lc_fitted_fnb, lc_residual_fnb, residual_std_fnb, chi_square_fnb, reduced_chi_square_fnb = results_fnb.values()
+    results_fnb = run_transit_fitting(lc_fnb, transit_model_name_fnb, 'folded' if fold else 'global', params_fnb_name, params_fnb_initial, priors_fnb, n_walkers_fnb, n_steps_fnb, chain_discard_proportion_fnb, chain_thin_fnb, max_iter_fnb, sigma_fnb)
+    [n_iter_fnb,
+     params_fnb_name_full,
+     n_params_fnb_free, params_fnb_name_free, params_fnb_name_fixed,
+     params_fnb_initial, priors_fnb,
+     params_fnb_samples_all, params_fnb_samples_unflattened_all,
+     params_fnb_best_full, params_fnb_best_lower_error_full, params_fnb_best_upper_error_full,
+     lc_fnb, lc_fitted_fnb, lc_residual_fnb,
+     residual_std_fnb, chi_square_fnb, reduced_chi_square_fnb,
+     r_hat_fnb, ess_bulk_fnb, ess_tail_fnb] = results_fnb.values()
+
+    params_fnb_name_fixed_string = ', '.join(params_fnb_name_fixed) if len(params_fnb_name_fixed) > 0 else 'None'
+    params_fnb_best_all = {key: params_fnb_best_full[key] for key in params_fnb_name}
 
     config = update_config(config_path, {
         'transit_fitting.fnb_fitted_transit_parameters.n_iterations': n_iter_fnb,
 
-        'transit_fitting.fnb_fitted_transit_parameters.k': [params_fnb_best['k'], params_fnb_best_lower_error['k'], params_fnb_best_upper_error['k']],
-        'transit_fitting.fnb_fitted_transit_parameters.t0': [params_fnb_best['t0'], params_fnb_best_lower_error['t0'], params_fnb_best_upper_error['t0']],
-        'transit_fitting.fnb_fitted_transit_parameters.p': [params_fnb_best['p'], params_fnb_best_lower_error['p'], params_fnb_best_upper_error['p']],
-        'transit_fitting.fnb_fitted_transit_parameters.a': [params_fnb_best['a'], params_fnb_best_lower_error['a'], params_fnb_best_upper_error['a']],
-        'transit_fitting.fnb_fitted_transit_parameters.i': [params_fnb_best['i'], params_fnb_best_lower_error['i'], params_fnb_best_upper_error['i']],
-        'transit_fitting.fnb_fitted_transit_parameters.i_in_degree': [params_fnb_best['i_in_degree'], params_fnb_best_lower_error['i_in_degree'], params_fnb_best_upper_error['i_in_degree']],
-        'transit_fitting.fnb_fitted_transit_parameters.ldc1': [params_fnb_best['ldc1'], params_fnb_best_lower_error['ldc1'], params_fnb_best_upper_error['ldc1']],
-        'transit_fitting.fnb_fitted_transit_parameters.ldc2': [params_fnb_best['ldc2'], params_fnb_best_lower_error['ldc2'], params_fnb_best_upper_error['ldc2']],
-        'transit_fitting.fnb_fitted_transit_parameters.ldc': [params_fnb_best['ldc'], params_fnb_best_lower_error['ldc'], params_fnb_best_upper_error['ldc']],
-        'transit_fitting.fnb_fitted_transit_parameters.transit_duration': [params_fnb_best['transit_duration'], params_fnb_best_lower_error['transit_duration'], params_fnb_best_upper_error['transit_duration']],
-        'transit_fitting.fnb_fitted_transit_parameters.transit_depth': [params_fnb_best['transit_depth'], params_fnb_best_lower_error['transit_depth'], params_fnb_best_upper_error['transit_depth']],
-
         'transit_fitting.fnb_fitted_transit_parameters.residual_std': residual_std_fnb,
         'transit_fitting.fnb_fitted_transit_parameters.chi_square': chi_square_fnb,
-        'transit_fitting.fnb_fitted_transit_parameters.reduced_chi_square': reduced_chi_square_fnb
+        'transit_fitting.fnb_fitted_transit_parameters.reduced_chi_square': reduced_chi_square_fnb,
     })
+
+    for key in params_fnb_name:
+        config = update_config(config_path, {
+            f'transit_fitting.fnb_intitial_transit_parameters.{key}': params_fnb_initial[f'{key}'],
+            f'transit_fitting.fnb_priors.{key}': priors_fnb[f'{key}']
+        })
+
+    for key in params_fnb_name_free:
+        config = update_config(config_path, {
+            f'transit_fitting.fnb_fitted_transit_parameters.r_hat.{key}': r_hat_fnb[f'{key}'],
+            f'transit_fitting.fnb_fitted_transit_parameters.ess_bulk.{key}': ess_bulk_fnb[f'{key}'],
+            f'transit_fitting.fnb_fitted_transit_parameters.ess_tail.{key}': ess_tail_fnb[f'{key}']
+        })
+
+    for key in params_fnb_name_full:
+        config = update_config(config_path, {
+            f'transit_fitting.fnb_fitted_transit_parameters.{key}': [params_fnb_best_full[f'{key}'],
+                                                                   params_fnb_best_lower_error_full[f'{key}'],
+                                                                   params_fnb_best_upper_error_full[f'{key}']],
+        })
 
 
     # Plot the visualization plots of the fitting process and result
     # plot the trace and evolution of MCMC parameters
     j = 1  # count the sub-step
 
-    params_fnb_trace_evolution_plot = plot_trace_evolution(results_fnb, running_mean_window_length_fnb)
+    if running_mean_window_length_fnb is None or running_mean_window_length_fnb < 1:
+        params_fnb_trace_evolution_plot = plot_trace_evolution(params_fnb_samples_unflattened_all)
+    else:
+        params_fnb_trace_evolution_plot = plot_trace_evolution(params_fnb_samples_unflattened_all, running_mean_window_length_fnb)
+        params_fnb_trace_evolution_plot.axes[1].set_title(f"Evolution ({running_mean_window_proportion_fnb * 100}% Window Running Mean) Of Parameters", fontsize='x-large')
     params_fnb_trace_evolution_plot.axes[0].set_title("Trace Of Parameters", fontsize='x-large')
-    params_fnb_trace_evolution_plot.axes[1].set_title(f"Evolution ({running_mean_window_proportion_fnb * 100}% Window Running Mean) Of Parameters", fontsize='x-large')
     if fold and bin:
-        params_fnb_trace_evolution_plot.suptitle(f"{lc_plot_title} Folded-and-binned Fitted Transit Parameters Trace and Evolution (Thinned By {chain_thin_fnb})", fontsize='xx-large')
+        params_fnb_trace_evolution_plot.suptitle(f"{lc_plot_title} Folded-and-binned Fitted Transit Parameters Trace and Evolution\n(Fixed Parameters: {params_fnb_name_fixed_string})", fontsize='xx-large')
         params_fnb_trace_evolution_plot.figure.savefig(pytransit_fitting_plots_dir_source_sector_lc + f"/{i:02}-{j:01}_Folded-and-binned_Fitted_Transit_Parameters_Trace_and_Evolution{pytransit_fitting_plots_suffix}.png")
     elif fold and not bin:
-        params_fnb_trace_evolution_plot.suptitle(f"{lc_plot_title} Folded Fitted Transit Parameters Trace and Evolution (Thinned By {chain_thin_fnb})", fontsize='xx-large')
+        params_fnb_trace_evolution_plot.suptitle(f"{lc_plot_title} Folded Fitted Transit Parameters Trace and Evolution\n(Fixed Parameters: {params_fnb_name_fixed_string})", fontsize='xx-large')
         params_fnb_trace_evolution_plot.figure.savefig(pytransit_fitting_plots_dir_source_sector_lc + f"/{i:02}-{j:01}_Folded_Fitted_Transit_Parameters_Trace_and_Evolution{pytransit_fitting_plots_suffix}.png")
     elif bin and not fold:
-        params_fnb_trace_evolution_plot.suptitle(f"{lc_plot_title} Binned Fitted Transit Parameters Trace and Evolution (Thinned By {chain_thin_fnb})", fontsize='xx-large')
+        params_fnb_trace_evolution_plot.suptitle(f"{lc_plot_title} Binned Fitted Transit Parameters Trace and Evolution\n(Fixed Parameters: {params_fnb_name_fixed_string})", fontsize='xx-large')
         params_fnb_trace_evolution_plot.figure.savefig(pytransit_fitting_plots_dir_source_sector_lc + f"/{i:02}-{j:01}_Binned_Fitted_Transit_Parameters_Trace_and_Evolution{pytransit_fitting_plots_suffix}.png")
     plt.close()
 
@@ -643,7 +761,7 @@ if fit_fnb:
     # plot the MCMC parameters posterior distribution corner plot
     j += 1  # count the sub-step
 
-    params_fnb_corner_plot = plot_posterior_corner(results_fnb, quantiles=[0.16, 0.5, 0.84], show_titles=True, title_fmt=".4f", figsize=(20, 25))
+    params_fnb_corner_plot = plot_posterior_corner(params_fnb_samples_all, quantiles=[0.16, 0.5, 0.84], figsize=(20, 25), show_titles=True, title_fmt=".4f")
     if fold and bin:
         params_fnb_corner_plot.suptitle(f"{lc_plot_title} Folded-and-binned Fitted Transit Parameters Posterior Distribution Corner Plot", fontsize='xx-large', y=1.05)
         params_fnb_corner_plot.figure.savefig(pytransit_fitting_plots_dir_source_sector_lc + f"/{i:02}-{j:01}_Folded-and-binned_Fitted_Transit_Parameters_Posterior_Distribution_Corner_Plot{pytransit_fitting_plots_suffix}.png", bbox_inches='tight')
@@ -658,6 +776,13 @@ if fit_fnb:
 
     # plot the best fitted light curve and residuals
     j += 1 # count the sub-step
+
+    # oversample the best fitted model lightcurve for plotting
+    if oversample_lcft:
+        if oversample_lcft_factor is not None and oversample_lcft_factor > 1:
+            lc_fitted_fnb, lc_residual_fnb = oversample_lc_fitted(params_fnb_best_all, transit_model_name_fnb, lc, oversample_lcft_factor)
+        else:
+            lc_fitted_fnb, lc_residual_fnb = oversample_lc_fitted(params_fnb_best_all, transit_model_name_fnb, lc)
 
     # plot the best fitted model
     lc_fitted_fnb_plot, (ax_lc_fitted_fnb, ax_lc_residual_fnb) = plt.subplots(2, 1, figsize=(20, 10), sharex=True)

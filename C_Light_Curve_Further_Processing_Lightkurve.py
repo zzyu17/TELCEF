@@ -119,6 +119,7 @@ p_bls_raw_nans_removed = float(pg_bls_raw_nans_removed.period_at_max_power.value
 t0_bls_raw_nans_removed = float(pg_bls_raw_nans_removed.transit_time_at_max_power.value)
 transit_duration_bls_raw_nans_removed = float(pg_bls_raw_nans_removed.duration_at_max_power.value)
 transit_depth_bls_raw_nans_removed = float(pg_bls_raw_nans_removed.depth_at_max_power.value / np.nanmedian(lc_raw_nans_removed.flux.value)) # calculate the normalized transit depth
+k_bls_raw_nans_removed = float((transit_depth_bls_raw_nans_removed)**0.5)
 transit_mask_bls_raw_nans_removed_span_coefficient = config['lightkurve']['transit_mask_bls_raw_nans_removed_span_coefficient'] if config['lightkurve']['transit_mask_bls_raw_nans_removed_span_coefficient'] is not None else 1.8 ##### set the coefficient of BLS transit mask span #####
 transit_mask_bls_raw_nans_removed = pg_bls_raw_nans_removed.get_transit_mask(period=p_bls_raw_nans_removed, transit_time=t0_bls_raw_nans_removed, duration=transit_duration_bls_raw_nans_removed * transit_mask_bls_raw_nans_removed_span_coefficient)
 lc_fitted_bls_raw_nans_removed = pg_bls_raw_nans_removed.get_transit_model(period=p_bls_raw_nans_removed, transit_time=t0_bls_raw_nans_removed, duration=transit_duration_bls_raw_nans_removed)
@@ -155,6 +156,7 @@ plt.close()
 
 config = update_config(config_path, {'lightkurve.lc_raw_nans_removed_cdpp': lc_raw_nans_removed_cdpp,
                                      'lightkurve.lc_raw_nans_removed_baseline_cdpp': lc_raw_nans_removed_baseline_cdpp,
+                                     'lightkurve.raw_nans_removed_bls_fitted_parameters.k': k_bls_raw_nans_removed,
                                      'lightkurve.raw_nans_removed_bls_fitted_parameters.p': p_bls_raw_nans_removed,
                                      'lightkurve.raw_nans_removed_bls_fitted_parameters.t0': t0_bls_raw_nans_removed,
                                      'lightkurve.raw_nans_removed_bls_fitted_parameters.transit_duration': transit_duration_bls_raw_nans_removed,
