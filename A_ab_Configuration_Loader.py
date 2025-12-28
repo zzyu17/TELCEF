@@ -1,6 +1,6 @@
 import os
 
-from utils import attribute_map, stage_map, load_config, update_config, get_source_metadata
+from utils import attribute_map, stage_map, load_config, update_config, get_source_metadata, epoch_time_to_btjd
 from A_aa_Sector_Locator import *
 
 
@@ -35,10 +35,13 @@ gaia = config['source']['gaia']
 tess_mag = config['source']['tess_mag']
 
 ##### Define the planet parameters #####
-p_nasa = config['planet']['p']
+k_nasa = config['planet']['k']
+t0_bjd_nasa = config['planet']['t0_bjd']
 t0_nasa = config['planet']['t0']
+p_nasa = config['planet']['p']
+a_nasa = config['planet']['a']
+i_nasa = config['planet']['i']
 transit_duration_nasa = config['planet']['transit_duration']
-transit_depth_nasa = config['planet']['transit_depth']
 
 cdpp_transit_duration = config['planet']['cdpp_transit_duration'] if config['planet']['cdpp_transit_duration'] is not None else float(config['planet']['transit_duration'] * 24) # convert the transit duration from days to hours
 
@@ -72,6 +75,10 @@ os.makedirs(data_dir, exist_ok=True)
 
 
 if __name__ == "__main__":
+    # Convert epoch time from NASA Exoplanet Archive from BJD to BTJD
+    t0_nasa = epoch_time_to_btjd(t0_bjd_nasa, p_nasa)
+    config = update_config(config_path, {'planet.t0': t0_nasa})
+
     # Retrieve the metadata of the source and update the configurations
     metadata_dict = get_source_metadata(name, sector)
     config = update_config(config_path, metadata_dict)

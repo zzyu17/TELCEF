@@ -472,6 +472,8 @@ transit_fitting:
   # plotting parameters
   alpha_exptime: # the plotting alpha coefficient of the light curve corresponding to the exposure time; if left blank (i.e., set to None), it will be set to the default values: 0.1 for (0, 80]s, 0.3 for (80, 400]s, 0.5 for (400, inf)s.
   scatter_point_size_exptime: # the scatter point size coefficient of the light curve corresponding to the exposure time; if left blank (i.e., set to None), it will be set to the default values: 0.025 for (0, 80]s, 0.25 for (80, 400]s, 0.75 for (400, inf)s.
+  oversample_lc_fitted: true # whether to oversample the best fitted model lightcurve for plotting
+  oversample_lc_fitted_factor: # the oversampling factor when oversampling the best fitted model lightcurve for plotting; if left blank (i.e., set to None), it will be set to 10 by default.
   running_mean_window_proportion_global: 0.05                      # Window length proportion of the unflattened MCMC chain to calculate the running means of the parameters when visualizing the process and result for global fitting, recommended: 0.05.
                                               # If left blank (i.e., set to None), the default window length of 20 will be used.
 
