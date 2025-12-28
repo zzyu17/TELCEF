@@ -148,7 +148,7 @@ def load_config(config_path):
     return config
 
 
-def update_config(config_path, dict_update, precision=15):
+def update_config(config_path, obj_update, precision=15, delete=False):
     """
     Update the specific key-value pairs in a YAML configuration file with new ones,
     while preserving the original formatting, comments and other contents.
@@ -158,22 +158,33 @@ def update_config(config_path, dict_update, precision=15):
     ----------
     config_path : str
         Path to the configuration file.
-    dict_update : dict
-        Dictionary where keys are dot-separated key paths and values are the new values.
-        For updating specific list indices, use the format: 'key.path[index]' or 'key.path[index].nested_key'.
+    obj_update : dict or list
+        When `delete` is `False`, a dictionary where keys are dot-separated key paths and values are the new values to update in the configuration file.
+        When `delete` is `True`, a list of keys to delete from the configuration file.
+        For updating or deleting specific list indices, use the format: 'key.path[index]' or 'key.path[index].nested_key'.
     precision : int, optional
         Precision for float representation. Default is `15` (avoiding edge cases where rounding affects the last digit because of IEEE-754 floating point behavior).
+    delete : bool, optional
+        If `True`, delete the keys specified in `obj_update`. Default is `False`.
 
     Returns
     -------
     config : dict
         The updated configuration dictionary.
     """
+    # Validate the type of obj_update
+    if not delete and not isinstance(obj_update, dict):
+        raise ValueError("When 'delete' is False, 'obj_update' must be a dictionary where keys are dot-separated key paths and values are the new values to update.")
+    if delete and not isinstance(obj_update, list):
+        raise ValueError("When 'delete' is True, 'obj_update' must be a list of keys to delete.")
+
+
     yaml = YAML()
 
     # Set YAML formatting options
     yaml.preserve_quotes = True  # preserve the quote style
     yaml.indent(mapping=2, sequence=4, offset=2)  # preserve the indentation format
+
 
     # Customize float construction
     # define custom float constructor
@@ -220,14 +231,20 @@ def update_config(config_path, dict_update, precision=15):
     # add custom float representers
     yaml.representer.add_representer(float, decimal_float_representer)
 
+
     # Load the existing configuration
     with open(config_path, 'r') as f:
         config = yaml.load(f) or {}
 
     # Apply the updates
-    for key_path, value in dict_update.items():
-        keys = _parse_key_path(key_path)
-        _deep_update(config, keys, value)
+    if not delete:
+        for key_path, value in obj_update.items():
+            keys = _parse_key_path(key_path)
+            _deep_update(config, keys, value, delete=delete)
+    else:
+        for key_path in obj_update:
+            keys = _parse_key_path(key_path)
+            _deep_update(config, keys, delete=delete)
 
     # Save the updated configuration back to the configuration file
     with open(config_path, 'w') as f:
@@ -277,9 +294,9 @@ def _parse_key_path(key_path):
 
     return keys
 
-def _deep_update(d, keys, value):
+def _deep_update(d, keys, value=None, delete=False):
     """
-    A helper function to recursively update nested dict `d` at `keys` with `value`,
+    A helper function to recursively update or delete from a nested dict `d` at `keys`,
     supporting list indices in the key path.
 
     Parameters
@@ -288,8 +305,10 @@ def _deep_update(d, keys, value):
         The dictionary or list to update.
     keys : list
         List of keys and indices to traverse.
-    value : any
-        The value to set at the final key/index.
+    value : any, optional
+        The value to set at the final key/index. Must be provided if `delete` is `False`.
+    delete : bool, optional
+        If `True`, delete the specified key. Default is `False`.
 
     Raises
     ------
@@ -297,39 +316,49 @@ def _deep_update(d, keys, value):
     `IndexError`: If an index is out of range for a list.
     `TypeError`: If trying to index a non-list or access a non-dict.
     """
+    # Validate input parameters
     if not keys:
         return
+    if not delete and value is None:
+        raise ValueError("Value must be provided when 'delete' is `False`.")
 
     current_key = keys[0]
     remaining_keys = keys[1:]
 
     if not remaining_keys:
-        # Set the value at the final key
+        # Set the value at or delete the final key
         if isinstance(d, dict):
-            d[current_key] = value
+            if delete:
+                if current_key in d:
+                    del d[current_key]
+            else:
+                d[current_key] = value
         elif isinstance(d, list):
             if isinstance(current_key, int):
                 if current_key < len(d):
-                    d[current_key] = value
+                    if delete:
+                        del d[current_key]
+                    else:
+                        d[current_key] = value
                 else:
                     raise IndexError(f"Index {current_key} out of range for list of length {len(d)}.")
             elif isinstance(current_key, str):
                 raise TypeError(f"Cannot use string key '{current_key}' with list.")
         else:
-            raise TypeError(f"Cannot set value on type {type(d)} at key '{current_key}'.")
+            raise TypeError(f"Cannot set value on type {type(d)} at or delete key '{current_key}'.")
 
     else:
         # Traverse deeper at the current key when it's not the final one
         if isinstance(d, dict):
             if current_key in d:
-                _deep_update(d[current_key], remaining_keys, value)
+                _deep_update(d[current_key], remaining_keys, value, delete=delete)
             else:
                 raise KeyError(f"Key '{current_key}' not found in dictionary.")
 
         elif isinstance(d, list):
             if isinstance(current_key, int):
                 if current_key < len(d):
-                    _deep_update(d[current_key], remaining_keys, value)
+                    _deep_update(d[current_key], remaining_keys, value, delete=delete)
                 else:
                     raise IndexError(f"Index {current_key} out of range for list of length {len(d)}.")
             elif isinstance(current_key, str):
@@ -1452,13 +1481,13 @@ def _physical_boundaries(lc):
     time_max = np.nanmax(lc.time.value)
 
     physical_boundaries_dict = {
-        'k': (0, float('inf')), # normalized planetary radius, i.e., R_p/R_s. Should be positive.
-        't0': (time_min, time_max), # epoch time in BTJD. Should be within the time range of the light curve (i.e., the observation period).
-        'p': (0, float('inf')), # orbital period in days. Should be positive.
-        'a': (1, float('inf')), # normalized semi-major axis, i.e., a/R_s. Should be larger than 1.
-        'i': (-np.pi / 2, np.pi / 2), # orbital inclination in radians. Should be within [-pi/2, pi/2].
-        'ldc1': (0, 1), # linear limb darkening coefficient. Should be within [0, 1].
-        'ldc2': (0, 1) # quadratic limb darkening coefficient. Should be within [0, 1].
+        'k': (0, float('inf')), # normalized planetary radius, i.e., R_p/R_s. Must be positive.
+        't0': (time_min, time_max), # epoch time in BTJD. Must be within the time range of the light curve (i.e., the observation period).
+        'p': (0, float('inf')), # orbital period in days. Must be positive.
+        'a': (1, float('inf')), # normalized semi-major axis, i.e., a/R_s. Must be larger than 1.
+        'i': (-np.pi / 2, np.pi / 2), # orbital inclination in radians. Must be within [-pi/2, pi/2].
+        'ldc1': (0, 1), # linear limb darkening coefficient. Must be within [0, 1].
+        'ldc2': (0, 1) # quadratic limb darkening coefficient. Must be within [0, 1].
     }
 
     return physical_boundaries_dict
@@ -2737,7 +2766,7 @@ def plot_posterior_corner(params_samples, quantiles=[0.16, 0.5, 0.84], **kwargs)
     Parameters
     -----------
     params_samples: dict
-        The `MCMC` fitting samples dictionary. Should use the flattened (single-chain) samples.
+        The `MCMC` fitting samples dictionary. Must use the flattened (single-chain) samples.
     quantiles : iterable, optional
         A list of fractional quantiles to show on the 1D histograms as vertical dashed lines.
         Will be passed to `corner.corner()` as the `quantiles` argument. Default is `[0.16, 0.5, 0.84]`.

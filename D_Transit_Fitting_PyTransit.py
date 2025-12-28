@@ -190,6 +190,13 @@ if fit_global:
             f'transit_fitting.global_priors.{key}': priors_global[f'{key}']
         })
 
+    for key in params_global_name_fixed:
+        config = update_config(config_path, [
+            f'transit_fitting.global_fitted_transit_parameters.r_hat.{key}',
+            f'transit_fitting.global_fitted_transit_parameters.ess_bulk.{key}',
+            f'transit_fitting.global_fitted_transit_parameters.ess_tail.{key}'
+        ], delete=True)
+
     for key in params_global_name_free:
         config = update_config(config_path, {
             f'transit_fitting.global_fitted_transit_parameters.r_hat.{key}': r_hat_global[f'{key}'],
@@ -389,6 +396,13 @@ if fit_individual:
                     f'transit_fitting.individual_fitted_transit_parameters.chi_square': [None] * n_possible_transits,
                     f'transit_fitting.individual_fitted_transit_parameters.reduced_chi_square': [None] * n_possible_transits,
                 })
+
+                for key in params_individual_name_fixed:
+                    config = update_config(config_path, [
+                        f'transit_fitting.individual_fitted_transit_parameters.r_hat.{key}',
+                        f'transit_fitting.individual_fitted_transit_parameters.ess_bulk.{key}',
+                        f'transit_fitting.individual_fitted_transit_parameters.ess_tail.{key}'
+                    ], delete=True)
 
                 for key in params_individual_name_free:
                     config = update_config(config_path, {
@@ -720,6 +734,13 @@ if fit_fnb:
             f'transit_fitting.fnb_intitial_transit_parameters.{key}': params_fnb_initial[f'{key}'],
             f'transit_fitting.fnb_priors.{key}': priors_fnb[f'{key}']
         })
+
+    for key in params_fnb_name_fixed:
+        config = update_config(config_path, [
+            f'transit_fitting.fnb_fitted_transit_parameters.r_hat.{key}',
+            f'transit_fitting.fnb_fitted_transit_parameters.ess_bulk.{key}',
+            f'transit_fitting.fnb_fitted_transit_parameters.ess_tail.{key}'
+        ], delete=True)
 
     for key in params_fnb_name_free:
         config = update_config(config_path, {
