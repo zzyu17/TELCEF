@@ -35,13 +35,13 @@ from matplotlib.ticker import ScalarFormatter
 
 ### ------ Mission-specified ------ ###
 # Define the attribute map and the stage map for different missions
-attribute_map = {
+ATTRIBUTE_MAP = {
     'Kepler': 'quarter',
     'K2': 'campaign',
     'TESS': 'sector'
 }
 
-stage_map = {
+STAGE_MAP = {
     'Kepler': 'Quarter',
     'K2': 'Campaign',
     'TESS': 'Sector'
@@ -163,6 +163,11 @@ def update_config(config_path, dict_update, precision=15):
         For updating specific list indices, use the format: 'key.path[index]' or 'key.path[index].nested_key'.
     precision : int, optional
         Precision for float representation. Default is `15` (avoiding edge cases where rounding affects the last digit because of IEEE-754 floating point behavior).
+
+    Returns
+    -------
+    config : dict
+        The updated configuration dictionary.
     """
     yaml = YAML()
 
@@ -255,7 +260,8 @@ def _parse_key_path(key_path):
             # If there's a key before the index, add the key first
             key = match.group(1)
             index = int(match.group(2))
-            if key:  # only add if the key is not empty
+            if key:
+                # only add if the key is not empty
                 keys.append(key)
             # Add the index as integer
             keys.append(index)
@@ -589,7 +595,7 @@ def match_fits_file(fits_path, type, config):
     Parameters
     ----------
     type : str, 'tpf' & 'targetpixelfile' or 'lc' & 'lightcurve'
-        The type of the `FITS` file, 'tpf' & 'targetpixelfile' for target pixel file `FITS` file, and 'lc' & 'lightcurve' for light curve `FITS` file.
+        The type of the `FITS` file, `'tpf'` & `'targetpixelfile'` for target pixel file `FITS` file, and `'lc'` & `'lightcurve'` for light curve `FITS` file.
     config : dict
         A dictionary containing the metadata of the source, should at least include TIC ID and Gaia ID of the source, mission, sector, author and exptime.
 
@@ -717,7 +723,7 @@ def search_matched_fits_file(fits_dir, type, config):
     Parameters
     ----------
     type : str, 'tpf' & 'targetpixelfile' or 'lc' & 'lightcurve'
-        The type of the `FITS` file, 'tpf' & 'targetpixelfile' for target pixel file `FITS` file, and 'lc' & 'lightcurve' for light curve `FITS` file.
+        The type of the `FITS` file, `'tpf'` & `'targetpixelfile'` for target pixel file `FITS` file, and `'lc'` & `'lightcurve'` for light curve `FITS` file.
     config : dict
         A dictionary containing the metadata of the source, should at least include TIC ID and Gaia ID of the source, mission, sector, author and exptime.
 
@@ -745,20 +751,20 @@ def format_fits_fn(fits_metadata_dict):
     ----------
     fits_metadata_dict : dict
         A dictionary containing the metadata of the source and data, should include the following keys:
-        - `type` : str, the type of the `FITS` file, 'tpf' & 'targetpixelfile' (for target pixel file `FITS` file),
-                'lc' & 'lightcurve' (for light curve `FITS` file), or 'targetdata' (for `eleanor.TargetData` `FITS` file)
+        - `type` : str, the type of the `FITS` file, `'tpf'` & `'targetpixelfile'` (for target pixel file `FITS` file),
+                `'lc'` & `'lightcurve'` (for light curve `FITS` file), or `'targetdata'` (for `eleanor.TargetData` `FITS` file)
         - `name` : str, the name of the source
         - `mission` : str, the mission name, e.g., 'TESS'
         - `sector` : int, the sector number
         - `author` : str, the author of the data
         - `exptime` : int, the exposure time of the data in seconds
-        - `tpf_height` : int, optional, the height of the target pixel file in pixels (required if type is `tpf` or `targetpixelfile`)
-        - `tpf_width` : int, optional, the width of the target pixel file in pixels (required if type is `tpf` or `targetpixelfile`)
-        - `aperture_mask_type` : str, optional, the type of the aperture mask used when extracting light curve via `lightkurve.TESSTargetPixelFile.extract_aperture_photometry()` method (required if author contains `lightkurve_aperture`)
-        - `flux_method` : str, optional, the flux extraction method used when extracting light curve via `lightkurve.TESSTargetPixelFile.extract_aperture_photometry()` method (required if author contains `lightkurve_aperture`)
-        - `centroid_method` : str, optional, the method of estimating the centroids used when extracting light curve via `lightkurve.TESSTargetPixelFile.extract_aperture_photometry()` method (required if author contains `lightkurve_aperture`)
-        - `lc_type` : str, optional, the type of the `eleanor` light curve, must be one of `Raw`, `Corrected`, `PCA`, `PSF` (required if type is `lc` or `lightcurve` and author is `eleanor`)
-        - `postcard` : bool, optional, whether the data is obtained from `postcard` (required if author is `eleanor`)
+        - `tpf_height` : int, optional, the height of the target pixel file in pixels (required if `type` is `tpf` or `targetpixelfile`)
+        - `tpf_width` : int, optional, the width of the target pixel file in pixels (required if `type` is `tpf` or `targetpixelfile`)
+        - `aperture_mask_type` : str, optional, the type of the aperture mask used when extracting light curve via `lightkurve.TESSTargetPixelFile.extract_aperture_photometry()` method (required if `author` contains `lightkurve_aperture`)
+        - `flux_method` : str, optional, the flux extraction method used when extracting light curve via `lightkurve.TESSTargetPixelFile.extract_aperture_photometry()` method (required if `author` contains `lightkurve_aperture`)
+        - `centroid_method` : str, optional, the method of estimating the centroids used when extracting light curve via `lightkurve.TESSTargetPixelFile.extract_aperture_photometry()` method (required if `author` contains `lightkurve_aperture`)
+        - `lc_type` : str, optional, the type of the `eleanor` light curve, must be one of `Raw`, `Corrected`, `PCA`, `PSF` (required if `type` is `lc` or `lightcurve` and `author` is `eleanor`)
+        - `postcard` : bool, optional, whether the data is obtained from `postcard` (required if `author` is `eleanor`)
 
     Returns
     ----------
@@ -939,7 +945,7 @@ def update_fits_headers(fits_file, dict_headers_update, open=False):
     elif isinstance(fits_file, fits.HDUList):
         hdulist = fits_file
     else:
-        raise ValueError(f"fits must be a file path or HDUList object. Got {type(fits_file)} instead.")
+        raise ValueError(f"'fits_file' must be a file path or `HDUList` object. Got {type(fits_file)} instead.")
 
 
     # Update header for each HDU
@@ -1085,7 +1091,7 @@ def aperture_overlay(data, aperture_mask, data_type='Flux', cadence=0, ax=None,
     aperture_mask : array
         2D array with the same `(nrows, ncols)` as `data` or 3D array with the same shape as `data`, with values in range [0,1] representing the aperture mask weights.
     ax : `matplotlib.axes.Axes`, optional
-        The matplotlib Axes object to plot on. If no Axes is provided, a new one will be generated.
+        The matplotlib Axes object to plot on. If `None`, a new one will be generated.
     data_type : str, optional
         Type of data to plot, e.g., 'Flux', 'Flux_err', etc. Will be displayed in the colorbar label. Default is `'Flux'`.
     cadence : int, optional
@@ -1178,7 +1184,7 @@ def calculate_cdpp(lc, exptime=None, cdpp_transit_duration=6.5):
         The `LightCurve` object.
     exptime : float or None, optional
         The exposure time of the light curve in units of `seconds`.
-        If not provided, will be calculated from the time array of the light curve.
+        If `None`, will be calculated from the time array of the light curve.
     cdpp_transit_duration : float, optional
         The transit duration in units of `hours` to calculate `CDPP`. Default is `6.5`.
 

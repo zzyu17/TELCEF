@@ -250,7 +250,7 @@ if fit_global:
     ax_lc_fitted_global.legend(loc='lower right')
     ax_lc_fitted_global.set_ylabel("Flux")
     ax_lc_fitted_global.tick_params(axis='x', labelbottom=True)
-    ax_lc_fitted_global.xaxis.set_major_formatter(ScalarFormatter(useOffset=False))
+    ax_lc_fitted_global.xaxis.set_major_formatter(ScalarFormatter(useOffset=False)) # disable offset scientific notation
     # plot the best fitted model residuals
     if plot_errorbar:
         lc_residual_global.scatter(ax=ax_lc_residual_global, c='green', label=None, s=0.1)
@@ -259,7 +259,7 @@ if fit_global:
         lc_residual_global.scatter(ax=ax_lc_residual_global, c='green', label=f"Best Fitted Model Residuals, residual std={residual_std_global:.6f}", s=0.1)
     ax_lc_residual_global.legend(loc='upper right')
     ax_lc_residual_global.set_ylabel("Residuals")
-    ax_lc_fitted_global.xaxis.set_major_formatter(ScalarFormatter(useOffset=False))
+    ax_lc_fitted_global.xaxis.set_major_formatter(ScalarFormatter(useOffset=False)) # disable offset scientific notation
 
     lc_fitted_global_plot.suptitle(f"{lc_plot_title} Global Best Fitted Light Curve and Residuals")
     lc_fitted_global_plot.figure.tight_layout()
@@ -489,7 +489,7 @@ if fit_individual:
             ax_lc_fitted_individual.legend(loc='lower right')
             ax_lc_fitted_individual.set_ylabel("Flux")
             ax_lc_fitted_individual.tick_params(axis='x', labelbottom=True)
-            ax_lc_fitted_individual.xaxis.set_major_formatter(ScalarFormatter(useOffset=False))
+            ax_lc_fitted_individual.xaxis.set_major_formatter(ScalarFormatter(useOffset=False)) # disable offset scientific notation
             ax_lc_fitted_individual.set_xlim(individual_transit_plot_range[0], individual_transit_plot_range[1])
             # plot the best fitted model residuals
             if plot_errorbar:
@@ -499,7 +499,7 @@ if fit_individual:
                 lc_residual_individual_masked.scatter(ax=ax_lc_residual_individual, c='green', label=f"Best Fitted Model Residuals, residual std={residual_std_individual:.6f}", s=0.1)
             ax_lc_residual_individual.legend(loc='upper right')
             ax_lc_residual_individual.set_ylabel("Residuals")
-            ax_lc_residual_individual.xaxis.set_major_formatter(ScalarFormatter(useOffset=False))
+            ax_lc_residual_individual.xaxis.set_major_formatter(ScalarFormatter(useOffset=False)) # disable offset scientific notation
             ax_lc_residual_individual.set_xlim(individual_transit_plot_range[0], individual_transit_plot_range[1])
 
             lc_fitted_individual_plot.suptitle(f"{lc_plot_title} Individual Transit {transit_index:02} Best Fitted Light Curve and Residuals")
@@ -536,7 +536,7 @@ if fit_individual:
                                                                                     f"residual std={config['transit_fitting']['individual_fitted_transit_parameters']['residual_std'][transit_index]:.6f}")
         ax_lc_fitted_individual.legend(loc='lower right')
         ax_lc_fitted_individual.set_ylabel("Flux")
-        ax_lc_fitted_individual.xaxis.set_major_formatter(ScalarFormatter(useOffset=False))
+        ax_lc_fitted_individual.xaxis.set_major_formatter(ScalarFormatter(useOffset=False)) # disable offset scientific notation
         ax_lc_fitted_individual.set_xlim(individual_transit_plot_range[0], individual_transit_plot_range[1])
         ax_lc_fitted_individual.set_title(f"Transit {transit_index:02}", fontsize='x-large')
 
@@ -805,7 +805,7 @@ if fit_fnb:
     ax_lc_fitted_fnb.legend(loc='lower right')
     ax_lc_fitted_fnb.set_ylabel("Flux")
     ax_lc_fitted_fnb.tick_params(axis='x', labelbottom=True)
-    ax_lc_fitted_fnb.xaxis.set_major_formatter(ScalarFormatter(useOffset=False))
+    ax_lc_fitted_fnb.xaxis.set_major_formatter(ScalarFormatter(useOffset=False)) # disable offset scientific notation
     # plot the best fitted model residuals
     if plot_errorbar:
         lc_residual_fnb.scatter(ax=ax_lc_residual_fnb, c='green', label=None, s=0.1)
@@ -814,7 +814,7 @@ if fit_fnb:
         lc_residual_fnb.scatter(ax=ax_lc_residual_fnb, c='green', label=f"Best Fitted Model Residuals, residual std={residual_std_fnb:.6f}", s=0.1)
     ax_lc_residual_fnb.legend(loc='upper right')
     ax_lc_residual_fnb.set_ylabel("Residuals")
-    ax_lc_fitted_fnb.xaxis.set_major_formatter(ScalarFormatter(useOffset=False))
+    ax_lc_fitted_fnb.xaxis.set_major_formatter(ScalarFormatter(useOffset=False)) # disable offset scientific notation
 
     if fold and bin:
         lc_fitted_fnb_plot.suptitle(f"{lc_plot_title} Folded-and-binned Best Fitted Light Curve and Residuals")

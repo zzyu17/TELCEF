@@ -1,6 +1,6 @@
 import os
 
-from utils import attribute_map, stage_map, load_config, update_config, get_source_metadata, epoch_time_to_btjd
+from utils import ATTRIBUTE_MAP, STAGE_MAP, load_config, update_config, get_source_metadata, epoch_time_to_btjd
 from A_aa_Sector_Locator import *
 
 
@@ -13,8 +13,8 @@ config = load_config(config_path)
 ##### Define the mission parameters #####
 mission = config['mission']['mission']
 tess_time = config['mission']['tess_time'] # BJD
-attribute = attribute_map.get(mission)
-stage = stage_map.get(mission)
+attribute = ATTRIBUTE_MAP.get(mission)
+stage = STAGE_MAP.get(mission)
 
 ##### Define the source parameters #####
 name = config['source']['name']
