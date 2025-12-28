@@ -80,13 +80,7 @@ for l in range(len(fits_fn_list)):
 if lc_path is None:
     raise FileNotFoundError("The specified lightcurve file does not exist in the data directory. Please check if the file exists and run the light curve extracting/downloading scripts first if necessary.")
 else:
-    if lc_provenance == "downloaded" and flux_column is not None and flux_column.lower() != "pdcsap_flux":
-        lc = lk.read(lc_path, flux_column=flux_column)
-    elif lc_provenance != "downloaded" and flux_column is not None:
-        warnings.warn("The 'flux_column' parameter is only used for downloaded light curve (i.e., when 'lightcurve_provenance' is set to 'downloaded'). The 'flux_column' parameter will be ignored.")
-        lc = lk.read(lc_path)
-    else:
-        lc = lk.read(lc_path)
+    lc = lk.read(lc_path, flux_column=flux_column)
     lc = lc.normalize() # Force lightcurve normalization before fitting
     print(f"Successfully found and read the specified lightcurve file: {lc_path}.\n")
 

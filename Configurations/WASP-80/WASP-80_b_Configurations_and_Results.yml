@@ -304,8 +304,8 @@ lightkurve:
                                # 'extracted' for light curve extracted from TPF in B_ab_Light_Curve_Extracting_From_TPF;
                                # 'downloaded' for light curve downloaded in B_bb_Light_Curve_Downloading;
                                # 'eleanor' for light curve extracted and preliminarily processed via eleanor in B_c_TESS_Light_Curve_Extracting_and_Preliminary_Processing_Eleanor.
+  # Specify 'flux_column' only if you want to read and assign a specified `flux` or `flux_err` column from the FITS file. The `flux` or `flux_err` column should follow and the specified `flux_err` column will be retrieved by the pattern: flux_err_column = f'{flux_column}_err'.
   flux_column: # The column in the FITS file to be read as 'flux', typically 'pdcsap_flux' or 'sap_flux'. If left blank (i.e., set to None), it will be set to 'pdcsap_flux' by Lightkurve's default.
-  flux_err_column: # The column in the FITS file to be read as 'flux_err', typically 'pdcsap_flux_err' or 'sap_flux_err'. If left blank (i.e., set to None), it will be set to f'{flux_column}_err' by Lightkurve's default. If such a column does not exist, 'flux_err' will be populated with NaN values.
 
 
   plot_errorbar: true # whether to plot the error bar of the light curve
@@ -356,8 +356,8 @@ transit_fitting:
                                     # 'downloaded' for light curve downloaded in B_bb_Light_Curve_Downloading;
                                     # 'eleanor' for light curve extracted and preliminarily processed via eleanor in B_c_TESS_Light_Curve_Extracting_and_Preliminary_Processing_Eleanor;
                                     # 'lightkurve' for light curve further processed via Lightkurve in C_Light_Curve_Further_Processing_Lightkurve.
+  # Specify 'flux_column' only if you want to read and assign a specified `flux` or `flux_err` column from the FITS file. The `flux` or `flux_err` column should follow and the specified `flux_err` column will be retrieved by the pattern: flux_err_column = f'{flux_column}_err'.
   flux_column: # The column in the FITS file to be read as 'flux', typically 'pdcsap_flux' or 'sap_flux'. If left blank (i.e., set to None), it will be set to 'pdcsap_flux' by Lightkurve's default.
-  flux_err_column: # The column in the FITS file to be read as 'flux_err', typically 'pdcsap_flux_err' or 'sap_flux_err'. If left blank (i.e., set to None), it will be set to f'{flux_column}_err' by Lightkurve's default. If such a column does not exist, 'flux_err' will be populated with NaN values.
 
 
   # Priors and initial fitted transit parameters
@@ -624,6 +624,7 @@ transit_fitting:
       ldc2: 3360
   preserve_formatting: # This key is for preserving the formatting of the configuration file. Ignore it and leave it blank.
 
+  # Individual fitted transit parameters ([value, lower_error, upper_error])
   individual_fitted_transit_parameters:
     n_possible_transits: 9
     n_valid_transits: 6
@@ -1224,6 +1225,7 @@ transit_fitting:
         - 5847
     preserve_formatting: # This key is for preserving the formatting of the configuration file. Ignore it and leave it blank.
 
+  # Folded-and-binned fitted transit parameters ([value, lower_error, upper_error])
   fnb_fitted_transit_parameters:
     n_iterations: 2
     k:
