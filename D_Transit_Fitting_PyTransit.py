@@ -8,7 +8,7 @@ from matplotlib.ticker import ScalarFormatter
 
 from utils import (update_dict, format_lc_fits_fn_by_provenance, calculate_cdpp,
                    PARAMS_NAME, load_params_initial_from_config, load_priors_from_config, load_params_fold_from_config, print_params_initial_priors, update_t0_prior,
-                   run_transit_fitting, oversample_lc_fitted, split_indiviual_lc, plot_trace_evolution, plot_posterior_corner)
+                   run_transit_fitting, supersample_lc_fitted, split_indiviual_lc, plot_trace_evolution, plot_posterior_corner)
 from A_ab_Configuration_Loader import *
 
 
@@ -144,8 +144,8 @@ elif exptime > 400:
     scatter_point_size_exptime_default = 1
 scatter_point_size_exptime = config['transit_fitting']['scatter_point_size_exptime'] if config['transit_fitting']['scatter_point_size_exptime'] is not None else scatter_point_size_exptime_default # the scatter point size coefficient of the light curve corresponding to the exposure time
 
-oversample_lcft = config['transit_fitting']['oversample_lc_fitted'] # whether to oversample the best fitted model lightcurve for plotting
-oversample_lcft_factor = config['transit_fitting']['oversample_lc_fitted_factor'] # the oversampling factor when oversampling the best fitted model lightcurve for plotting
+supersample_lcft = config['transit_fitting']['supersample_lc_fitted'] # whether to supersample the best fitted model lightcurve for plotting
+supersample_lcft_factor = config['transit_fitting']['supersample_lc_fitted_factor'] # the supersampling factor when supersampling the best fitted model lightcurve for plotting
 running_mean_window_proportion_global = config['transit_fitting']['running_mean_window_proportion_global'] # window length proportion of the unflattened MCMC chain to calculate the running means of the parameters when visualizing the process and result for global fitting
 running_mean_window_length_global = int(running_mean_window_proportion_global * n_steps_global * (1 - chain_discard_proportion_global) / chain_thin_global) if running_mean_window_proportion_global is not None else None
 
@@ -239,12 +239,12 @@ if fit_global:
     # plot the best fitted light curve and residuals
     j += 1 # count the sub-step
 
-    # oversample the best fitted model lightcurve for plotting
-    if oversample_lcft:
-        if oversample_lcft_factor is not None and oversample_lcft_factor > 1:
-            lc_fitted_global, lc_residual_global = oversample_lc_fitted(params_global_best_all, transit_model_name_global, lc, oversample_lcft_factor)
+    # supersample the best fitted model lightcurve for plotting
+    if supersample_lcft:
+        if supersample_lcft_factor is not None and supersample_lcft_factor > 1:
+            lc_fitted_global, lc_residual_global = supersample_lc_fitted(params_global_best_all, transit_model_name_global, lc, supersample_lcft_factor)
         else:
-            lc_fitted_global, lc_residual_global = oversample_lc_fitted(params_global_best_all, transit_model_name_global, lc)
+            lc_fitted_global, lc_residual_global = supersample_lc_fitted(params_global_best_all, transit_model_name_global, lc)
 
     # plot the best fitted model
     lc_fitted_global_plot, (ax_lc_fitted_global, ax_lc_residual_global) = plt.subplots(2, 1, figsize=(20, 10), sharex=True)
@@ -485,12 +485,12 @@ if fit_individual:
             lc_fitted_individual_masked = lc_fitted_individual[individual_transit_plot_mask]
             lc_residual_individual_masked = lc_residual_individual[individual_transit_plot_mask]
 
-            # oversample the best fitted model lightcurve for plotting
-            if oversample_lcft:
-                if oversample_lcft_factor is not None and oversample_lcft_factor > 1:
-                    lc_fitted_individual, lc_residual_individual = oversample_lc_fitted(params_individual_best_all, transit_model_name_individual, lc_individual, oversample_lcft_factor)
+            # supersample the best fitted model lightcurve for plotting
+            if supersample_lcft:
+                if supersample_lcft_factor is not None and supersample_lcft_factor > 1:
+                    lc_fitted_individual, lc_residual_individual = supersample_lc_fitted(params_individual_best_all, transit_model_name_individual, lc_individual, supersample_lcft_factor)
                 else:
-                    lc_fitted_individual, lc_residual_individual = oversample_lc_fitted(params_individual_best_all, transit_model_name_individual, lc_individual)
+                    lc_fitted_individual, lc_residual_individual = supersample_lc_fitted(params_individual_best_all, transit_model_name_individual, lc_individual)
 
             # plot the best fitted model
             lc_fitted_individual_plot, (ax_lc_fitted_individual, ax_lc_residual_individual) = plt.subplots(2, 1, figsize=(20, 10), sharex=True)
@@ -798,12 +798,12 @@ if fit_fnb:
     # plot the best fitted light curve and residuals
     j += 1 # count the sub-step
 
-    # oversample the best fitted model lightcurve for plotting
-    if oversample_lcft:
-        if oversample_lcft_factor is not None and oversample_lcft_factor > 1:
-            lc_fitted_fnb, lc_residual_fnb = oversample_lc_fitted(params_fnb_best_all, transit_model_name_fnb, lc, oversample_lcft_factor)
+    # supersample the best fitted model lightcurve for plotting
+    if supersample_lcft:
+        if supersample_lcft_factor is not None and supersample_lcft_factor > 1:
+            lc_fitted_fnb, lc_residual_fnb = supersample_lc_fitted(params_fnb_best_all, transit_model_name_fnb, lc, supersample_lcft_factor)
         else:
-            lc_fitted_fnb, lc_residual_fnb = oversample_lc_fitted(params_fnb_best_all, transit_model_name_fnb, lc)
+            lc_fitted_fnb, lc_residual_fnb = supersample_lc_fitted(params_fnb_best_all, transit_model_name_fnb, lc)
 
     # plot the best fitted model
     lc_fitted_fnb_plot, (ax_lc_fitted_fnb, ax_lc_residual_fnb) = plt.subplots(2, 1, figsize=(20, 10), sharex=True)

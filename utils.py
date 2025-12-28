@@ -2454,9 +2454,9 @@ def run_transit_fitting(lc, transit_model_name, fit_type, params_name=PARAMS_NAM
     return results
 
 
-def oversample_lc_fitted(params, transit_model_name, lc, oversample_factor=10, return_residual=True):
+def supersample_lc_fitted(params, transit_model_name, lc, supersample_factor=10, return_residual=True):
     """
-    Generate an oversampled best fitted model lightcurve and residuals based on the provided transit parameters and transit model name.
+    Generate an supersampled best fitted model lightcurve and residuals based on the provided transit parameters and transit model name.
 
     Parameters
     -----------
@@ -2466,27 +2466,27 @@ def oversample_lc_fitted(params, transit_model_name, lc, oversample_factor=10, r
         Name of the `PyTransit` transit model to use. Currently supported models are: `Quadratic`, `RoadRunner_Quadratic`.
     lc : `lightkurve.LightCurve`
         The `LightCurve` object. Must contain `flux` column.
-    oversample_factor : int, optional
-        The oversampling factor, i.e., how many times to oversample the light curve. Default is `10`.
+    supersample_factor : int, optional
+        The supersampling factor, i.e., how many times to supersample the light curve. Default is `10`.
     return_residual : bool, optional
         Whether to return the residual light curve. Default is `True`.
 
     Returns
     --------
     lc_fitted : `lightkurve.LightCurve`
-        The oversampled best fitted model lightcurve.
+        The supersampled best fitted model lightcurve.
     lc_residual : `lightkurve.LightCurve`, optional
-        The oversampled residual lightcurve. Only returned if `return_residual` is `True`.
+        The supersampled residual lightcurve. Only returned if `return_residual` is `True`.
     """
     # Parse transit_model_name
     tm = parse_transit_model(transit_model_name)
 
-    # Generate oversampled time array
+    # Generate supersampled time array
     time_segments = []
     for i in range(len(lc.time.value) - 1):
         start_time = lc.time.value[i]
         end_time = lc.time.value[i + 1]
-        segment = np.linspace(start_time, end_time, oversample_factor, endpoint=False)
+        segment = np.linspace(start_time, end_time, supersample_factor, endpoint=False)
         time_segments.append(segment)
     time_segments.append(np.array([lc.time.value[-1]]))
     time = np.concatenate(time_segments)
