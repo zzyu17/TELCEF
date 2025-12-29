@@ -148,7 +148,7 @@ def load_config(config_path):
     return config
 
 
-def update_config(config_path, obj_update, precision=15, delete=False):
+def update_config(config_path, obj_update, precision=12, delete=False):
     """
     Update the specific key-value pairs in a YAML configuration file with new ones,
     while preserving the original formatting, comments and other contents.
@@ -163,7 +163,7 @@ def update_config(config_path, obj_update, precision=15, delete=False):
         When `delete` is `True`, a list of keys to delete from the configuration file.
         For updating or deleting specific list indices, use the format: 'key.path[index]' or 'key.path[index].nested_key'.
     precision : int, optional
-        Precision for float representation. Default is `15` (avoiding edge cases where rounding affects the last digit because of IEEE-754 floating point behavior).
+        Precision for float representation. Default is `12` (avoiding edge cases where rounding affects the last digit because of IEEE-754 floating point behavior).
     delete : bool, optional
         If `True`, delete the keys specified in `obj_update`. Default is `False`.
 
