@@ -2181,30 +2181,62 @@ def model_log_posterior(params_free, transit_model, lc, params_fixed=None, prior
 
 
 ### Transit Properties Calculation ###
-def calculate_transit_duration(k, p, a, i):
+def calculate_transit_duration(params):
     """
-    Function to calculate the transit duration (`t_14`) based on the normalized planetary radius (`k`),
+    Calculate the transit duration (`t_14`) based on the normalized planetary radius (`k`),
     orbital period (`p`), normalized semi-major axis (`a`), and orbital inclination (`i`).
+
+    Parameters
+    ----------
+    params: dict
+        A dictionary of all the transit parameters, should contain keys for parameter names, i.e., `'k'`, `'t0'`, `'p'`, `'a'`, `'i'`, `'ldc1'`, `'ldc2'`.
+
+    Returns
+    ----------
+    t_14: float
+        The transit duration in the same time units as the orbital period (`p`).
     """
+    k = params['k']
+    p = params['p']
+    a = params['a']
+    i = params['i']
+
     b = a * np.cos(i)
     t_14 = np.arcsin(np.sqrt((1 + k) ** 2 - b ** 2) / (a * np.sin(i))) * p / np.pi
 
     return t_14
 
 
-def calculate_transit_depth(k, a, i, ldc, transit_model_name):
+def calculate_transit_depth(params, transit_model_name):
     """
-    Function to calculate the transit depth based on the normalized planetary radius (`k`), normalized semi-major axis (`a`),
-    orbital inclination (`i`), limb darkening coefficients (`ldc`) and the transit model.
+    Calculate the transit depth based on the normalized planetary radius (`k`), normalized semi-major axis (`a`),
+    orbital inclination (`i`), limb darkening coefficients (`ldc`) and the transit model name.
+
+    Parameters
+    ----------
+    params: dict
+        A dictionary of all the transit parameters, should contain keys for parameter names, i.e., `'k'`, `'t0'`, `'p'`, `'a'`, `'i'`, `'ldc1'`, `'ldc2'`.
+    transit_model_name : str
+        Name of the `PyTransit` transit model to use. Currently supported models are: `Quadratic`, `RoadRunner_Quadratic`.
+
+    Returns
+    ----------
+    transit_depth: float
+        The normalized transit depth.
     """
+    k = np.atleast_1d(params['k'])
+    t0 = np.zeros_like(k) # t0 should be set to 0.0
+    p = np.ones_like(k) # p can be set randomly
+    a = np.atleast_1d(params['a'])
+    i = np.atleast_1d(params['i'])
+    ldc1 = np.atleast_1d(params['ldc1'])
+    ldc2 = np.atleast_1d(params['ldc2'])
+    ldc = np.column_stack((ldc1, ldc2))
     tm = parse_transit_model(transit_model_name)
 
-    t0 = 0.0 # t0 should be set to 0.0
-    p = 1.0 # p can be set randomly
+    tm.set_data(time=np.array([0.0])) # calculate the transit depth at t=0.0 (i.e., at the epoch time)
 
-    tm.set_data(time=[0.0]) # calculate the transit depth at t=0.0 (i.e., at the epoch time)
-
-    flux_out = tm.evaluate(k=0, t0=t0, p=p, a=a, i=i, ldc=ldc) # calculate the out-of-transit flux at the epoch time, where k=0 means no planet
+    flux_out = tm.evaluate(k=np.zeros_like(k), t0=t0, p=p, a=a, i=i, ldc=ldc) # calculate the out-of-transit flux at the epoch time, where k=0 means no planet
     flux_in = tm.evaluate(k=k, t0=t0, p=p, a=a, i=i, ldc=ldc) # calculate the in-transit flux at the epoch time
     transit_depth = flux_out - flux_in # calculate the transit depth
 
@@ -2381,15 +2413,15 @@ def run_transit_fitting(lc, transit_model_name, fit_type, params_name=PARAMS_NAM
         ldc_samples = np.column_stack((params_samples_all['ldc1'], params_samples_all['ldc2']))
         ldc_best, ldc_best_lower_error, ldc_best_upper_error = to_python_floats([[params_best_all['ldc1'], params_best_all['ldc2']], [params_best_lower_error_all['ldc1'], params_best_lower_error_all['ldc2']], [params_best_upper_error_all['ldc1'], params_best_upper_error_all['ldc2']]])
 
-        transit_duration_samples = [calculate_transit_duration(k, p, a, i) for k, p, a, i in zip(params_samples_all['k'], params_samples_all['p'], params_samples_all['a'], params_samples_all['i'])]
-        transit_duration_best = float(np.median(transit_duration_samples, axis=0))
-        transit_duration_best_lower_error = float(transit_duration_best - np.percentile(transit_duration_samples, 16, axis=0))
-        transit_duration_best_upper_error = float(np.percentile(transit_duration_samples, 84, axis=0) - transit_duration_best)
+        transit_duration_samples = calculate_transit_duration(params_samples_all)
+        transit_duration_best = float(np.nanmedian(transit_duration_samples, axis=0))
+        transit_duration_best_lower_error = float(transit_duration_best - np.nanpercentile(transit_duration_samples, 16, axis=0))
+        transit_duration_best_upper_error = float(np.nanpercentile(transit_duration_samples, 84, axis=0) - transit_duration_best)
 
-        transit_depth_samples = [calculate_transit_depth(k, a, i, ldc, transit_model_name) for k, a, i, ldc in zip(params_samples_all['k'], params_samples_all['a'], params_samples_all['i'], ldc_samples)]
-        transit_depth_best = float(np.median(transit_depth_samples, axis=0))
-        transit_depth_best_lower_error = float(transit_depth_best - np.percentile(transit_depth_samples, 16, axis=0))
-        transit_depth_best_upper_error = float(np.percentile(transit_depth_samples, 84, axis=0) - transit_depth_best)
+        transit_depth_samples = calculate_transit_depth(params_samples_all, transit_model_name)
+        transit_depth_best = float(np.nanmedian(transit_depth_samples, axis=0))
+        transit_depth_best_lower_error = float(transit_depth_best - np.nanpercentile(transit_depth_samples, 16, axis=0))
+        transit_depth_best_upper_error = float(np.nanpercentile(transit_depth_samples, 84, axis=0) - transit_depth_best)
 
         # Update the best fitted transit parameters and their uncertainties dictionaries
         params_best_full = update_dict(params_best_full, {
