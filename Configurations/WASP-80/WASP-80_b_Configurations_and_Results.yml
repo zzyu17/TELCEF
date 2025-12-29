@@ -182,6 +182,8 @@ lightcurve_extracting:
       - 0
       - 99.799999999999997
     plot_errorbar: true # whether to plot the error bar of the light curve
+    alpha_exptime: 0.1 # the plotting alpha coefficient of the light curve corresponding to the exposure time; if left blank (i.e., set to None), it will be set to the default values: 0.1 for (0, 80]s, 0.3 for (80, 400]s, 0.5 for (400, inf)s.
+    scatter_point_size_exptime: 1 # the scatter point size coefficient of the light curve corresponding to the exposure time; if left blank (i.e., set to None), it will be set to the default values: 1 for (0, 80]s, 10 for (80, 400]s, 20 for (400, inf)s.
 
   lc_extracted_cdpp: 22000.646484375        # ppm
 
@@ -285,6 +287,8 @@ eleanor:
       - -0.1
 
     plot_errorbar_specific: true # whether to plot the error bar for the specific type of light curve on the individual light curve plots
+    alpha_exptime_specific: 0.1 # the plotting alpha coefficient of the light curve corresponding to the exposure time; if left blank (i.e., set to None), it will be set to the default values: 0.1 for (0, 80]s, 0.3 for (80, 400]s, 0.5 for (400, inf)s.
+    scatter_point_size_exptime_specific: 1 # the scatter point size coefficient of the light curve corresponding to the exposure time; if left blank (i.e., set to None), it will be set to the default values: 1 for (0, 80]s, 10 for (80, 400]s, 20 for (400, inf)s.
 
     tpf_margin: 3 # pixels, margin of the TPF plot when plotting the pixel-by-pixel light curves
 
@@ -308,7 +312,11 @@ lightkurve:
   flux_column: # The column in the FITS file to be read as 'flux', typically 'pdcsap_flux' or 'sap_flux'. If left blank (i.e., set to None), it will be set to 'pdcsap_flux' by Lightkurve's default.
 
 
+  # plotting parameters
   plot_errorbar: true # whether to plot the error bar of the light curve
+  alpha_exptime: 0.1 # the plotting alpha coefficient of the light curve corresponding to the exposure time; if left blank (i.e., set to None), it will be set to the default values: 0.1 for (0, 80]s, 0.3 for (80, 400]s, 0.5 for (400, inf)s.
+  scatter_point_size_exptime: 1 # the scatter point size coefficient of the light curve corresponding to the exposure time; if left blank (i.e., set to None), it will be set to the default values: 1 for (0, 80]s, 10 for (80, 400]s, 20 for (400, inf)s.
+
 
   p_bls_raw_nans_removed_range:
     # days, minimun and maximum period to search when fitting the NaNs-removed raw light curve using the Box Least Squares (BLS) method, recommended: [0.5, 27]
@@ -453,9 +461,6 @@ transit_fitting:
     ldc2: hu(0, 1) # quadratic limb darkening coefficient
 
 
-  plot_errorbar: true # whether to plot the error bar of the light curve and residuals
-
-
   # Global transit fitting parameters
   fit_global: true
 
@@ -470,8 +475,9 @@ transit_fitting:
   chain_thin_global: 10 # thinning factor of the MCMC chain for global fitting
 
   # plotting parameters
-  alpha_exptime: # the plotting alpha coefficient of the light curve corresponding to the exposure time; if left blank (i.e., set to None), it will be set to the default values: 0.1 for (0, 80]s, 0.3 for (80, 400]s, 0.5 for (400, inf)s.
-  scatter_point_size_exptime: # the scatter point size coefficient of the light curve corresponding to the exposure time; if left blank (i.e., set to None), it will be set to the default values: 0.025 for (0, 80]s, 0.25 for (80, 400]s, 0.75 for (400, inf)s.
+  plot_errorbar: true # whether to plot the error bar of the light curve and residuals
+  alpha_exptime: 0.1 # the plotting alpha coefficient of the light curve corresponding to the exposure time; if left blank (i.e., set to None), it will be set to the default values: 0.1 for (0, 80]s, 0.3 for (80, 400]s, 0.5 for (400, inf)s.
+  scatter_point_size_exptime: 1 # the scatter point size coefficient of the light curve corresponding to the exposure time; if left blank (i.e., set to None), it will be set to the default values: 1 for (0, 80]s, 10 for (80, 400]s, 20 for (400, inf)s.
   supersample_lc_fitted: true # whether to supersample the best fitted model lightcurve for plotting
   supersample_lc_fitted_factor: # the supersampling factor when supersampling the best fitted model lightcurve for plotting; if left blank (i.e., set to None), it will be set to 10 by default.
   running_mean_window_proportion_global: 0.05                      # Window length proportion of the unflattened MCMC chain to calculate the running means of the parameters when visualizing the process and result for global fitting, recommended: 0.05.

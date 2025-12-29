@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 from matplotlib import animation
 from matplotlib import rcParams
 
-from utils import update_config, format_fits_fn, update_fits_headers, calculate_cdpp
+from utils import update_config, format_fits_fn, update_fits_headers, calculate_cdpp, alpha_exptime_default, scatter_point_size_exptime_default
 from A_ab_Configuration_Loader import *
 
 
@@ -257,6 +257,8 @@ for lc_type in lc_type_list:
 # Plot the individual light curve of the specific type
 i += 1 # count the step
 plot_errorbar_specific = config['eleanor']['visualize']['plot_errorbar_specific'] # set whether to plot the error bar for the specific type of light curve
+alpha_exptime_specific = config['eleanor']['visualize']['alpha_exptime_specific'] if config['eleanor']['visualize']['alpha_exptime_specific'] is not None else alpha_exptime_default(exptime)  # set the plotting alpha coefficient of the light curve corresponding to the exposure time
+scatter_point_size_exptime_specific = config['eleanor']['visualize']['scatter_point_size_exptime_specific'] if config['eleanor']['visualize']['scatter_point_size_exptime_specific'] is not None else scatter_point_size_exptime_default(exptime)  # set the scatter point size coefficient of the light curve corresponding to the exposure time
 for l in range(len(lc_list)):
     lc = lc_list[l]
     lc_type = lc_type_list[l]
@@ -265,10 +267,10 @@ for l in range(len(lc_list)):
 
     lc_plot, ax_lc = plt.subplots(figsize=(20, 5))
     if plot_errorbar_specific:
-        lc.normalize().scatter(ax=ax_lc, label=None, s=0.1)
-        lc.normalize().errorbar(ax=ax_lc, label=f"{lc_type}, {cdpp_transit_duration:.3f}h-CDPP={lc_cdpp:.2f} ppm")
+        lc.normalize().scatter(ax=ax_lc, label=None, s=scatter_point_size_exptime_specific / 8, alpha=1.0)
+        lc.normalize().errorbar(ax=ax_lc, label=f"{lc_type}, {cdpp_transit_duration:.3f}h-CDPP={lc_cdpp:.2f} ppm", alpha=alpha_exptime_specific)
     else:
-        lc.normalize().scatter(ax=ax_lc, label=f"{lc_type}, {cdpp_transit_duration:.3f}h-CDPP={lc_cdpp:.2f} ppm", s=0.1)
+        lc.normalize().scatter(ax=ax_lc, label=f"{lc_type}, {cdpp_transit_duration:.3f}h-CDPP={lc_cdpp:.2f} ppm", s=scatter_point_size_exptime_specific / 4, alpha=1.0)
     ax_lc.set_title(f"{name} Sector {sector} Eleanor {lc_type} Light Curve Exptime={exptime}s")
     lc_plot.figure.tight_layout()
     lc_plot.figure.savefig(eleanor_processed_lightcurve_plots_dir_source_sector_pc_lc + f"/{i:02}-{l:01}_{name}_Sector-{sector}_Eleanor_{lc_type}_Light_Curve_Exptime={exptime}s.png")

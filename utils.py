@@ -1383,6 +1383,33 @@ def estimate_lc_flux_err(lc, mask=None, method='mad_diff', new_column=False, new
     return lc_estimated
 
 
+def alpha_exptime_default(exptime):
+    """
+    Return the default plotting alpha coefficient of the light curve and residuals corresponding to the exposure time.
+    """
+    if exptime <= 80:
+        alpha_exptime_default = 0.1
+    elif 80 < exptime <= 400:
+        alpha_exptime_default = 0.3
+    elif exptime > 400:
+        alpha_exptime_default = 0.5
+
+    return alpha_exptime_default
+
+def scatter_point_size_exptime_default(exptime):
+    """
+    Return the default scatter point size coefficient of the light curve and residuals corresponding to the exposure time.
+    """
+    if exptime <= 80:
+        scatter_point_size_exptime_default = 1
+    elif 80 < exptime <= 400:
+        scatter_point_size_exptime_default = 10
+    elif exptime > 400:
+        scatter_point_size_exptime_default = 20
+
+    return scatter_point_size_exptime_default
+
+
 
 
 ### ------ Transit Fitting ------ ###
