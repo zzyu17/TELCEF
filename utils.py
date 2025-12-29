@@ -1483,7 +1483,7 @@ def model_flux(params, transit_model, time):
 
     if isinstance(time, np.ndarray):
         tm.set_data(time=time)
-    elif isinstance(time, u.Quantity):
+    else:
         tm.set_data(time=time.value)
 
     flux_model = tm.evaluate(k=k, t0=t0, p=p, a=a, i=i, e=0.0, w=0.0, ldc=[ldc1, ldc2])
@@ -2557,7 +2557,7 @@ def run_transit_fitting(lc, transit_model_name, fit_type, params_name=PARAMS_NAM
 
 def supersample_lc_fitted(params, transit_model_name, lc, supersample_factor=10, return_residual=True):
     """
-    Generate an supersampled best fitted model lightcurve and residuals based on the provided transit parameters and transit model name.
+    Generate a supersampled best fitted model lightcurve and residuals based on the provided transit parameters and transit model name.
 
     Parameters
     -----------
@@ -2591,11 +2591,12 @@ def supersample_lc_fitted(params, transit_model_name, lc, supersample_factor=10,
         time_segments.append(segment)
     time_segments.append(np.array([lc.time.value[-1]]))
     time = np.concatenate(time_segments)
+    lc_time = Time(time, format=lc.time.format, scale=lc.time.scale)
 
 
-    lc_fitted = lk.LightCurve(time=Time(time, format=lc.time.format, scale=lc.time.scale),
-                              flux=model_flux(params, tm, time=time),
-                              flux_err=np.zeros(len(time)))
+    lc_fitted = lk.LightCurve(time=lc_time,
+                              flux=model_flux(params, tm, time=lc_time),
+                              flux_err=np.zeros(len(lc_time)))
 
 
     if return_residual:

@@ -225,8 +225,6 @@ if fit_global:
     if supersample_lcft:
         if supersample_lcft_factor is not None and supersample_lcft_factor > 1:
             lc_fitted_global, lc_residual_global = supersample_lc_fitted(params_global_best_all, transit_model_name_global, lc, supersample_lcft_factor)
-        else:
-            lc_fitted_global, lc_residual_global = supersample_lc_fitted(params_global_best_all, transit_model_name_global, lc)
 
     # plot the best fitted model
     lc_fitted_global_plot, (ax_lc_fitted_global, ax_lc_residual_global) = plt.subplots(2, 1, figsize=(20, 10), sharex=True)
@@ -470,9 +468,7 @@ if fit_individual:
             # supersample the best fitted model lightcurve for plotting
             if supersample_lcft:
                 if supersample_lcft_factor is not None and supersample_lcft_factor > 1:
-                    lc_fitted_individual, lc_residual_individual = supersample_lc_fitted(params_individual_best_all, transit_model_name_individual, lc_individual, supersample_lcft_factor)
-                else:
-                    lc_fitted_individual, lc_residual_individual = supersample_lc_fitted(params_individual_best_all, transit_model_name_individual, lc_individual)
+                    lc_fitted_individual_masked, lc_residual_individual_masked = supersample_lc_fitted(params_individual_best_all, transit_model_name_individual, lc_individual_masked, supersample_lcft_factor)
 
             # plot the best fitted model
             lc_fitted_individual_plot, (ax_lc_fitted_individual, ax_lc_residual_individual) = plt.subplots(2, 1, figsize=(20, 10), sharex=True)
@@ -790,13 +786,15 @@ if fit_fnb:
         lc_fnb_masked = lc_fnb[folded_transit_plot_mask]
         lc_fitted_fnb_masked = lc_fitted_fnb[folded_transit_plot_mask]
         lc_residual_fnb_masked = lc_residual_fnb[folded_transit_plot_mask]
+    else:
+        lc_fnb_masked = lc_fnb
+        lc_fitted_fnb_masked = lc_fitted_fnb
+        lc_residual_fnb_masked = lc_residual_fnb
 
     # supersample the best fitted model lightcurve for plotting
     if supersample_lcft:
         if supersample_lcft_factor is not None and supersample_lcft_factor > 1:
-            lc_fitted_fnb, lc_residual_fnb = supersample_lc_fitted(params_fnb_best_all, transit_model_name_fnb, lc_fnb, supersample_lcft_factor)
-        else:
-            lc_fitted_fnb, lc_residual_fnb = supersample_lc_fitted(params_fnb_best_all, transit_model_name_fnb, lc_fnb)
+            lc_fitted_fnb_masked, lc_residual_fnb_masked = supersample_lc_fitted(params_fnb_best_all, transit_model_name_fnb, lc_fnb_masked, supersample_lcft_factor)
 
     # plot the best fitted model
     lc_fitted_fnb_plot, (ax_lc_fitted_fnb, ax_lc_residual_fnb) = plt.subplots(2, 1, figsize=(20, 10), sharex=True)
@@ -808,15 +806,15 @@ if fit_fnb:
             lc_fnb_masked.scatter(ax=ax_lc_fitted_fnb, label=None, s=scatter_point_size_exptime * p_fold / 10, alpha=1.0)
             lc_fnb_masked.errorbar(ax=ax_lc_fitted_fnb, label="Original Light Curve", alpha=alpha_exptime * p_fold / 5 if alpha_exptime <= 5/p_fold else 1.0)
         elif bin and not fold:
-            lc_fnb.scatter(ax=ax_lc_fitted_fnb, label=None, s=scatter_point_size_exptime * 2, alpha=1.0)
-            lc_fnb.errorbar(ax=ax_lc_fitted_fnb, label="Original Light Curve", alpha=1.0)
+            lc_fnb_masked.scatter(ax=ax_lc_fitted_fnb, label=None, s=scatter_point_size_exptime * 2, alpha=1.0)
+            lc_fnb_masked.errorbar(ax=ax_lc_fitted_fnb, label="Original Light Curve", alpha=1.0)
     else:
         if fold and bin:
             lc_fnb_masked.scatter(ax=ax_lc_fitted_fnb, label="Original Light Curve", s=scatter_point_size_exptime * 10, alpha=1.0)
         elif fold and not bin:
             lc_fnb_masked.scatter(ax=ax_lc_fitted_fnb, label="Original Light Curve", s=scatter_point_size_exptime * p_fold / 5, alpha=1.0)
         elif bin and not fold:
-            lc_fnb.scatter(ax=ax_lc_fitted_fnb, label="Original Light Curve", s=scatter_point_size_exptime * 4, alpha=1.0)
+            lc_fnb_masked.scatter(ax=ax_lc_fitted_fnb, label="Original Light Curve", s=scatter_point_size_exptime * 4, alpha=1.0)
     lc_fitted_fnb_masked.plot(ax=ax_lc_fitted_fnb, c='red', label=f"Best Fitted {transit_model_name_fnb} Model, chi-square={chi_square_fnb:.2f}, reduced chi-square={reduced_chi_square_fnb:.2f}")
     ax_lc_fitted_fnb.legend(loc='lower right')
     ax_lc_fitted_fnb.set_ylabel("Flux")
@@ -831,15 +829,15 @@ if fit_fnb:
             lc_residual_fnb_masked.scatter(ax=ax_lc_residual_fnb, c='green', label=None, s=scatter_point_size_exptime * p_fold / 10, alpha=1.0)
             lc_residual_fnb_masked.errorbar(ax=ax_lc_residual_fnb, c='green', label=f"Best Fitted Model Residuals, residual std={residual_std_fnb:.6f}", alpha=alpha_exptime * p_fold / 5 if alpha_exptime <= 5/p_fold else 1.0)
         elif bin and not fold:
-            lc_residual_fnb.scatter(ax=ax_lc_residual_fnb, c='green', label=None, s=scatter_point_size_exptime * 2, alpha=1.0)
-            lc_residual_fnb.errorbar(ax=ax_lc_residual_fnb, c='green', label=f"Best Fitted Model Residuals, residual std={residual_std_fnb:.6f}", alpha=1.0)
+            lc_residual_fnb_masked.scatter(ax=ax_lc_residual_fnb, c='green', label=None, s=scatter_point_size_exptime * 2, alpha=1.0)
+            lc_residual_fnb_masked.errorbar(ax=ax_lc_residual_fnb, c='green', label=f"Best Fitted Model Residuals, residual std={residual_std_fnb:.6f}", alpha=1.0)
     else:
         if fold and bin:
             lc_residual_fnb_masked.scatter(ax=ax_lc_residual_fnb, c='green', label=f"Best Fitted Model Residuals, residual std={residual_std_fnb:.6f}", s=scatter_point_size_exptime * 10, alpha=1.0)
         elif fold and not bin:
             lc_residual_fnb_masked.scatter(ax=ax_lc_residual_fnb, c='green', label=f"Best Fitted Model Residuals, residual std={residual_std_fnb:.6f}", s=scatter_point_size_exptime * p_fold / 5, alpha=1.0)
         elif bin and not fold:
-            lc_residual_fnb.scatter(ax=ax_lc_residual_fnb, c='green', label=f"Best Fitted Model Residuals, residual std={residual_std_fnb:.6f}", s=scatter_point_size_exptime * 4, alpha=1.0)
+            lc_residual_fnb_masked.scatter(ax=ax_lc_residual_fnb, c='green', label=f"Best Fitted Model Residuals, residual std={residual_std_fnb:.6f}", s=scatter_point_size_exptime * 4, alpha=1.0)
     ax_lc_residual_fnb.legend(loc='upper right')
     ax_lc_residual_fnb.set_ylabel("Residuals")
     ax_lc_fitted_fnb.xaxis.set_major_formatter(ScalarFormatter(useOffset=False)) # disable offset scientific notation
