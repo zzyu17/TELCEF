@@ -1863,7 +1863,7 @@ def parse_priors(lc, priors=None):
 
     return priors
 
-def update_t0_prior(t0_prior_first, p, transit_index, lc_individual):
+def update_t0_prior_individual(t0_prior_first, p, transit_index, lc_individual):
     """
     Update the `t0` prior distribution string for each individual transit fitting.
     """
@@ -1907,6 +1907,48 @@ def update_t0_prior(t0_prior_first, p, transit_index, lc_individual):
             return updated_t0_prior
 
     raise ValueError(f"Invalid 't0_prior_first' parameter: {t0_prior_first}. If provided (i.e., not `None`), must be 'fixed(v)', 'u(a,b)' & 'U(a,b)', 'hu(a, b)' & 'HU(a, b)' or 'n(mu,sigma)' & 'N(mu,sigma)'.")
+
+def update_t0_prior_folded(t0_prior, lc_folded):
+    """
+    Update the `t0` prior distribution string for folded light curve fitting.
+    """
+    if t0_prior is None:
+        return None
+
+    else:
+        # Parse the original t0 prior
+        prior_type, prior_params = _parse_prior_string(t0_prior)
+
+        time_min = np.nanmin(lc_folded.time.value)
+        time_max = np.nanmax(lc_folded.time.value)
+
+        if prior_type == 'fixed':
+            v = 0.0
+            updated_t0_prior = f"fixed({v})"
+            return updated_t0_prior
+
+        elif prior_type in ['uniform', 'hard_boundaries_uniform']:
+            a, b = prior_params
+            # shift the center to 0.0
+            avg = (a + b) / 2.0
+            a -= avg
+            b -= avg
+            a = max(a, time_min)
+            b = min(b, time_max)
+            updated_t0_prior = f"{'u' if prior_type == 'uniform' else 'hu'}({a}, {b})"
+            return updated_t0_prior
+
+        elif prior_type == 'normal':
+            mu, sigma = prior_params
+            mu = 0.0
+            if - 3 * sigma < time_min:
+                sigma = -time_min / 3.0
+            if 3 * sigma > time_max:
+                sigma = time_max / 3.0
+            updated_t0_prior = f"n({mu}, {sigma})"
+            return updated_t0_prior
+
+    raise ValueError(f"Invalid 't0_prior' parameter: {t0_prior}. If provided (i.e., not `None`), must be 'fixed(v)', 'u(a,b)' & 'U(a,b)', 'hu(a, b)' & 'HU(a, b)' or 'n(mu,sigma)' & 'N(mu,sigma)'.")
 
 
 def _param_initial_from_prior(physical_boundaries, prior_string, max_attempts=100):

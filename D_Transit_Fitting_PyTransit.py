@@ -7,7 +7,7 @@ import numpy as np
 from matplotlib.ticker import ScalarFormatter
 
 from utils import (update_dict, format_lc_fits_fn_by_provenance, calculate_cdpp,
-                   PARAMS_NAME, load_params_initial_from_config, load_priors_from_config, load_params_fold_from_config, print_params_initial_priors, update_t0_prior,
+                   PARAMS_NAME, load_params_initial_from_config, load_priors_from_config, load_params_fold_from_config, print_params_initial_priors, update_t0_prior_individual, update_t0_prior_folded,
                    run_transit_fitting, supersample_lc_fitted, split_indiviual_lc, plot_trace_evolution, plot_posterior_corner)
 from A_ab_Configuration_Loader import *
 
@@ -357,7 +357,7 @@ if fit_individual:
             # update initial value and prior for t0 for each individual transit fitting
             t0_individual_initial = t0_individual_first_transit + p_individual * transit_index
             params_individual_initial = update_dict(params_individual_initial, {'t0': t0_individual_initial})
-            t0_prior = update_t0_prior(t0_prior_first_transit, p_individual, transit_index, lc_individual)
+            t0_prior = update_t0_prior_individual(t0_prior_first_transit, p_individual, transit_index, lc_individual)
             priors_individual = update_dict(priors_individual, {'t0': t0_prior})
 
             # Run individual transit fitting
@@ -701,6 +701,7 @@ p_fnb = params_fnb_initial['p']
 priors_fnb = load_priors_from_config(config, 'fnb', lc_fnb)
 if fold:
     priors_fnb['p'] = f'fixed({p_fnb})'  # fix the period for folded transit fitting
+    priors_fnb['t0'] = update_t0_prior_folded(priors_fnb['t0'], lc_fnb)
 
 print_params_initial_priors(params_fnb_initial, priors_fnb, 'fnb', lc)
 
