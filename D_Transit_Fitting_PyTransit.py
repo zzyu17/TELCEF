@@ -802,9 +802,9 @@ if fit_fnb:
     # supersample the best fitted model lightcurve for plotting
     if supersample_lcft:
         if supersample_lcft_factor is not None and supersample_lcft_factor > 1:
-            lc_fitted_fnb, lc_residual_fnb = supersample_lc_fitted(params_fnb_best_all, transit_model_name_fnb, lc, supersample_lcft_factor)
+            lc_fitted_fnb, lc_residual_fnb = supersample_lc_fitted(params_fnb_best_all, transit_model_name_fnb, lc_fnb, supersample_lcft_factor)
         else:
-            lc_fitted_fnb, lc_residual_fnb = supersample_lc_fitted(params_fnb_best_all, transit_model_name_fnb, lc)
+            lc_fitted_fnb, lc_residual_fnb = supersample_lc_fitted(params_fnb_best_all, transit_model_name_fnb, lc_fnb)
 
     # plot the best fitted model
     lc_fitted_fnb_plot, (ax_lc_fitted_fnb, ax_lc_residual_fnb) = plt.subplots(2, 1, figsize=(20, 10), sharex=True)
