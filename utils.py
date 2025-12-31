@@ -2301,6 +2301,9 @@ def calculate_transit_depth(params, transit_model_name):
     ldc1 = np.atleast_1d(params['ldc1'])
     ldc2 = np.atleast_1d(params['ldc2'])
     ldc = np.column_stack((ldc1, ldc2))
+    if 'roadrunner' in transit_model_name.lower() and ldc.ndim == 2:
+        # expand the passband dimension for RoadRunner transit models
+        ldc = np.expand_dims(ldc, axis=1)
     tm = parse_transit_model(transit_model_name)
 
     tm.set_data(time=np.array([0.0])) # calculate the transit depth at t=0.0 (i.e., at the epoch time)
