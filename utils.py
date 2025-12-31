@@ -2742,9 +2742,10 @@ def _arviz_idata_from_samples(params_samples):
     # Retrieve and validate MCMC samples and parameters from the samples dictionary
     n_params = len(params_samples)
     params_name = list(params_samples.keys())
-    for key in params_samples.keys():
-        if params_samples[key].ndim == 2:
-            np.expand_dims(params_samples[key], axis=1)
+    if min(params_samples[key].ndim for key in params_samples.keys()) == 1:
+        # expand the walker dimension for flattened samples
+        for key in params_samples.keys():
+            params_samples[key] = np.expand_dims(params_samples[key], axis=params_samples[key].ndim)
     params_samples_array = np.array(list(params_samples.values())).transpose(2, 1, 0) # convert to shape: (n_walkers, n_steps, n_params)
 
     # Create arviz InferenceData object
@@ -2794,9 +2795,10 @@ def plot_trace_evolution(params_samples, running_mean_window_length=20):
     params_samples_free = _drop_fixed_params_from_samples(params_samples)
     n_params_free = len(params_samples_free)
     params_name_free = list(params_samples_free.keys())
-    for key in params_samples_free.keys():
-        if params_samples_free[key].ndim == 2:
-            np.expand_dims(params_samples_free[key], axis=1)
+    if min(params_samples_free[key].ndim for key in params_samples_free.keys()) == 1:
+        # expand the walker dimension for flattened samples
+        for key in params_samples_free.keys():
+            params_samples_free[key] = np.expand_dims(params_samples_free[key], axis=params_samples_free[key].ndim)
     params_samples_free_array = np.array(list(params_samples_free.values())).transpose(1, 2, 0) # convert to shape: (n_steps, n_walkers, n_params)
     n_walkers = params_samples_free_array.shape[1]
 
