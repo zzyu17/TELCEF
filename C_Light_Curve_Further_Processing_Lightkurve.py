@@ -64,6 +64,9 @@ lc_raw_fn_pure = os.path.splitext(lc_raw_fn)[0]
 lc_raw_fn_suffix = lc_raw_fn_pure.replace(f"{name}_{mission}_Sector-{sector}_", "", 1).replace(f"_LC", "", -1)
 
 lightkurve_processed_lightcurve_plots_dir_source_sector_lc = lightkurve_processed_lightcurve_plots_dir_source_sector + f"/{lc_raw_fn_suffix}"
+lightkurve_processed_lightcurve_plots_dir_source_sector_lc_suffix = config["directory"]["lightkurve_processed_lightcurve_plots_dir_source_sector_lc_suffix"]
+if lightkurve_processed_lightcurve_plots_dir_source_sector_lc_suffix is not None:
+    lightkurve_processed_lightcurve_plots_dir_source_sector_lc += f"{lightkurve_processed_lightcurve_plots_dir_source_sector_lc_suffix}"
 os.makedirs(lightkurve_processed_lightcurve_plots_dir_source_sector_lc, exist_ok=True)
 
 

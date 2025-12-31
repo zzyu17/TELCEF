@@ -95,6 +95,9 @@ lc_fn_suffix = lc_fn_pure.replace(f"{name}_{mission}_Sector-{sector}_", "", 1).r
 correction = config['lightkurve']['correction'] if config['lightkurve']['correction'] is not None else ""
 
 pytransit_fitting_plots_dir_source_sector_lc = pytransit_fitting_plots_dir_source_sector + f"/{lc_fn_suffix}"
+pytransit_fitting_plots_dir_source_sector_lc_suffix = config["directory"]["pytransit_fitting_plots_dir_source_sector_lc_suffix"]
+if pytransit_fitting_plots_dir_source_sector_lc_suffix is not None:
+    pytransit_fitting_plots_dir_source_sector_lc += f"{pytransit_fitting_plots_dir_source_sector_lc_suffix}"
 os.makedirs(pytransit_fitting_plots_dir_source_sector_lc, exist_ok=True)
 
 
