@@ -2801,6 +2801,7 @@ def plot_trace_evolution(params_samples, running_mean_window_length=20):
     n_walkers = params_samples_free_array.shape[1]
 
     params_name_fixed = [key for key in params_samples if key not in params_name_free]
+    n_params_fixed = len(params_name_fixed)
     params_name_fixed_string = ', '.join(params_name_fixed) if len(params_name_fixed) > 0 else 'None'
 
     # Calculate MCMC diagnostics
@@ -2817,8 +2818,8 @@ def plot_trace_evolution(params_samples, running_mean_window_length=20):
         params_running_mean.append(param_running_mean)
 
     # Create figure and grid
-    fig = plt.figure(figsize=(20, 2 * n_params_free))
-    gs = GridSpec(n_params_free, 2, wspace=0.05)
+    fig = plt.figure(figsize=(20, 1.5 * (n_params_free + 1)), layout='constrained')
+    gs = GridSpec(n_params_free, 2, wspace=0.05, figure=fig)
 
     # Plot trace and evolution for each parameter
     for d in range(n_params_free):
@@ -2857,7 +2858,6 @@ def plot_trace_evolution(params_samples, running_mean_window_length=20):
 
     # Set main title
     fig.suptitle(f"Fitted Transit Parameters Trace and Evolution\n(Fixed Parameters: {params_name_fixed_string})", fontsize='xx-large')
-    fig.subplots_adjust(wspace=0.05)
 
     return fig
 
