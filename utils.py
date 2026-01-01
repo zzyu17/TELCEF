@@ -110,6 +110,36 @@ def run_script(script_name, args=None, max_retries=0, retry_delay=5.0):
         time.sleep(retry_delay)
 
 
+def run_source_worker(source_config, max_retries=0, retry_delay=5.0):
+    """
+    Worker to run all the Python scripts for a single source.
+
+    Parameters
+    ----------
+    source_config : dict
+        A dictionary containing the configuration for the source, including the configuration filename and names of the scripts to run for the source.
+    max_retries : int, optional
+        The maximum number of retries on failure. Default is `0` (i.e., no retries).
+    retry_delay : float, optional
+        The delay (in seconds) before each retry. Default is `5.0`.
+    """
+    start = time.time()
+
+    success = True
+    for script in source_config['scripts']:
+        args = ["--config", source_config['config_fn']]
+        if not run_script(script, args, max_retries, retry_delay):
+            success = False
+            break
+
+    end = time.time()
+    run_time = end - start
+
+    worker_results = {'success': success, 'run_time': run_time}
+
+    return worker_results
+
+
 
 
 ### ------ Directory and File Management ------ ###
