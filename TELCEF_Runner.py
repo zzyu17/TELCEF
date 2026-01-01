@@ -1,7 +1,7 @@
 import argparse
 import os
 import time
-import multiprocessing as mp
+from concurrent.futures import ProcessPoolExecutor
 
 from utils import run_source_worker, load_config
 
@@ -23,9 +23,9 @@ def main():
     # Load the sources configurations
     sources_name, sources_config = zip(*(runner_config["sources"].items()))
     n_sources = len(runner_config['sources'])
-    n_completed = 0
+    n_succeeded = 0
     n_failed = 0
-    completed_sources = []
+    succeeded_sources = []
     failed_sources = []
 
 
@@ -50,22 +50,22 @@ def main():
 
     if not multiprocessing or n_processes == 1:
         # Sequential processing
-        for i in range(n_sources):
-            source_name = sources_name[i]
-            source_config = sources_config[i]
+        for source_index in range(n_sources):
+            source_name = sources_name[source_index]
+            source_config = sources_config[source_index]
 
             print(f"{'=' * 100}")
-            print(f"Processing: {source_name} ({i + 1}/{n_sources})")
+            print(f"Processing: {source_name} ({source_index + 1}/{n_sources})")
             print(f"{'=' * 100}\n")
 
             # Run source worker sequentially
-            apply_results = run_source_worker(source_config, max_retries, retry_delay)
-            [success, telcef_runner_single_run_time] = apply_results.values()
+            worker_results = run_source_worker(source_config, max_retries, retry_delay, source_name)
+            success, telcef_runner_single_run_time = worker_results.values()
 
             if success:
-                n_completed += 1
-                completed_sources.append(source_name)
-                print(f"\u2713 Completed processing {source_name} in {telcef_runner_single_run_time:.3f} seconds.\n\n")
+                n_succeeded += 1
+                succeeded_sources.append(source_name)
+                print(f"\u2713 Succeeded processing {source_name} in {telcef_runner_single_run_time:.3f} seconds.\n\n")
             else:
                 n_failed += 1
                 failed_sources.append(source_name)
@@ -79,35 +79,25 @@ def main():
 
 
     else:
-        # Parallel processing using multiprocessing
-        with mp.Pool(processes=n_processes) as pool:
-            sources_results = []
+        # Parallel processing using ProcessPoolExecutor
+        futures = []
+        with ProcessPoolExecutor(max_workers=n_processes) as executor:
+            for source_index in range(n_sources):
+                source_name = sources_name[source_index]
+                source_config = sources_config[source_index]
 
-            for i in range(n_sources):
-                source_name = sources_name[i]
-                source_config = sources_config[i]
+                # Submit all jobs to the pool
+                future = executor.submit(run_source_worker, source_config, max_retries, retry_delay)
+                futures.append((future, source_name))
 
-                print(f"{'=' * 100}")
-                print(f"Processing: {source_name} ({i + 1}/{n_sources})")
-                print(f"{'=' * 100}\n")
-
-                # Apply async source worker
-                apply_results = pool.apply_async(run_source_worker, args=(source_config, max_retries, retry_delay))
-                sources_results.append({source_name: apply_results})
-
-            pool.close()
-            pool.join()
-
-            # Collect workers results
-            for source_results in sources_results:
-                source_name = list(source_results.keys())[0]
-                apply_results = source_results[source_name]
-                [success, telcef_runner_single_run_time] = apply_results.get().values()
+            # Process results
+            for future, source_name in futures:
+                result = future.result()
+                success, telcef_runner_single_run_time = result.values()
 
                 if success:
-                    n_completed += 1
-                    completed_sources.append(source_name)
-                    print(f"\u2713 Completed processing {source_name} in {telcef_runner_single_run_time:.3f} seconds.\n\n")
+                    n_succeeded += 1
+                    succeeded_sources.append(source_name)
                 else:
                     n_failed += 1
                     failed_sources.append(source_name)
@@ -126,7 +116,7 @@ def main():
 
     print(f"{'#' * 100}")
     if failed_sources:
-        print(f"\u2713 {n_completed}/{n_sources} source(s) processed successfully.")
+        print(f"\u2713 {n_succeeded}/{n_sources} source(s) processed successfully.")
         print(f"\u2715 Failed ({n_failed}/{n_sources}) source(s): {', '.join(failed_sources)}.\n")
     else:
         print(f"\u2713 All {n_sources} source(s) processed successfully.\n")

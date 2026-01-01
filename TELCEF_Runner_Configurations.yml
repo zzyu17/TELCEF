@@ -17,7 +17,7 @@ sources:
 ### Global settings ###
 settings:
   multiprocessing: true # whether to run scripts in multiprocessing mode
-  n_processes: 4 # number of processes to use in multiprocessing mode; if left blank (i.e., set to None), it will be set to min(n_sources, int(0.8 * cpu_count))
+  n_processes: # number of processes to use in multiprocessing mode, recommended: n_sources; if left blank (i.e., set to None), it will be set to min(n_sources, int(0.8 * cpu_count))
   stop_on_failure: # whether to stop the entire pipeline if a script fails; if left blank (i.e., set to None), it will be set to false
   max_retries: # Number of retries for failed script(s) after the first attempt. Set this to any number larger than 0 only when running scripts that needs Internet connection, e.g., the searching and/or downloading scripts.
                # If left blank (i.e., set to None), it will be set to 0.

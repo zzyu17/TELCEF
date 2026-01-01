@@ -85,7 +85,8 @@ def run_script(script_name, args=None, max_retries=0, retry_delay=5.0):
                 stdout=sys.stdout,
                 stderr=sys.stderr,
                 text=True,
-                bufsize=1
+                bufsize=1,
+                universal_newlines=True
             )
             process.wait()
         except KeyboardInterrupt:
@@ -95,7 +96,7 @@ def run_script(script_name, args=None, max_retries=0, retry_delay=5.0):
 
         # If succeeded, return True
         if process.returncode == 0:
-            print(f"\u2713 Completed running {script_name}.\n\n")
+            print(f"\u2713 Succeeded running {script_name}.\n\n")
             return True
 
         # If failed, check whether to retry
@@ -122,6 +123,11 @@ def run_source_worker(source_config, max_retries=0, retry_delay=5.0):
         The maximum number of retries on failure. Default is `0` (i.e., no retries).
     retry_delay : float, optional
         The delay (in seconds) before each retry. Default is `5.0`.
+
+    Returns
+    -------
+    worker_results : dict
+        A dictionary containing the results of the source worker, including whether all scripts ran successfully and the total run time.
     """
     start = time.time()
 
