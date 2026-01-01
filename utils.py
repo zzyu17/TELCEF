@@ -82,13 +82,11 @@ def run_script(script_name, args=None, max_retries=0, retry_delay=5.0):
         try:
             process = subprocess.Popen(
                 cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
+                stdout=sys.stdout,
+                stderr=sys.stderr,
                 text=True,
                 bufsize=1
             )
-            for line in process.stdout:
-                print(line.rstrip("\n"), flush=True)
             process.wait()
         except KeyboardInterrupt:
             if process and process.poll() is None:
