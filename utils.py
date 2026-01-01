@@ -2357,7 +2357,7 @@ def run_transit_fitting(lc, transit_model_name, fit_type, params_name=PARAMS_NAM
 
     Returns
     --------
-    results : dict
+    fitting_results : dict
         A dictionary containing the `MCMC` fitting results, including transit parameters samples, best fitted transit parameters and their uncertainties, best fitted model and residuals, goodness-of-fit metrics and MCMC diagnostics.
     """
     # Parse transit_model_name
@@ -2374,7 +2374,7 @@ def run_transit_fitting(lc, transit_model_name, fit_type, params_name=PARAMS_NAM
 
     # Parse initial fitted transit parameters
     params_initial = parse_params_initial(lc, params_initial, priors)
-    params_initial_first_iter = params_initial.copy() # save initial parameters of the first iteration to the results dictionary
+    params_initial_first_iter = params_initial.copy() # save initial parameters of the first iteration to the fitting results dictionary
 
     # Validate priors (period should be fixed for individual or folded transit fitting)
     if fit_type.lower() in ['individual', 'folded']:
@@ -2386,7 +2386,7 @@ def run_transit_fitting(lc, transit_model_name, fit_type, params_name=PARAMS_NAM
 
     # Parse priors
     priors = parse_priors(lc, priors)
-    priors_first_iter = priors.copy() # save priors of the first iteration to the results dictionary
+    priors_first_iter = priors.copy() # save priors of the first iteration to the fitting results dictionary
 
     # Identify free and fixed parameters based on prior types
     params_free = {}
@@ -2421,8 +2421,8 @@ def run_transit_fitting(lc, transit_model_name, fit_type, params_name=PARAMS_NAM
     params_best_lower_error_full = {key: None for key in params_name_full}
     params_best_upper_error_full = {key: None for key in params_name_full}
 
-    # Initialize results dictionary
-    results = {
+    # Initialize fitting results dictionary
+    fitting_results = {
         'n_iterations': 0,
         'params_name_full': params_name_full,
         'n_params_free': n_params_free, 'params_name_free': params_name_free, 'params_name_fixed': params_name_fixed,
@@ -2531,7 +2531,7 @@ def run_transit_fitting(lc, transit_model_name, fit_type, params_name=PARAMS_NAM
         ess_tail = diagnostics['ess_tail']
 
 
-        results = update_dict(results, {
+        fitting_results = update_dict(fitting_results, {
             'n_iterations': n_iter,
             'params_samples': params_samples_all, 'params_samples_unflattened': params_samples_unflattened_all,
             'params_best_full': params_best_full, 'params_best_lower_error_full': params_best_lower_error_full, 'params_best_upper_error_full': params_best_upper_error_full,
@@ -2555,7 +2555,7 @@ def run_transit_fitting(lc, transit_model_name, fit_type, params_name=PARAMS_NAM
 
     print(f"{fit_type.capitalize()} fitting completed in {n_iter} iteration(s).\n")
 
-    return results
+    return fitting_results
 
 
 def supersample_lc_fitted(params, transit_model_name, lc, supersample_factor=10, return_residual=True):

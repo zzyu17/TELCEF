@@ -147,7 +147,7 @@ print_params_initial_priors(params_global_initial, priors_global, 'global', lc)
 
 if fit_global:
     # Run global transit fitting
-    results_global = run_transit_fitting(lc, transit_model_name_global, 'global', params_global_name, params_global_initial, priors_global, n_walkers_global, n_steps_global, chain_discard_proportion_global, chain_thin_global, max_iter_global, sigma_global)
+    fitting_results_global = run_transit_fitting(lc, transit_model_name_global, 'global', params_global_name, params_global_initial, priors_global, n_walkers_global, n_steps_global, chain_discard_proportion_global, chain_thin_global, max_iter_global, sigma_global)
     [n_iter_global,
      params_global_name_full,
      n_params_global_free, params_global_name_free, params_global_name_fixed,
@@ -156,7 +156,7 @@ if fit_global:
      params_global_best_full, params_global_best_lower_error_full, params_global_best_upper_error_full,
      lc, lc_fitted_global, lc_residual_global,
      residual_std_global, chi_square_global, reduced_chi_square_global,
-     r_hat_global, ess_bulk_global, ess_tail_global] = results_global.values()
+     r_hat_global, ess_bulk_global, ess_tail_global] = fitting_results_global.values()
 
     params_global_name_fixed_string = ', '.join(params_global_name_fixed) if len(params_global_name_fixed) > 0 else 'None'
     params_global_best_all = {key: params_global_best_full[key] for key in params_global_name}
@@ -344,7 +344,7 @@ if fit_individual:
             priors_individual = update_dict(priors_individual, {'t0': t0_prior})
 
             # Run individual transit fitting
-            results_individual = run_transit_fitting(lc_individual, transit_model_name_individual, 'individual', params_individual_name, params_individual_initial, priors_individual, n_walkers_individual, n_steps_individual, chain_discard_proportion_individual, chain_thin_individual, max_iter_individual, sigma_individual, transit_index)
+            fitting_results_individual = run_transit_fitting(lc_individual, transit_model_name_individual, 'individual', params_individual_name, params_individual_initial, priors_individual, n_walkers_individual, n_steps_individual, chain_discard_proportion_individual, chain_thin_individual, max_iter_individual, sigma_individual, transit_index)
             [n_iter_individual,
              params_individual_name_full,
              n_params_individual_free, params_individual_name_free, params_individual_name_fixed,
@@ -353,7 +353,7 @@ if fit_individual:
              params_individual_best_full, params_individual_best_lower_error_full, params_individual_best_upper_error_full,
              lc_individual, lc_fitted_individual, lc_residual_individual,
              residual_std_individual, chi_square_individual, reduced_chi_square_individual,
-             r_hat_individual, ess_bulk_individual, ess_tail_individual] = results_individual.values()
+             r_hat_individual, ess_bulk_individual, ess_tail_individual] = fitting_results_individual.values()
 
             params_individual_name_fixed_string = ', '.join(params_individual_name_fixed) if len(params_individual_name_fixed) > 0 else 'None'
             params_individual_best_all = {key: params_individual_best_full[key] for key in params_individual_name}
@@ -691,7 +691,7 @@ print_params_initial_priors(params_fnb_initial, priors_fnb, 'fnb', lc)
 
 if fit_fnb:
     # Run folded-and-binned transit fitting
-    results_fnb = run_transit_fitting(lc_fnb, transit_model_name_fnb, 'folded' if fold else 'global', params_fnb_name, params_fnb_initial, priors_fnb, n_walkers_fnb, n_steps_fnb, chain_discard_proportion_fnb, chain_thin_fnb, max_iter_fnb, sigma_fnb)
+    fitting_results_fnb = run_transit_fitting(lc_fnb, transit_model_name_fnb, 'folded' if fold else 'global', params_fnb_name, params_fnb_initial, priors_fnb, n_walkers_fnb, n_steps_fnb, chain_discard_proportion_fnb, chain_thin_fnb, max_iter_fnb, sigma_fnb)
     [n_iter_fnb,
      params_fnb_name_full,
      n_params_fnb_free, params_fnb_name_free, params_fnb_name_fixed,
@@ -700,7 +700,7 @@ if fit_fnb:
      params_fnb_best_full, params_fnb_best_lower_error_full, params_fnb_best_upper_error_full,
      lc_fnb, lc_fitted_fnb, lc_residual_fnb,
      residual_std_fnb, chi_square_fnb, reduced_chi_square_fnb,
-     r_hat_fnb, ess_bulk_fnb, ess_tail_fnb] = results_fnb.values()
+     r_hat_fnb, ess_bulk_fnb, ess_tail_fnb] = fitting_results_fnb.values()
 
     params_fnb_name_fixed_string = ', '.join(params_fnb_name_fixed) if len(params_fnb_name_fixed) > 0 else 'None'
     params_fnb_best_all = {key: params_fnb_best_full[key] for key in params_fnb_name}
