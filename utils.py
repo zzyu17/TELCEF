@@ -2841,7 +2841,7 @@ def plot_trace_evolution(params_samples, running_mean_window_length=20):
 
     params_name_fixed = [key for key in params_samples if key not in params_name_free]
     n_params_fixed = len(params_name_fixed)
-    params_name_fixed_string = ', '.join(params_name_fixed) if len(params_name_fixed) > 0 else 'None'
+    params_name_fixed_str = ", ".join(params_name_fixed) if len(params_name_fixed) > 0 else 'None'
 
     # Calculate MCMC diagnostics
     diagnostics = arviz_diagnostics(params_samples_free)
@@ -2896,7 +2896,7 @@ def plot_trace_evolution(params_samples, running_mean_window_length=20):
             ax_evolution.set_title(f"Evolution ({running_mean_window_length} Steps Running Mean) Of Parameters", fontsize='x-large')
 
     # Set main title
-    fig.suptitle(f"Fitted Transit Parameters Trace and Evolution\n(Fixed Parameters: {params_name_fixed_string})", fontsize='xx-large')
+    fig.suptitle(f"Fitted Transit Parameters Trace and Evolution\n(Fixed Parameters: {params_name_fixed_str})", fontsize='xx-large')
 
     return fig
 

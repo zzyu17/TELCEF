@@ -158,7 +158,7 @@ if fit_global:
      residual_std_global, chi_square_global, reduced_chi_square_global,
      r_hat_global, ess_bulk_global, ess_tail_global] = fitting_results_global.values()
 
-    params_global_name_fixed_string = ', '.join(params_global_name_fixed) if len(params_global_name_fixed) > 0 else 'None'
+    params_global_name_fixed_str = ", ".join(params_global_name_fixed) if len(params_global_name_fixed) > 0 else "None"
     params_global_best_all = {key: params_global_best_full[key] for key in params_global_name}
 
     config = update_config(config_path, {
@@ -207,7 +207,7 @@ if fit_global:
         params_global_trace_evolution_plot = plot_trace_evolution(params_global_samples_unflattened_all, running_mean_window_length_global)
         params_global_trace_evolution_plot.axes[1].set_title(f"Evolution ({running_mean_window_proportion_global * 100}% Window Running Mean) Of Parameters", fontsize='x-large')
     params_global_trace_evolution_plot.axes[0].set_title("Trace Of Parameters", fontsize='x-large')
-    params_global_trace_evolution_plot.suptitle(f"{lc_plot_title} Global Fitted Transit Parameters Trace and Evolution\n(Fixed Parameters: {params_global_name_fixed_string})", fontsize='xx-large')
+    params_global_trace_evolution_plot.suptitle(f"{lc_plot_title} Global Fitted Transit Parameters Trace and Evolution\n(Fixed Parameters: {params_global_name_fixed_str})", fontsize='xx-large')
     params_global_trace_evolution_plot.figure.savefig(pytransit_fitting_plots_dir_source_sector_lc + f"/{i:02}-{j:01}_Global_Fitted_Transit_Parameters_Trace_and_Evolution{pytransit_fitting_plots_suffix}.png")
     plt.close()
 
@@ -355,7 +355,7 @@ if fit_individual:
              residual_std_individual, chi_square_individual, reduced_chi_square_individual,
              r_hat_individual, ess_bulk_individual, ess_tail_individual] = fitting_results_individual.values()
 
-            params_individual_name_fixed_string = ', '.join(params_individual_name_fixed) if len(params_individual_name_fixed) > 0 else 'None'
+            params_individual_name_fixed_str = ", ".join(params_individual_name_fixed) if len(params_individual_name_fixed) > 0 else "None"
             params_individual_best_all = {key: params_individual_best_full[key] for key in params_individual_name}
 
             # Store the individual light curve, the individual best fitted light curve and residuals into the lists
@@ -442,7 +442,7 @@ if fit_individual:
                 params_individual_trace_evolution_plot = plot_trace_evolution(params_individual_samples_unflattened_all, running_mean_window_length_individual)
                 params_individual_trace_evolution_plot.axes[1].set_title(f"Evolution ({running_mean_window_proportion_individual * 100}% Window Running Mean) Of Parameters", fontsize='x-large')
             params_individual_trace_evolution_plot.axes[0].set_title("Trace Of Parameters", fontsize='x-large')
-            params_individual_trace_evolution_plot.suptitle(f"{lc_plot_title} Individual Transit {transit_index:02} Fitted Transit Parameters Trace and Evolution\n(Fixed Parameters: {params_individual_name_fixed_string})", fontsize='xx-large')
+            params_individual_trace_evolution_plot.suptitle(f"{lc_plot_title} Individual Transit {transit_index:02} Fitted Transit Parameters Trace and Evolution\n(Fixed Parameters: {params_individual_name_fixed_str})", fontsize='xx-large')
             params_individual_trace_evolution_plot.figure.savefig(pytransit_fitting_plots_dir_source_sector_lc_transit + f"/{i:02}-{j:01}-{transit_index:02}_Individual_Transit-{transit_index:02}_Fitted_Transit_Parameters_Trace_and_Evolution{pytransit_fitting_plots_suffix}.png")
             plt.close()
 
@@ -702,7 +702,7 @@ if fit_fnb:
      residual_std_fnb, chi_square_fnb, reduced_chi_square_fnb,
      r_hat_fnb, ess_bulk_fnb, ess_tail_fnb] = fitting_results_fnb.values()
 
-    params_fnb_name_fixed_string = ', '.join(params_fnb_name_fixed) if len(params_fnb_name_fixed) > 0 else 'None'
+    params_fnb_name_fixed_str = ", ".join(params_fnb_name_fixed) if len(params_fnb_name_fixed) > 0 else "None"
     params_fnb_best_all = {key: params_fnb_best_full[key] for key in params_fnb_name}
 
     config = update_config(config_path, {
@@ -752,13 +752,13 @@ if fit_fnb:
         params_fnb_trace_evolution_plot.axes[1].set_title(f"Evolution ({running_mean_window_proportion_fnb * 100}% Window Running Mean) Of Parameters", fontsize='x-large')
     params_fnb_trace_evolution_plot.axes[0].set_title("Trace Of Parameters", fontsize='x-large')
     if fold and bin:
-        params_fnb_trace_evolution_plot.suptitle(f"{lc_plot_title} Folded-and-binned Fitted Transit Parameters Trace and Evolution\n(Fixed Parameters: {params_fnb_name_fixed_string})", fontsize='xx-large')
+        params_fnb_trace_evolution_plot.suptitle(f"{lc_plot_title} Folded-and-binned Fitted Transit Parameters Trace and Evolution\n(Fixed Parameters: {params_fnb_name_fixed_str})", fontsize='xx-large')
         params_fnb_trace_evolution_plot.figure.savefig(pytransit_fitting_plots_dir_source_sector_lc + f"/{i:02}-{j:01}_Folded-and-binned_Fitted_Transit_Parameters_Trace_and_Evolution{pytransit_fitting_plots_suffix}.png")
     elif fold and not bin:
-        params_fnb_trace_evolution_plot.suptitle(f"{lc_plot_title} Folded Fitted Transit Parameters Trace and Evolution\n(Fixed Parameters: {params_fnb_name_fixed_string})", fontsize='xx-large')
+        params_fnb_trace_evolution_plot.suptitle(f"{lc_plot_title} Folded Fitted Transit Parameters Trace and Evolution\n(Fixed Parameters: {params_fnb_name_fixed_str})", fontsize='xx-large')
         params_fnb_trace_evolution_plot.figure.savefig(pytransit_fitting_plots_dir_source_sector_lc + f"/{i:02}-{j:01}_Folded_Fitted_Transit_Parameters_Trace_and_Evolution{pytransit_fitting_plots_suffix}.png")
     elif bin and not fold:
-        params_fnb_trace_evolution_plot.suptitle(f"{lc_plot_title} Binned Fitted Transit Parameters Trace and Evolution\n(Fixed Parameters: {params_fnb_name_fixed_string})", fontsize='xx-large')
+        params_fnb_trace_evolution_plot.suptitle(f"{lc_plot_title} Binned Fitted Transit Parameters Trace and Evolution\n(Fixed Parameters: {params_fnb_name_fixed_str})", fontsize='xx-large')
         params_fnb_trace_evolution_plot.figure.savefig(pytransit_fitting_plots_dir_source_sector_lc + f"/{i:02}-{j:01}_Binned_Fitted_Transit_Parameters_Trace_and_Evolution{pytransit_fitting_plots_suffix}.png")
     plt.close()
 

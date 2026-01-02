@@ -33,7 +33,7 @@ for sector in sectors:
     try:
         shutil.copy2(base_config_path, new_config_path)
         update_config(new_config_path, {'source.sector': sector}) ##### update the specific value(s) in the new configuration file #####
-        success = run_script("A_ab_Configuration_Loader.py", ["--config", new_config_fn], max_retries=max_retries, retry_delay=retry_delay)
+        success = run_script("A_ab_Configuration_Loader.py", ["--config", new_config_fn], max_retries, retry_delay)
     except Exception as e:
         success = False
         print(f"Error while processing {new_config_fn_base}: {e}")
