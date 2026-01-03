@@ -51,7 +51,7 @@ STAGE_MAP = {
 
 
 ### ------ TELCEF Runner ------ ###
-def run_script(script_name, args=None, max_retries=0, retry_delay=5.0):
+def run_script(script_name, args=None, max_retries=0, retry_delay=5.0, use_terminal=False, source_name=None):
     """
     Run a Python script with optional arguments in a command-line subprocess, with retry mechanism on failure.
 
@@ -65,21 +65,60 @@ def run_script(script_name, args=None, max_retries=0, retry_delay=5.0):
         The maximum number of retries on failure. Default is `0` (i.e., no retries).
     retry_delay : float, optional
         The delay (in seconds) before each retry. Default is `5.0`.
+    use_terminal : bool, optional
+        Whether to run the script in a new terminal window. Default is `False`.
+    source_name : str, optional
+        Name of the source, used for terminal window title.
 
     Returns
     -------
     `True` if the script ran successfully, `False` otherwise.
     """
+    if source_name is None:
+        source_name = ""
+
     print(f">>> Running: {script_name}...\n")
+
 
     # Construct the command to run the script
     cmd = [sys.executable, script_name]
     if args:
         cmd.extend(args)
 
+    if use_terminal:
+        if sys.platform.startswith('win'):
+            # Windows
+            title = f'TELCEF Runner - {source_name}'
+            cmd = ['start', 'cmd', '/k', f'title {title} && ' + ' '.join(cmd)]
+        elif sys.platform.startswith('darwin'):
+            # macOS
+            title = f'TELCEF Runner - {source_name}'
+            osa_script = f'tell application "Terminal" to do script "echo \\"{title}\\"; {" ".join(cmd)}"'
+            cmd = ['osascript', '-e', osa_script]
+        elif sys.platform.startswith('linux'):
+            # Linux (requires 'gnome-terminal' to be installed)
+            title = f'TELCEF Runner - {source_name}'
+            cmd = ['gnome-terminal', '--title', title, '--' + ' '.join(cmd)]
+        else:
+            raise OSError("Unsupported operating system for launching a new terminal.")
+
+
+    # Run the command with retry mechanism
     retry = 0
     while True:
-        try:
+        if use_terminal:
+            # For terminal execution, just start the process and return
+            process = subprocess.Popen(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                bufsize=1,
+                universal_newlines=True
+            )
+            return True
+        else:
+            # For non-terminal execution, run the process and wait for completion
             process = subprocess.Popen(
                 cmd,
                 stdout=sys.stdout,
@@ -89,29 +128,27 @@ def run_script(script_name, args=None, max_retries=0, retry_delay=5.0):
                 universal_newlines=True
             )
             process.wait()
-        except KeyboardInterrupt:
-            if process and process.poll() is None:
-                process.terminate()
-            raise
-
-        # If succeeded, return True
-        if process.returncode == 0:
-            print(f"\u2713 Succeeded running {script_name}.\n\n")
-            return True
-
-        # If failed, check whether to retry
-        print(f"\u2715 Failed running {script_name}.\n")
-        if retry >= max_retries:
-            print(f"Exceeded max retries ({max_retries}). Given up on {script_name}.\n\n")
-            return False
-
-        # Sleep before retrying
-        retry += 1
-        print(f"Retrying ({retry}/{max_retries}) in {retry_delay} seconds...\n")
-        time.sleep(retry_delay)
 
 
-def run_source_worker(source_config, max_retries=0, retry_delay=5.0):
+        if not use_terminal:
+            # If succeeded, return True
+            if process.returncode == 0:
+                print(f"\u2713 Succeeded running {script_name}.\n\n")
+                return True
+
+            # If failed, check whether to retry
+            print(f"\n\u2715 Failed running {script_name}.\n")
+            if retry >= max_retries:
+                print(f"Exceeded max retries ({max_retries}). Given up on {script_name}.\n\n")
+                return False
+
+            # Sleep before retrying
+            retry += 1
+            print(f"Retrying ({retry}/{max_retries}) in {retry_delay} seconds...\n")
+            time.sleep(retry_delay)
+
+
+def run_source_worker(source_config, max_retries=0, retry_delay=5.0, use_terminal=False, source_name=None, stop_on_failure=False, close_terminal=False):
     """
     Worker to run all the Python scripts for a single source.
 
@@ -123,29 +160,141 @@ def run_source_worker(source_config, max_retries=0, retry_delay=5.0):
         The maximum number of retries on failure. Default is `0` (i.e., no retries).
     retry_delay : float, optional
         The delay (in seconds) before each retry. Default is `5.0`.
+    use_terminal : bool, optional
+        Whether to run the source worker in a new terminal window. Default is `False`.
+    source_name : str, optional
+        Name of the source, used for terminal window title.
+    stop_on_failure : bool, optional
+        Whether to stop running further scripts on failure. Default is `False`.
+        Only applicable when `use_terminal` is `True`.
+    close_terminal : bool, optional
+        Whether to close the terminal window after running the source worker. Default is `False`.
+        Only applicable when `use_terminal` is `True`.
 
     Returns
     -------
-    worker_results : dict
-        A dictionary containing the results of the source worker, including whether all scripts ran successfully and the total run time.
+    `True` if the source worker ran successfully, `False` otherwise.
     """
+    if source_name is None:
+        source_name = ""
+
     start = time.time()
-
     success = True
-    for script in source_config['scripts']:
-        args = ["--config", source_config['config_fn']]
-        if not run_script(script, args, max_retries, retry_delay):
-            success = False
-            break
-
-    end = time.time()
-    run_time = end - start
-
-    worker_results = {'success': success, 'run_time': run_time}
-
-    return worker_results
 
 
+    if use_terminal:
+        print(f"Launching {source_name} in terminal...\n")
+
+        # Construct the command to run all scripts for the single source in sequence
+        cmd_source = []
+        for script_name in source_config['scripts']:
+            args_script = ["--config", source_config['config_fn']]
+            cmd_script = [sys.executable, script_name] + args_script
+            cmd_script_str = ' '.join(cmd_script)
+            cmd_source.append(cmd_script_str)
+
+        # choose separator and add pause command at the end
+        if sys.platform.startswith('win'):
+            # Windows
+            separator = ' && ' if stop_on_failure else ' & '
+            cmd_source_str = separator.join(cmd_source)
+            if not close_terminal:
+                cmd_source_str += ' & pause'
+        else:
+            # macOS and Linux
+            separator = ' && ' if stop_on_failure else ' ; '
+            cmd_source_str = separator.join(cmd_source)
+            if not close_terminal:
+                cmd_source_str += ' ; echo "\nPress any key to continue..." ; read -n 1'
+            else:
+                cmd_source_str += ' ; exit'
+
+        # create a temporary script file to run all commands for the single source
+        if sys.platform.startswith('win'):
+            temp_script = f"{source_name}.bat"
+            with open(temp_script, 'w') as f:
+                f.write(f"@echo off\n")
+                f.write(f"echo Running all scripts for {source_name}...\n\n")
+                f.write(f"{cmd_source_str}\n")
+        else:
+            temp_script = f"{source_name}.sh"
+            with open(temp_script, 'w') as f:
+                f.write("#!/bin/bash\n")
+                f.write(f"echo 'Running all scripts for {source_name}...'\n\n")
+                f.write(f"{cmd_source_str}\n")
+            os.chmod(temp_script, 0o755)
+
+        if sys.platform.startswith('win'):
+            # Windows
+            title = f'TELCEF Runner - {source_name}'
+            cmd_flag = '/c' if close_terminal else '/k'
+            cmd = ['start', 'cmd', cmd_flag, f'title {title} && {temp_script}']
+        elif sys.platform.startswith('darwin'):
+            # macOS
+            title = f'TELCEF Runner - {source_name}'
+            osa_script = f'tell application "Terminal" to do script "echo \\"{title}\\"; ./{temp_script}"'
+            cmd = ['osascript', '-e', osa_script]
+        elif sys.platform.startswith('linux'):
+            # Linux (requires 'gnome-terminal' to be installed)
+            title = f'TELCEF Runner - {source_name}'
+            cmd = ['gnome-terminal', '--title', title, '--', f'./{temp_script}']
+        else:
+            raise OSError("Unsupported operating system for launching a new terminal.")
+
+        # Run the command
+        # For terminal execution, just start the process and return
+        process = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            bufsize=1,
+            universal_newlines=True
+        )
+        time.sleep(1) # wait a moment to ensure the terminal is launched
+        os.remove(temp_script)
+
+        end = time.time()
+        run_time = end - start
+        print(f"\n\u2713 Succeeded launching {source_name} in terminal in {run_time:.3f} seconds.\n\n")
+
+        return success
+
+
+    else:
+        succeeded_scipts = []
+        failed_scipts = []
+        for script_name in source_config['scripts']:
+            args = ["--config", source_config['config_fn']]
+            script_success = run_script(script_name, args, max_retries, retry_delay, use_terminal, source_name)
+            if not script_success:
+                success = False
+                if stop_on_failure:
+                    end = time.time()
+                    run_time = end - start
+                    print(f"Stopped further scripts for {source_name}.\n\n")
+                    break
+                else:
+                    failed_scipts.append(script_name)
+            else:
+                succeeded_scipts.append(script_name)
+
+        end = time.time()
+        run_time = end - start
+        if success:
+            print(f"\u2713 Succeeded running all scripts for {source_name} in {run_time:.3f} seconds.\n\n")
+        else:
+            if stop_on_failure:
+                if len(succeeded_scipts) > 0:
+                    succeeded_scipts_str = ", ".join(succeeded_scipts)
+                else:
+                    succeeded_scipts_str = "none of the scripts"
+                print(f"\u2715 Succeeded running {succeeded_scipts_str} for {source_name} and/but failed in {script_name} after {run_time:.3f} seconds.\n\n")
+            else:
+                failed_scipts_str = ", ".join(failed_scipts)
+                print(f"\u2715 Failed running {failed_scipts_str} (while succeeded in the others) for {source_name} in {run_time:.3f} seconds.\n\n")
+
+        return success
 
 
 ### ------ Directory and File Management ------ ###
